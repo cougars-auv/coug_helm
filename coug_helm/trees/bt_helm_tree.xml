@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+
+  <!--
+  @file bt_helm_tree.xml
+  @brief Behavior tree for waypoint mission execution.
+  @author Nelson Durrant
+  @date May 2026
+  -->
+
+  <TreeNodesModel>
+    <Condition ID="CheckOdomHealthy"/>
+    <Condition ID="CheckHasMission"/>
+    <Condition ID="CheckMissionComplete"/>
+    <Action ID="ComputeHSD"/>
+    <Action ID="PublishHSD"/>
+    <Action ID="AdvanceIfReached"/>
+    <Action ID="StopVehicle"/>
+  </TreeNodesModel>
+
+  <BehaviorTree ID="MainTree">
+    <Fallback>
+      <Sequence>
+        <CheckOdomHealthy/>
+        <CheckHasMission/>
+        <Inverter>
+          <CheckMissionComplete/>
+        </Inverter>
+        <ComputeHSD/>
+        <PublishHSD/>
+        <AdvanceIfReached/>
+      </Sequence>
+      <StopVehicle/>
+    </Fallback>
+  </BehaviorTree>
+</root>
