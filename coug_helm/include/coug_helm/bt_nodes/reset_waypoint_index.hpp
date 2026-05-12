@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /**
- * @file check_mission_complete.hpp
- * @brief BT condition node that checks whether the mission is finished.
+ * @file reset_waypoint_index.hpp
+ * @brief BT action node that resets the waypoint index to 0.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -23,36 +23,33 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <geometry_msgs/msg/point.hpp>
-#include <string>
-#include <vector>
-
 namespace coug_helm::bt_nodes {
 
 /**
- * @class CheckMissionComplete
- * @brief Returns SUCCESS if waypoint_index has advanced past the end of the waypoint list.
+ * @class ResetWaypointIndex
+ * @brief Resets waypoint_index to 0 and clears prev_norm_dist to restart traversal from the
+ *        beginning of the waypoint list.
  */
-class CheckMissionComplete : public BT::ConditionNode {
+class ResetWaypointIndex : public BT::SyncActionNode {
  public:
   /**
-   * @brief Constructor for CheckMissionComplete.
+   * @brief Constructor for ResetWaypointIndex.
    * @param name The name of the node.
    * @param config The BT node configuration.
    */
-  CheckMissionComplete(const std::string& name, const BT::NodeConfig& config)
-      : BT::ConditionNode(name, config) {}
+  ResetWaypointIndex(const std::string& name, const BT::NodeConfig& config)
+      : BT::SyncActionNode(name, config) {}
 
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Checks whether the waypoint index has passed the end of the list.
-   * @return SUCCESS if the mission is complete, FAILURE otherwise.
+   * @brief Sets waypoint_index to 0 and prev_norm_dist to -1.0.
+   * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
-    auto idx = config().blackboard->get<size_t>("waypoint_index");
-    return (idx >= wps.size()) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+    config().blackboard->set("waypoint_index", size_t{0});
+    config().blackboard->set("prev_norm_dist", -1.0);
+    return BT::NodeStatus::SUCCESS;
   }
 };
 

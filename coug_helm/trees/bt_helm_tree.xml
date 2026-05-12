@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<root BTCPP_format="4">
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
 
   <!--
   @file bt_helm_tree.xml
@@ -10,21 +10,68 @@
 
   <TreeNodesModel>
     <Condition ID="CheckOdomHealthy"/>
-    <Condition ID="CheckHasMission"/>
+    <Condition ID="CheckMissionActive"/>
     <Condition ID="CheckMissionComplete"/>
+    <Condition ID="CheckCommand">
+      <input_port name="command">Command string to match against pending_command</input_port>
+    </Condition>
+    <Action ID="ClearCommand"/>
+    <Action ID="SetMissionActive">
+      <input_port name="value">true to enable mission, false to disable</input_port>
+    </Action>
+    <Action ID="ResetWaypointIndex"/>
+    <Action ID="SetMissionWaypoints"/>
+    <Action ID="SetSurfaceWaypoint"/>
+    <Action ID="SetHomeWaypoint"/>
     <Action ID="ComputeHSD"/>
     <Action ID="PublishHSD"/>
     <Action ID="AdvanceIfReached"/>
     <Action ID="StopVehicle"/>
   </TreeNodesModel>
 
+  <BehaviorTree ID="CommandDispatch">
+    <Fallback>
+      <Sequence>
+        <CheckCommand command="start"/>
+        <ClearCommand/>
+        <SetMissionWaypoints/>
+        <ResetWaypointIndex/>
+        <SetMissionActive value="true"/>
+      </Sequence>
+      <Sequence>
+        <CheckCommand command="stop"/>
+        <ClearCommand/>
+        <SetMissionActive value="false"/>
+      </Sequence>
+      <Sequence>
+        <CheckCommand command="surface"/>
+        <ClearCommand/>
+        <SetSurfaceWaypoint/>
+        <ResetWaypointIndex/>
+        <SetMissionActive value="true"/>
+      </Sequence>
+      <Sequence>
+        <CheckCommand command="home"/>
+        <ClearCommand/>
+        <SetHomeWaypoint/>
+        <ResetWaypointIndex/>
+        <SetMissionActive value="true"/>
+      </Sequence>
+      <AlwaysSuccess/>
+    </Fallback>
+  </BehaviorTree>
+
   <BehaviorTree ID="MainTree">
     <Fallback>
       <Sequence>
+        <SubTree ID="CommandDispatch" _autoremap="true"/>
         <CheckOdomHealthy/>
-        <CheckHasMission/>
+        <CheckMissionActive/>
         <Inverter>
-          <CheckMissionComplete/>
+          <Sequence>
+            <CheckMissionComplete/>
+            <SetMissionActive value="false"/>
+          </Sequence>
         </Inverter>
         <ComputeHSD/>
         <PublishHSD/>
@@ -33,4 +80,5 @@
       <StopVehicle/>
     </Fallback>
   </BehaviorTree>
+
 </root>

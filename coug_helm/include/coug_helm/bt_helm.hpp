@@ -32,6 +32,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/float64.hpp>
+#include <std_srvs/srv/trigger.hpp>
+#include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
 
@@ -50,6 +52,31 @@ class BTHelmNode : public rclcpp::Node {
   explicit BTHelmNode(const rclcpp::NodeOptions& options);
 
  private:
+  // --- Service Callbacks ---
+  /**
+   * @brief Queues a "start" command on the blackboard for the BT to dispatch on the next tick.
+   */
+  void startCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                     std_srvs::srv::Trigger::Response::SharedPtr res);
+
+  /**
+   * @brief Queues a "stop" command on the blackboard for the BT to dispatch on the next tick.
+   */
+  void stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                    std_srvs::srv::Trigger::Response::SharedPtr res);
+
+  /**
+   * @brief Queues a "surface" command on the blackboard for the BT to dispatch on the next tick.
+   */
+  void surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                       std_srvs::srv::Trigger::Response::SharedPtr res);
+
+  /**
+   * @brief Queues a "home" command on the blackboard for the BT to dispatch on the next tick.
+   */
+  void homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                    std_srvs::srv::Trigger::Response::SharedPtr res);
+
   // --- Logic ---
   /**
    * @brief Callback for the shared GPS origin fix. Sets the ENU projection origin.
@@ -104,6 +131,11 @@ class BTHelmNode : public rclcpp::Node {
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr origin_sub_;
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr surface_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr home_srv_;
 
   rclcpp::TimerBase::SharedPtr tick_timer_;
   diagnostic_updater::Updater diagnostic_updater_;

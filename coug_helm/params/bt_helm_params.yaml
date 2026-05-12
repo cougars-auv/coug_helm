@@ -26,11 +26,23 @@ bt_helm_node:
     default_value: 50
 
   capture_radius:
-    type: double
-    default_value: 25.0
+    type: double_array
+    default_value: [25.0, 2.0]
   slip_radius:
-    type: double
-    default_value: 50.0
+    type: double_array
+    default_value: [50.0, 4.0]
+  surface_capture_radius:
+    type: double_array
+    default_value: [1000.0, 0.5]
+  surface_slip_radius:
+    type: double_array
+    default_value: [1000.0, 0.5]
+  home_capture_radius:
+    type: double_array
+    default_value: [5.0, 0.5]
+  home_slip_radius:
+    type: double_array
+    default_value: [10.0, 1.0]
   desired_speed_rpm:
     type: double
     default_value: 1500.0

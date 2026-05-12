@@ -55,23 +55,27 @@ class AdvanceIfReached : public BT::SyncActionNode {
     auto idx = config().blackboard->get<size_t>("waypoint_index");
     double cx = config().blackboard->get<double>("current_x");
     double cy = config().blackboard->get<double>("current_y");
-    double prev_dist = config().blackboard->get<double>("previous_distance");
-    double cap_r = config().blackboard->get<double>("capture_radius");
-    double slip_r = config().blackboard->get<double>("slip_radius");
+    double cz = config().blackboard->get<double>("current_z");
+    double prev_dist = config().blackboard->get<double>("prev_norm_dist");
+    auto cap_r = config().blackboard->get<std::vector<double>>("capture_radius");
+    auto slip_r = config().blackboard->get<std::vector<double>>("slip_radius");
 
     const auto& target = wps[idx];
-    double dx = target.x - cx;
-    double dy = target.y - cy;
-    double dist = std::hypot(dx, dy);
+    double h_dist = std::hypot(target.x - cx, target.y - cy);
+    double v_dist = std::abs(target.z - cz);
 
-    bool capture = dist < cap_r;
-    bool slip = (prev_dist > 0.0 && dist > prev_dist && dist < slip_r);
+    // Normalized ellipsoidal distance: < 1.0 means inside the ellipse
+    double norm_cap = std::hypot(h_dist / cap_r[0], v_dist / cap_r[1]);
+    double norm_slip = std::hypot(h_dist / slip_r[0], v_dist / slip_r[1]);
+
+    bool capture = norm_cap < 1.0;
+    bool slip = (prev_dist > 0.0 && norm_cap > prev_dist && norm_slip < 1.0);
 
     if (capture || slip) {
       config().blackboard->set("waypoint_index", idx + 1);
-      config().blackboard->set("previous_distance", -1.0);
+      config().blackboard->set("prev_norm_dist", -1.0);
     } else {
-      config().blackboard->set("previous_distance", dist);
+      config().blackboard->set("prev_norm_dist", norm_cap);
     }
 
     return BT::NodeStatus::SUCCESS;

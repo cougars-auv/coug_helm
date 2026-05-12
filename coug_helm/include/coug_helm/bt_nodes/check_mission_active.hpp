@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /**
- * @file check_has_mission.hpp
- * @brief BT condition node that checks whether a mission has been received.
+ * @file check_mission_active.hpp
+ * @brief BT condition node that checks whether a mission is actively running.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -30,28 +30,29 @@
 namespace coug_helm::bt_nodes {
 
 /**
- * @class CheckHasMission
- * @brief Returns SUCCESS if a non-empty waypoint list is loaded.
+ * @class CheckMissionActive
+ * @brief Returns SUCCESS if a non-empty waypoint list is loaded and mission_active is true.
  */
-class CheckHasMission : public BT::ConditionNode {
+class CheckMissionActive : public BT::ConditionNode {
  public:
   /**
-   * @brief Constructor for CheckHasMission.
+   * @brief Constructor for CheckMissionActive.
    * @param name The name of the node.
    * @param config The BT node configuration.
    */
-  CheckHasMission(const std::string& name, const BT::NodeConfig& config)
+  CheckMissionActive(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Checks whether a non-empty waypoint list is available.
-   * @return SUCCESS if waypoints are loaded, FAILURE otherwise.
+   * @brief Checks whether waypoints are loaded and the mission is active.
+   * @return SUCCESS if mission is active and waypoints are available, FAILURE otherwise.
    */
   BT::NodeStatus tick() override {
     auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
-    return wps.empty() ? BT::NodeStatus::FAILURE : BT::NodeStatus::SUCCESS;
+    bool active = config().blackboard->get<bool>("mission_active");
+    return (!wps.empty() && active) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
   }
 };
 
