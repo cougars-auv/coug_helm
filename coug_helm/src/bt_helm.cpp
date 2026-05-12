@@ -81,12 +81,8 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
 
   // --- ROS Interfaces ---
-  heading_pub_ =
-      create_publisher<std_msgs::msg::Float64>(params_.heading_topic, rclcpp::SystemDefaultsQoS());
-  speed_pub_ =
-      create_publisher<std_msgs::msg::Float64>(params_.speed_topic, rclcpp::SystemDefaultsQoS());
-  depth_pub_ =
-      create_publisher<std_msgs::msg::Float64>(params_.depth_topic, rclcpp::SystemDefaultsQoS());
+  hsd_pub_ = create_publisher<coug_interfaces::msg::ControlSetpoint>(params_.hsd_topic,
+                                                                     rclcpp::SystemDefaultsQoS());
 
   origin_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
       params_.origin_topic, rclcpp::SystemDefaultsQoS(),
@@ -131,15 +127,13 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::AdvanceIfReached>("AdvanceIfReached");
 
   factory_.registerBuilder<bt_nodes::PublishHSD>(
-      "PublishHSD", [h = heading_pub_, sp = speed_pub_, d = depth_pub_](
-                        const std::string& name, const BT::NodeConfig& config) {
-        return std::make_unique<bt_nodes::PublishHSD>(name, config, h, sp, d);
+      "PublishHSD", [p = hsd_pub_](const std::string& name, const BT::NodeConfig& config) {
+        return std::make_unique<bt_nodes::PublishHSD>(name, config, p);
       });
 
   factory_.registerBuilder<bt_nodes::StopVehicle>(
-      "StopVehicle", [h = heading_pub_, sp = speed_pub_, d = depth_pub_](
-                         const std::string& name, const BT::NodeConfig& config) {
-        return std::make_unique<bt_nodes::StopVehicle>(name, config, h, sp, d);
+      "StopVehicle", [p = hsd_pub_](const std::string& name, const BT::NodeConfig& config) {
+        return std::make_unique<bt_nodes::StopVehicle>(name, config, p);
       });
 
   std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");

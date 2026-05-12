@@ -25,13 +25,13 @@
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 
 #include <GeographicLib/LocalCartesian.hpp>
+#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <memory>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <std_msgs/msg/float64.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <vector>
 
@@ -124,9 +124,7 @@ class BTHelmNode : public rclcpp::Node {
   bool origin_set_{false};
 
   // --- ROS Interfaces ---
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr heading_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr speed_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr depth_pub_;
+  rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
 
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr origin_sub_;
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;

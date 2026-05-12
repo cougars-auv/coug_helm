@@ -8,15 +8,9 @@ bt_helm_node:
   odom_topic:
     type: string
     default_value: "odometry/global"
-  heading_topic:
+  hsd_topic:
     type: string
-    default_value: "heading"
-  speed_topic:
-    type: string
-    default_value: "speed"
-  depth_topic:
-    type: string
-    default_value: "depth"
+    default_value: "cmd_hsd"
   publish_diagnostics:
     type: bool
     default_value: false

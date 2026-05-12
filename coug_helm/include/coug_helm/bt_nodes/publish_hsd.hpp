@@ -23,15 +23,15 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/float64.hpp>
 #include <string>
 
 namespace coug_helm::bt_nodes {
 
 /**
  * @class PublishHSD
- * @brief Publishes the computed heading, speed, and depth commands to ROS topics.
+ * @brief Publishes the computed heading, speed, and depth as a single ControlSetpoint message.
  */
 class PublishHSD : public BT::SyncActionNode {
  public:
@@ -39,45 +39,30 @@ class PublishHSD : public BT::SyncActionNode {
    * @brief Constructor for PublishHSD.
    * @param name The name of the node.
    * @param config The BT node configuration.
-   * @param heading_pub Publisher for the heading command.
-   * @param speed_pub Publisher for the speed command.
-   * @param depth_pub Publisher for the depth command.
+   * @param hsd_pub Publisher for the combined HSD setpoint.
    */
   PublishHSD(const std::string& name, const BT::NodeConfig& config,
-             rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr heading_pub,
-             rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr speed_pub,
-             rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr depth_pub)
-      : BT::SyncActionNode(name, config),
-        heading_pub_(std::move(heading_pub)),
-        speed_pub_(std::move(speed_pub)),
-        depth_pub_(std::move(depth_pub)) {}
+             rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub)
+      : BT::SyncActionNode(name, config), hsd_pub_(std::move(hsd_pub)) {}
 
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Publishes heading, speed, and depth from the blackboard.
+   * @brief Publishes heading, speed, and depth from the blackboard as a ControlSetpoint.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    std_msgs::msg::Float64 msg;
-
-    msg.data = config().blackboard->get<double>("heading");
-    heading_pub_->publish(msg);
-
-    msg.data = config().blackboard->get<double>("speed");
-    speed_pub_->publish(msg);
-
-    msg.data = config().blackboard->get<double>("depth");
-    depth_pub_->publish(msg);
-
+    coug_interfaces::msg::ControlSetpoint msg;
+    msg.heading = config().blackboard->get<double>("heading");
+    msg.speed = config().blackboard->get<double>("speed");
+    msg.depth = config().blackboard->get<double>("depth");
+    hsd_pub_->publish(msg);
     return BT::NodeStatus::SUCCESS;
   }
 
  private:
   // --- ROS Interfaces ---
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr heading_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr speed_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr depth_pub_;
+  rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
 };
 
 }  // namespace coug_helm::bt_nodes
