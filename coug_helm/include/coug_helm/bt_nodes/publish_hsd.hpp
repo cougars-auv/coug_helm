@@ -24,6 +24,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 
 #include <coug_interfaces/msg/control_setpoint.hpp>
+#include <cstdint>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
@@ -56,6 +57,7 @@ class PublishHSD : public BT::SyncActionNode {
     msg.heading = config().blackboard->get<double>("heading");
     msg.speed = config().blackboard->get<double>("speed");
     msg.depth = config().blackboard->get<double>("depth");
+    msg.mode = config().blackboard->get<uint8_t>("mode");
     hsd_pub_->publish(msg);
     return BT::NodeStatus::SUCCESS;
   }

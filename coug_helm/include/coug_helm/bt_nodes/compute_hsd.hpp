@@ -24,6 +24,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 
 #include <cmath>
+#include <cstdint>
 #include <geometry_msgs/msg/point.hpp>
 #include <string>
 #include <vector>
@@ -47,7 +48,7 @@ class ComputeHSD : public BT::SyncActionNode {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Computes and writes heading, speed, and depth to the blackboard.
+   * @brief Computes and writes heading, speed, depth, and mode to the blackboard.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
@@ -64,6 +65,7 @@ class ComputeHSD : public BT::SyncActionNode {
     config().blackboard->set("heading", std::atan2(dy, dx) * 180.0 / M_PI);
     config().blackboard->set("speed", speed_rpm);
     config().blackboard->set("depth", target.z);
+    config().blackboard->set("mode", target.z > 0.0 ? uint8_t{1} : uint8_t{0});
 
     return BT::NodeStatus::SUCCESS;
   }

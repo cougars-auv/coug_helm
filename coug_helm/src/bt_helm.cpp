@@ -24,6 +24,7 @@
 #include <GeographicLib/LocalCartesian.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <cmath>
+#include <cstdint>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
@@ -69,6 +70,7 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("heading", 0.0);
   blackboard_->set("speed", 0.0);
   blackboard_->set("depth", 0.0);
+  blackboard_->set("mode", uint8_t{0});
   blackboard_->set("capture_radius", params_.capture_radius);
   blackboard_->set("slip_radius", params_.slip_radius);
   blackboard_->set("mission_capture_radius", params_.capture_radius);
@@ -218,7 +220,7 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     geometry_msgs::msg::Point p;
     double dummy_z;
     local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, p.x, p.y, dummy_z);
-    p.z = gps.altitude;  // altitude field carries depth, z-up
+    p.z = gps.altitude;  // depth below surface, altitude above seafloor
     enu_waypoints.push_back(p);
     RCLCPP_INFO(get_logger(), "Waypoint %zu: Lat %.6f, Lon %.6f, Depth %.2f", i, gps.latitude,
                 gps.longitude, gps.altitude);
