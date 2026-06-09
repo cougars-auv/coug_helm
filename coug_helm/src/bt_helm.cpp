@@ -99,16 +99,16 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
       std::bind(&BTHelmNode::odomCallback, this, std::placeholders::_1));
 
   start_srv_ = create_service<std_srvs::srv::Trigger>(
-      "start",
+      params_.start_service,
       std::bind(&BTHelmNode::startCallback, this, std::placeholders::_1, std::placeholders::_2));
   stop_srv_ = create_service<std_srvs::srv::Trigger>(
-      "stop",
+      params_.stop_service,
       std::bind(&BTHelmNode::stopCallback, this, std::placeholders::_1, std::placeholders::_2));
   surface_srv_ = create_service<std_srvs::srv::Trigger>(
-      "surface",
+      params_.surface_service,
       std::bind(&BTHelmNode::surfaceCallback, this, std::placeholders::_1, std::placeholders::_2));
   home_srv_ = create_service<std_srvs::srv::Trigger>(
-      "home",
+      params_.home_service,
       std::bind(&BTHelmNode::homeCallback, this, std::placeholders::_1, std::placeholders::_2));
 
   tick_timer_ = create_wall_timer(std::chrono::milliseconds(params_.tick_rate_ms),

@@ -11,6 +11,20 @@ bt_helm_node:
   hsd_topic:
     type: string
     default_value: "cmd_hsd"
+
+  start_service:
+    type: string
+    default_value: "start"
+  stop_service:
+    type: string
+    default_value: "stop"
+  surface_service:
+    type: string
+    default_value: "surface"
+  home_service:
+    type: string
+    default_value: "home"
+
   publish_diagnostics:
     type: bool
     default_value: false
