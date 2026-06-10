@@ -28,6 +28,7 @@
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
+#include <string>
 #include <vector>
 
 #include "coug_helm/bt_nodes/advance_if_reached.hpp"
@@ -79,7 +80,7 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("surface_slip_radius", params_.surface_slip_radius);
   blackboard_->set("home_capture_radius", params_.home_capture_radius);
   blackboard_->set("home_slip_radius", params_.home_slip_radius);
-  blackboard_->set("desired_speed_rpm", params_.desired_speed_rpm);
+  blackboard_->set("waypoint_speeds", std::vector<double>{});
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
 
   // --- ROS Interfaces ---
@@ -215,6 +216,7 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
   }
 
   std::vector<geometry_msgs::msg::Point> enu_waypoints;
+  std::vector<double> waypoint_speeds;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& gps = msg->waypoints[i].position;
     geometry_msgs::msg::Point p;
@@ -222,12 +224,23 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, p.x, p.y, dummy_z);
     p.z = gps.altitude;  // depth below surface, altitude above seafloor
     enu_waypoints.push_back(p);
-    RCLCPP_INFO(get_logger(), "Waypoint %zu: Lat %.6f, Lon %.6f, Depth %.2f", i, gps.latitude,
-                gps.longitude, gps.altitude);
+
+    double speed = 1500.0;
+    for (const auto& kv : msg->waypoints[i].props) {
+      if (kv.key == "speed_rpm") {
+        speed = std::stod(kv.value);
+        break;
+      }
+    }
+    waypoint_speeds.push_back(speed);
+
+    RCLCPP_INFO(get_logger(), "Waypoint %zu: Lat %.6f, Lon %.6f, Depth %.2f, Speed %.1f RPM", i,
+                gps.latitude, gps.longitude, gps.altitude, speed);
   }
 
   blackboard_->set("waypoints", enu_waypoints);
   blackboard_->set("mission_waypoints", enu_waypoints);
+  blackboard_->set("waypoint_speeds", waypoint_speeds);
   RCLCPP_INFO(get_logger(), "Mission Received: %zu waypoint(s).", msg->waypoints.size());
 }
 

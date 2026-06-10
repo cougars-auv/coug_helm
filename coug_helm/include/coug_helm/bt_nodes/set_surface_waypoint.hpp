@@ -57,6 +57,7 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
     wp.y = config().blackboard->get<double>("current_y");
     wp.z = 0.0;
     config().blackboard->set("waypoints", std::vector<geometry_msgs::msg::Point>{wp});
+    config().blackboard->set("waypoint_speeds", std::vector<double>{});
     config().blackboard->set(
         "capture_radius", config().blackboard->get<std::vector<double>>("surface_capture_radius"));
     config().blackboard->set("slip_radius",

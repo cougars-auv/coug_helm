@@ -53,17 +53,16 @@ class ComputeHSD : public BT::SyncActionNode {
    */
   BT::NodeStatus tick() override {
     auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
+    auto speeds = config().blackboard->get<std::vector<double>>("waypoint_speeds");
     auto idx = config().blackboard->get<size_t>("waypoint_index");
     double cx = config().blackboard->get<double>("current_x");
     double cy = config().blackboard->get<double>("current_y");
-    double speed_rpm = config().blackboard->get<double>("desired_speed_rpm");
-
     const auto& target = wps[idx];
     double dx = target.x - cx;
     double dy = target.y - cy;
 
     config().blackboard->set("heading", std::atan2(dy, dx) * 180.0 / M_PI);
-    config().blackboard->set("speed", speed_rpm);
+    config().blackboard->set("speed", speeds[idx]);
     config().blackboard->set("depth", target.z);
     config().blackboard->set("mode", target.z > 0.0 ? uint8_t{1} : uint8_t{0});
 

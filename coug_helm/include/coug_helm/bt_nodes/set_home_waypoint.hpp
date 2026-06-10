@@ -54,6 +54,7 @@ class SetHomeWaypoint : public BT::SyncActionNode {
     geometry_msgs::msg::Point home = mission[0];
     home.z = 0.0;
     config().blackboard->set("waypoints", std::vector<geometry_msgs::msg::Point>{home});
+    config().blackboard->set("waypoint_speeds", std::vector<double>{});
     config().blackboard->set("capture_radius",
                              config().blackboard->get<std::vector<double>>("home_capture_radius"));
     config().blackboard->set("slip_radius",

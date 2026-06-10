@@ -51,9 +51,6 @@ bt_helm_node:
   home_slip_radius:
     type: double_array
     default_value: [10.0, 1.0]
-  desired_speed_rpm:
-    type: double
-    default_value: 1500.0
   odom_timeout_sec:
     type: double
     default_value: 2.0
