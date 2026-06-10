@@ -54,6 +54,9 @@ bt_helm_node:
   odom_timeout_sec:
     type: double
     default_value: 2.0
+  default_speed_rpm:
+    type: double
+    default_value: 1500.0
 
   publish_groot2:
     type: bool

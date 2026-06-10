@@ -60,9 +60,11 @@ class ComputeHSD : public BT::SyncActionNode {
     const auto& target = wps[idx];
     double dx = target.x - cx;
     double dy = target.y - cy;
+    double speed =
+        (idx < speeds.size()) ? speeds[idx] : config().blackboard->get<double>("default_speed");
 
     config().blackboard->set("heading", std::atan2(dy, dx) * 180.0 / M_PI);
-    config().blackboard->set("speed", speeds[idx]);
+    config().blackboard->set("speed", speed);
     config().blackboard->set("depth", target.z);
     config().blackboard->set("mode", target.z > 0.0 ? uint8_t{1} : uint8_t{0});
 

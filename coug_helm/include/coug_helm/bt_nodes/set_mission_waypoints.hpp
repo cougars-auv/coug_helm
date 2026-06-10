@@ -30,8 +30,9 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class SetMissionWaypoints
- * @brief Copies mission_waypoints into waypoints and resets capture_radius and slip_radius
- *        to the mission defaults, undoing any overrides left by surface or home commands.
+ * @brief Copies mission_waypoints into waypoints and resets the waypoint speeds,
+ *        capture_radius, and slip_radius to the mission values, undoing any overrides
+ *        left by surface or home commands.
  */
 class SetMissionWaypoints : public BT::SyncActionNode {
  public:
@@ -41,7 +42,7 @@ class SetMissionWaypoints : public BT::SyncActionNode {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Sets waypoints from mission_waypoints.
+   * @brief Sets waypoints and waypoint_speeds from the stored mission values.
    * @return SUCCESS if a mission exists, FAILURE if none has been published.
    */
   BT::NodeStatus tick() override {
@@ -51,6 +52,8 @@ class SetMissionWaypoints : public BT::SyncActionNode {
       return BT::NodeStatus::FAILURE;
     }
     config().blackboard->set("waypoints", mission);
+    config().blackboard->set("waypoint_speeds", config().blackboard->get<std::vector<double>>(
+                                                    "mission_waypoint_speeds"));
     config().blackboard->set(
         "capture_radius", config().blackboard->get<std::vector<double>>("mission_capture_radius"));
     config().blackboard->set("slip_radius",

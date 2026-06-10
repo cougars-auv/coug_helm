@@ -62,7 +62,7 @@ class AdvanceIfReached : public BT::SyncActionNode {
 
     const auto& target = wps[idx];
     double h_dist = std::hypot(target.x - cx, target.y - cy);
-    double v_dist = std::abs(target.z - cz);
+    double v_dist = (target.z > 0.0) ? 0.0 : std::abs(target.z - cz);
 
     // Normalized ellipsoidal distance: < 1.0 means inside the ellipse
     double norm_cap = std::hypot(h_dist / cap_r[0], v_dist / cap_r[1]);

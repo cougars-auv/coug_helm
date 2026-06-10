@@ -47,8 +47,8 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Overwrites waypoints with one entry at (current_x, current_y, z=0), and sets surface
-   * radii.
+   * @brief Overwrites waypoints with one entry at (current_x, current_y, z=0) at the default
+   * speed, and sets surface radii.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
@@ -57,7 +57,8 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
     wp.y = config().blackboard->get<double>("current_y");
     wp.z = 0.0;
     config().blackboard->set("waypoints", std::vector<geometry_msgs::msg::Point>{wp});
-    config().blackboard->set("waypoint_speeds", std::vector<double>{});
+    config().blackboard->set(
+        "waypoint_speeds", std::vector<double>{config().blackboard->get<double>("default_speed")});
     config().blackboard->set(
         "capture_radius", config().blackboard->get<std::vector<double>>("surface_capture_radius"));
     config().blackboard->set("slip_radius",

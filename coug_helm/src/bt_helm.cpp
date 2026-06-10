@@ -81,6 +81,8 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("home_capture_radius", params_.home_capture_radius);
   blackboard_->set("home_slip_radius", params_.home_slip_radius);
   blackboard_->set("waypoint_speeds", std::vector<double>{});
+  blackboard_->set("mission_waypoint_speeds", std::vector<double>{});
+  blackboard_->set("default_speed", params_.default_speed_rpm);
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
 
   // --- ROS Interfaces ---
@@ -225,10 +227,15 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     p.z = gps.altitude;  // depth below surface, altitude above seafloor
     enu_waypoints.push_back(p);
 
-    double speed = 1500.0;
+    double speed = params_.default_speed_rpm;
     for (const auto& kv : msg->waypoints[i].props) {
       if (kv.key == "speed_rpm") {
-        speed = std::stod(kv.value);
+        try {
+          speed = std::stod(kv.value);
+        } catch (const std::exception&) {
+          RCLCPP_WARN(get_logger(), "Invalid speed_rpm '%s' on waypoint %zu. Using default %.1f.",
+                      kv.value.c_str(), i, params_.default_speed_rpm);
+        }
         break;
       }
     }
@@ -241,6 +248,7 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
   blackboard_->set("waypoints", enu_waypoints);
   blackboard_->set("mission_waypoints", enu_waypoints);
   blackboard_->set("waypoint_speeds", waypoint_speeds);
+  blackboard_->set("mission_waypoint_speeds", waypoint_speeds);
   RCLCPP_INFO(get_logger(), "Mission Received: %zu waypoint(s).", msg->waypoints.size());
 }
 

@@ -42,7 +42,8 @@ class SetHomeWaypoint : public BT::SyncActionNode {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Overwrites waypoints with mission_waypoints[0] at depth 0, and sets home radii.
+   * @brief Overwrites waypoints with mission_waypoints[0] at depth 0 at the default speed,
+   * and sets home radii.
    * @return SUCCESS if a mission exists, FAILURE if none has been published.
    */
   BT::NodeStatus tick() override {
@@ -54,7 +55,8 @@ class SetHomeWaypoint : public BT::SyncActionNode {
     geometry_msgs::msg::Point home = mission[0];
     home.z = 0.0;
     config().blackboard->set("waypoints", std::vector<geometry_msgs::msg::Point>{home});
-    config().blackboard->set("waypoint_speeds", std::vector<double>{});
+    config().blackboard->set(
+        "waypoint_speeds", std::vector<double>{config().blackboard->get<double>("default_speed")});
     config().blackboard->set("capture_radius",
                              config().blackboard->get<std::vector<double>>("home_capture_radius"));
     config().blackboard->set("slip_radius",
