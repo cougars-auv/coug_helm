@@ -281,7 +281,7 @@ void BTHelmNode::checkMissionStatus(diagnostic_updater::DiagnosticStatusWrapper&
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Mission inactive.");
   } else {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Navigating to waypoint " +
-                                                                 std::to_string(idx + 1) + " / " +
+                                                                 std::to_string(idx + 1) + "/" +
                                                                  std::to_string(wps.size()) + ".");
     stat.add("Horizontal Distance (m)", std::hypot(wps[idx].x - cx, wps[idx].y - cy));
     stat.add("Vertical Distance (m)", std::abs(wps[idx].z - cz));
