@@ -1,4 +1,48 @@
 bt_helm_node:
+  # --- Node Settings ---
+  tick_rate_ms:
+    type: int
+    default_value: 50
+  publish_diagnostics:
+    type: bool
+    default_value: false
+
+  capture_radius:
+    type: double_array
+    default_value: [25.0, 2.0]
+  surface_capture_radius:
+    type: double_array
+    default_value: [1000.0, 0.5]
+  home_capture_radius:
+    type: double_array
+    default_value: [5.0, 0.5]
+
+  slip_radius:
+    type: double_array
+    default_value: [50.0, 4.0]
+  surface_slip_radius:
+    type: double_array
+    default_value: [1000.0, 0.5]
+  home_slip_radius:
+    type: double_array
+    default_value: [10.0, 1.0]
+
+  odom_timeout_sec:
+    type: double
+    default_value: 2.0
+  default_speed_rpm:
+    type: double
+    default_value: 1500.0
+
+  # --- Groot2 Connection ---
+  publish_groot2:
+    type: bool
+    default_value: true
+  groot2_port:
+    type: int
+    default_value: 1667
+
+  # --- ROS Topics and Services ---
   origin_topic:
     type: string
     default_value: "/origin"
@@ -24,43 +68,3 @@ bt_helm_node:
   home_service:
     type: string
     default_value: "home"
-
-  publish_diagnostics:
-    type: bool
-    default_value: false
-
-  tick_rate_ms:
-    type: int
-    default_value: 50
-
-  capture_radius:
-    type: double_array
-    default_value: [25.0, 2.0]
-  slip_radius:
-    type: double_array
-    default_value: [50.0, 4.0]
-  surface_capture_radius:
-    type: double_array
-    default_value: [1000.0, 0.5]
-  surface_slip_radius:
-    type: double_array
-    default_value: [1000.0, 0.5]
-  home_capture_radius:
-    type: double_array
-    default_value: [5.0, 0.5]
-  home_slip_radius:
-    type: double_array
-    default_value: [10.0, 1.0]
-  odom_timeout_sec:
-    type: double
-    default_value: 2.0
-  default_speed_rpm:
-    type: double
-    default_value: 1500.0
-
-  publish_groot2:
-    type: bool
-    default_value: true
-  groot2_port:
-    type: int
-    default_value: 1667
