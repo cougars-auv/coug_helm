@@ -57,6 +57,8 @@ class ComputeHSD : public BT::SyncActionNode {
     auto idx = config().blackboard->get<size_t>("waypoint_index");
     double cx = config().blackboard->get<double>("current_x");
     double cy = config().blackboard->get<double>("current_y");
+
+    if (wps.empty() || idx >= wps.size()) return BT::NodeStatus::FAILURE;
     const auto& target = wps[idx];
     double dx = target.x - cx;
     double dy = target.y - cy;

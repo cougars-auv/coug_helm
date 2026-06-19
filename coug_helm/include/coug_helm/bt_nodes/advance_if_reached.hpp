@@ -60,6 +60,7 @@ class AdvanceIfReached : public BT::SyncActionNode {
     auto cap_r = config().blackboard->get<std::vector<double>>("capture_radius");
     auto slip_r = config().blackboard->get<std::vector<double>>("slip_radius");
 
+    if (wps.empty() || idx >= wps.size()) return BT::NodeStatus::FAILURE;
     const auto& target = wps[idx];
     double h_dist = std::hypot(target.x - cx, target.y - cy);
     double v_dist = (target.z > 0.0) ? 0.0 : std::abs(target.z - cz);

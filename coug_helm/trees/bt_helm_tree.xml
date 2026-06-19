@@ -33,9 +33,9 @@
     <Fallback>
       <Sequence>
         <CheckCommand command="start"/>
-        <ClearCommand/>
         <SetMissionWaypoints/>
         <ResetWaypointIndex/>
+        <ClearCommand/>
         <SetMissionActive value="true"/>
       </Sequence>
       <Sequence>
@@ -45,16 +45,16 @@
       </Sequence>
       <Sequence>
         <CheckCommand command="surface"/>
-        <ClearCommand/>
         <SetSurfaceWaypoint/>
         <ResetWaypointIndex/>
+        <ClearCommand/>
         <SetMissionActive value="true"/>
       </Sequence>
       <Sequence>
         <CheckCommand command="home"/>
-        <ClearCommand/>
         <SetHomeWaypoint/>
         <ResetWaypointIndex/>
+        <ClearCommand/>
         <SetMissionActive value="true"/>
       </Sequence>
       <AlwaysSuccess/>
