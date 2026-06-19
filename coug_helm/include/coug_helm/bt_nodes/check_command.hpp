@@ -42,7 +42,10 @@ class CheckCommand : public BT::ConditionNode {
       : BT::ConditionNode(name, config) {}
 
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::string>("command", "Command string to match")};
+    return {
+        BT::InputPort<std::string>("command"),
+        BT::InputPort<std::string>("pending_command"),
+    };
   }
 
   /**
@@ -51,7 +54,7 @@ class CheckCommand : public BT::ConditionNode {
    */
   BT::NodeStatus tick() override {
     auto expected = getInput<std::string>("command").value();
-    auto pending = config().blackboard->get<std::string>("pending_command");
+    auto pending = getInput<std::string>("pending_command").value();
     return (pending == expected) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
   }
 };

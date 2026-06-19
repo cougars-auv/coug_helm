@@ -39,7 +39,18 @@ class SetHomeWaypoint : public BT::SyncActionNode {
   SetHomeWaypoint(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("mission_waypoints"),
+        BT::InputPort<double>("default_speed"),
+        BT::InputPort<std::vector<double>>("home_capture_radius"),
+        BT::InputPort<std::vector<double>>("home_slip_radius"),
+        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::OutputPort<std::vector<double>>("waypoint_speeds"),
+        BT::OutputPort<std::vector<double>>("capture_radius"),
+        BT::OutputPort<std::vector<double>>("slip_radius"),
+    };
+  }
 
   /**
    * @brief Overwrites waypoints with mission_waypoints[0] at depth 0 at the default speed,
@@ -47,20 +58,16 @@ class SetHomeWaypoint : public BT::SyncActionNode {
    * @return SUCCESS if a mission exists, FAILURE if none has been published.
    */
   BT::NodeStatus tick() override {
-    auto mission =
-        config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("mission_waypoints");
+    auto mission = getInput<std::vector<geometry_msgs::msg::Point>>("mission_waypoints").value();
     if (mission.empty()) {
       return BT::NodeStatus::FAILURE;
     }
     geometry_msgs::msg::Point home = mission[0];
     home.z = 0.0;
-    config().blackboard->set("waypoints", std::vector<geometry_msgs::msg::Point>{home});
-    config().blackboard->set(
-        "waypoint_speeds", std::vector<double>{config().blackboard->get<double>("default_speed")});
-    config().blackboard->set("capture_radius",
-                             config().blackboard->get<std::vector<double>>("home_capture_radius"));
-    config().blackboard->set("slip_radius",
-                             config().blackboard->get<std::vector<double>>("home_slip_radius"));
+    setOutput("waypoints", std::vector<geometry_msgs::msg::Point>{home});
+    setOutput("waypoint_speeds", std::vector<double>{getInput<double>("default_speed").value()});
+    setOutput("capture_radius", getInput<std::vector<double>>("home_capture_radius").value());
+    setOutput("slip_radius", getInput<std::vector<double>>("home_slip_radius").value());
     return BT::NodeStatus::SUCCESS;
   }
 };

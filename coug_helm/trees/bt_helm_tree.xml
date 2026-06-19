@@ -9,53 +9,148 @@
   -->
 
   <TreeNodesModel>
-    <Condition ID="CheckOdomHealthy"/>
-    <Condition ID="CheckMissionActive"/>
-    <Condition ID="CheckMissionComplete"/>
-    <Condition ID="CheckCommand">
-      <input_port name="command">Command string to match against pending_command</input_port>
+    <Condition ID="CheckOdomHealthy">
+      <input_port name="last_odom_time"/>
+      <input_port name="current_time"/>
+      <input_port name="odom_timeout_sec"/>
     </Condition>
-    <Action ID="ClearCommand"/>
-    <Action ID="SetMissionActive">
-      <input_port name="value">true to enable mission, false to disable</input_port>
+    <Condition ID="CheckMissionActive">
+      <input_port name="waypoints"/>
+      <input_port name="mission_active"/>
+    </Condition>
+    <Condition ID="CheckMissionComplete">
+      <input_port name="waypoints"/>
+      <input_port name="waypoint_index"/>
+    </Condition>
+    <Condition ID="CheckCommand">
+      <input_port name="command"/>
+      <input_port name="pending_command"/>
+    </Condition>
+    <Action ID="ClearCommand">
+      <output_port name="pending_command"/>
     </Action>
-    <Action ID="ResetWaypointIndex"/>
-    <Action ID="SetMissionWaypoints"/>
-    <Action ID="SetSurfaceWaypoint"/>
-    <Action ID="SetHomeWaypoint"/>
-    <Action ID="ComputeHSD"/>
-    <Action ID="PublishHSD"/>
-    <Action ID="AdvanceIfReached"/>
+    <Action ID="SetMissionActive">
+      <input_port name="value"/>
+      <output_port name="mission_active"/>
+    </Action>
+    <Action ID="ResetWaypointIndex">
+      <output_port name="waypoint_index"/>
+      <output_port name="prev_norm_dist"/>
+    </Action>
+    <Action ID="SetMissionWaypoints">
+      <input_port name="mission_waypoints"/>
+      <input_port name="mission_waypoint_speeds"/>
+      <input_port name="mission_capture_radius"/>
+      <input_port name="mission_slip_radius"/>
+      <output_port name="waypoints"/>
+      <output_port name="waypoint_speeds"/>
+      <output_port name="capture_radius"/>
+      <output_port name="slip_radius"/>
+    </Action>
+    <Action ID="SetSurfaceWaypoint">
+      <input_port name="current_x"/>
+      <input_port name="current_y"/>
+      <input_port name="default_speed"/>
+      <input_port name="surface_capture_radius"/>
+      <input_port name="surface_slip_radius"/>
+      <output_port name="waypoints"/>
+      <output_port name="waypoint_speeds"/>
+      <output_port name="capture_radius"/>
+      <output_port name="slip_radius"/>
+    </Action>
+    <Action ID="SetHomeWaypoint">
+      <input_port name="mission_waypoints"/>
+      <input_port name="default_speed"/>
+      <input_port name="home_capture_radius"/>
+      <input_port name="home_slip_radius"/>
+      <output_port name="waypoints"/>
+      <output_port name="waypoint_speeds"/>
+      <output_port name="capture_radius"/>
+      <output_port name="slip_radius"/>
+    </Action>
+    <Action ID="ComputeHSD">
+      <input_port name="waypoints"/>
+      <input_port name="waypoint_speeds"/>
+      <input_port name="waypoint_index"/>
+      <input_port name="current_x"/>
+      <input_port name="current_y"/>
+      <input_port name="default_speed"/>
+      <output_port name="heading"/>
+      <output_port name="speed"/>
+      <output_port name="depth"/>
+      <output_port name="mode"/>
+    </Action>
+    <Action ID="PublishHSD">
+      <input_port name="heading"/>
+      <input_port name="speed"/>
+      <input_port name="depth"/>
+      <input_port name="mode"/>
+    </Action>
+    <Action ID="AdvanceIfReached">
+      <input_port name="waypoints"/>
+      <input_port name="current_x"/>
+      <input_port name="current_y"/>
+      <input_port name="current_z"/>
+      <input_port name="capture_radius"/>
+      <input_port name="slip_radius"/>
+      <inout_port name="waypoint_index"/>
+      <inout_port name="prev_norm_dist"/>
+    </Action>
     <Action ID="StopVehicle"/>
   </TreeNodesModel>
 
   <BehaviorTree ID="CommandDispatch">
     <Fallback>
       <Sequence>
-        <CheckCommand command="start"/>
-        <SetMissionWaypoints/>
-        <ResetWaypointIndex/>
-        <ClearCommand/>
-        <SetMissionActive value="true"/>
+        <CheckCommand command="start" pending_command="{pending_command}"/>
+        <SetMissionWaypoints
+            mission_waypoints="{mission_waypoints}"
+            mission_waypoint_speeds="{mission_waypoint_speeds}"
+            mission_capture_radius="{mission_capture_radius}"
+            mission_slip_radius="{mission_slip_radius}"
+            waypoints="{waypoints}"
+            waypoint_speeds="{waypoint_speeds}"
+            capture_radius="{capture_radius}"
+            slip_radius="{slip_radius}"/>
+        <ResetWaypointIndex waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
+        <ClearCommand pending_command="{pending_command}"/>
+        <SetMissionActive value="true" mission_active="{mission_active}"/>
       </Sequence>
       <Sequence>
-        <CheckCommand command="stop"/>
-        <ClearCommand/>
-        <SetMissionActive value="false"/>
+        <CheckCommand command="stop" pending_command="{pending_command}"/>
+        <ClearCommand pending_command="{pending_command}"/>
+        <SetMissionActive value="false" mission_active="{mission_active}"/>
       </Sequence>
       <Sequence>
-        <CheckCommand command="surface"/>
-        <SetSurfaceWaypoint/>
-        <ResetWaypointIndex/>
-        <ClearCommand/>
-        <SetMissionActive value="true"/>
+        <CheckCommand command="surface" pending_command="{pending_command}"/>
+        <SetSurfaceWaypoint
+            current_x="{current_x}"
+            current_y="{current_y}"
+            default_speed="{default_speed}"
+            surface_capture_radius="{surface_capture_radius}"
+            surface_slip_radius="{surface_slip_radius}"
+            waypoints="{waypoints}"
+            waypoint_speeds="{waypoint_speeds}"
+            capture_radius="{capture_radius}"
+            slip_radius="{slip_radius}"/>
+        <ResetWaypointIndex waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
+        <ClearCommand pending_command="{pending_command}"/>
+        <SetMissionActive value="true" mission_active="{mission_active}"/>
       </Sequence>
       <Sequence>
-        <CheckCommand command="home"/>
-        <SetHomeWaypoint/>
-        <ResetWaypointIndex/>
-        <ClearCommand/>
-        <SetMissionActive value="true"/>
+        <CheckCommand command="home" pending_command="{pending_command}"/>
+        <SetHomeWaypoint
+            mission_waypoints="{mission_waypoints}"
+            default_speed="{default_speed}"
+            home_capture_radius="{home_capture_radius}"
+            home_slip_radius="{home_slip_radius}"
+            waypoints="{waypoints}"
+            waypoint_speeds="{waypoint_speeds}"
+            capture_radius="{capture_radius}"
+            slip_radius="{slip_radius}"/>
+        <ResetWaypointIndex waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
+        <ClearCommand pending_command="{pending_command}"/>
+        <SetMissionActive value="true" mission_active="{mission_active}"/>
       </Sequence>
       <AlwaysSuccess/>
     </Fallback>
@@ -65,17 +160,42 @@
     <Fallback>
       <Sequence>
         <SubTree ID="CommandDispatch" _autoremap="true"/>
-        <CheckOdomHealthy/>
-        <CheckMissionActive/>
+        <CheckOdomHealthy
+            last_odom_time="{last_odom_time}"
+            current_time="{current_time}"
+            odom_timeout_sec="{odom_timeout_sec}"/>
+        <CheckMissionActive waypoints="{waypoints}" mission_active="{mission_active}"/>
         <Inverter>
           <Sequence>
-            <CheckMissionComplete/>
-            <SetMissionActive value="false"/>
+            <CheckMissionComplete waypoints="{waypoints}" waypoint_index="{waypoint_index}"/>
+            <SetMissionActive value="false" mission_active="{mission_active}"/>
           </Sequence>
         </Inverter>
-        <ComputeHSD/>
-        <PublishHSD/>
-        <AdvanceIfReached/>
+        <ComputeHSD
+            waypoints="{waypoints}"
+            waypoint_speeds="{waypoint_speeds}"
+            waypoint_index="{waypoint_index}"
+            current_x="{current_x}"
+            current_y="{current_y}"
+            default_speed="{default_speed}"
+            heading="{heading}"
+            speed="{speed}"
+            depth="{depth}"
+            mode="{mode}"/>
+        <PublishHSD
+            heading="{heading}"
+            speed="{speed}"
+            depth="{depth}"
+            mode="{mode}"/>
+        <AdvanceIfReached
+            waypoints="{waypoints}"
+            current_x="{current_x}"
+            current_y="{current_y}"
+            current_z="{current_z}"
+            capture_radius="{capture_radius}"
+            slip_radius="{slip_radius}"
+            waypoint_index="{waypoint_index}"
+            prev_norm_dist="{prev_norm_dist}"/>
       </Sequence>
       <StopVehicle/>
     </Fallback>

@@ -46,7 +46,14 @@ class PublishHSD : public BT::SyncActionNode {
              rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub)
       : BT::SyncActionNode(name, config), hsd_pub_(std::move(hsd_pub)) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<double>("heading"),
+        BT::InputPort<double>("speed"),
+        BT::InputPort<double>("depth"),
+        BT::InputPort<uint8_t>("mode"),
+    };
+  }
 
   /**
    * @brief Publishes heading, speed, and depth from the blackboard as a ControlSetpoint.
@@ -54,10 +61,10 @@ class PublishHSD : public BT::SyncActionNode {
    */
   BT::NodeStatus tick() override {
     coug_interfaces::msg::ControlSetpoint msg;
-    msg.heading = config().blackboard->get<double>("heading");
-    msg.speed = config().blackboard->get<double>("speed");
-    msg.depth = config().blackboard->get<double>("depth");
-    msg.mode = config().blackboard->get<uint8_t>("mode");
+    msg.heading = getInput<double>("heading").value();
+    msg.speed = getInput<double>("speed").value();
+    msg.depth = getInput<double>("depth").value();
+    msg.mode = getInput<uint8_t>("mode").value();
     hsd_pub_->publish(msg);
     return BT::NodeStatus::SUCCESS;
   }

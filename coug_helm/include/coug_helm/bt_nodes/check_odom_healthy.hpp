@@ -41,16 +41,22 @@ class CheckOdomHealthy : public BT::ConditionNode {
   CheckOdomHealthy(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<double>("last_odom_time"),
+        BT::InputPort<double>("current_time"),
+        BT::InputPort<double>("odom_timeout_sec"),
+    };
+  }
 
   /**
    * @brief Checks whether odometry is being received within the timeout.
    * @return SUCCESS if odometry is healthy, FAILURE otherwise.
    */
   BT::NodeStatus tick() override {
-    double last_odom = config().blackboard->get<double>("last_odom_time");
-    double now = config().blackboard->get<double>("current_time");
-    double timeout = config().blackboard->get<double>("odom_timeout_sec");
+    double last_odom = getInput<double>("last_odom_time").value();
+    double now = getInput<double>("current_time").value();
+    double timeout = getInput<double>("odom_timeout_sec").value();
 
     if (last_odom == 0.0) {
       return BT::NodeStatus::FAILURE;

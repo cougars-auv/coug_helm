@@ -43,15 +43,20 @@ class CheckMissionActive : public BT::ConditionNode {
   CheckMissionActive(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::InputPort<bool>("mission_active"),
+    };
+  }
 
   /**
    * @brief Checks whether waypoints are loaded and the mission is active.
    * @return SUCCESS if mission is active and waypoints are available, FAILURE otherwise.
    */
   BT::NodeStatus tick() override {
-    auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
-    bool active = config().blackboard->get<bool>("mission_active");
+    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("waypoints").value();
+    bool active = getInput<bool>("mission_active").value();
     return (!wps.empty() && active) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
   }
 };

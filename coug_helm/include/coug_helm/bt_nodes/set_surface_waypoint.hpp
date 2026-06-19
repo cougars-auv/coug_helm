@@ -44,7 +44,19 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
   SetSurfaceWaypoint(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<double>("current_x"),
+        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("default_speed"),
+        BT::InputPort<std::vector<double>>("surface_capture_radius"),
+        BT::InputPort<std::vector<double>>("surface_slip_radius"),
+        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::OutputPort<std::vector<double>>("waypoint_speeds"),
+        BT::OutputPort<std::vector<double>>("capture_radius"),
+        BT::OutputPort<std::vector<double>>("slip_radius"),
+    };
+  }
 
   /**
    * @brief Overwrites waypoints with one entry at (current_x, current_y, z=0) at the default
@@ -53,16 +65,13 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
    */
   BT::NodeStatus tick() override {
     geometry_msgs::msg::Point wp;
-    wp.x = config().blackboard->get<double>("current_x");
-    wp.y = config().blackboard->get<double>("current_y");
+    wp.x = getInput<double>("current_x").value();
+    wp.y = getInput<double>("current_y").value();
     wp.z = 0.0;
-    config().blackboard->set("waypoints", std::vector<geometry_msgs::msg::Point>{wp});
-    config().blackboard->set(
-        "waypoint_speeds", std::vector<double>{config().blackboard->get<double>("default_speed")});
-    config().blackboard->set(
-        "capture_radius", config().blackboard->get<std::vector<double>>("surface_capture_radius"));
-    config().blackboard->set("slip_radius",
-                             config().blackboard->get<std::vector<double>>("surface_slip_radius"));
+    setOutput("waypoints", std::vector<geometry_msgs::msg::Point>{wp});
+    setOutput("waypoint_speeds", std::vector<double>{getInput<double>("default_speed").value()});
+    setOutput("capture_radius", getInput<std::vector<double>>("surface_capture_radius").value());
+    setOutput("slip_radius", getInput<std::vector<double>>("surface_slip_radius").value());
     return BT::NodeStatus::SUCCESS;
   }
 };

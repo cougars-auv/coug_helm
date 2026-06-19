@@ -40,15 +40,20 @@ class ResetWaypointIndex : public BT::SyncActionNode {
   ResetWaypointIndex(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::OutputPort<size_t>("waypoint_index"),
+        BT::OutputPort<double>("prev_norm_dist"),
+    };
+  }
 
   /**
    * @brief Sets waypoint_index to 0 and prev_norm_dist to -1.0.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    config().blackboard->set("waypoint_index", size_t{0});
-    config().blackboard->set("prev_norm_dist", -1.0);
+    setOutput("waypoint_index", size_t{0});
+    setOutput("prev_norm_dist", -1.0);
     return BT::NodeStatus::SUCCESS;
   }
 };

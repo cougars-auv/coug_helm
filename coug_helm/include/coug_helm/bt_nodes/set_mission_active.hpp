@@ -40,7 +40,10 @@ class SetMissionActive : public BT::SyncActionNode {
       : BT::SyncActionNode(name, config) {}
 
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<bool>("value", "true to enable, false to disable")};
+    return {
+        BT::InputPort<bool>("value"),
+        BT::OutputPort<bool>("mission_active"),
+    };
   }
 
   /**
@@ -49,7 +52,7 @@ class SetMissionActive : public BT::SyncActionNode {
    */
   BT::NodeStatus tick() override {
     auto value = getInput<bool>("value").value();
-    config().blackboard->set("mission_active", value);
+    setOutput("mission_active", value);
     return BT::NodeStatus::SUCCESS;
   }
 };

@@ -41,14 +41,14 @@ class ClearCommand : public BT::SyncActionNode {
   ClearCommand(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() { return {BT::OutputPort<std::string>("pending_command")}; }
 
   /**
    * @brief Sets pending_command to an empty string.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    config().blackboard->set("pending_command", std::string{""});
+    setOutput("pending_command", std::string{""});
     return BT::NodeStatus::SUCCESS;
   }
 };

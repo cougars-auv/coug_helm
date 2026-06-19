@@ -45,30 +45,42 @@ class ComputeHSD : public BT::SyncActionNode {
   ComputeHSD(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::InputPort<std::vector<double>>("waypoint_speeds"),
+        BT::InputPort<size_t>("waypoint_index"),
+        BT::InputPort<double>("current_x"),
+        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("default_speed"),
+        BT::OutputPort<double>("heading"),
+        BT::OutputPort<double>("speed"),
+        BT::OutputPort<double>("depth"),
+        BT::OutputPort<uint8_t>("mode"),
+    };
+  }
 
   /**
    * @brief Computes and writes heading, speed, depth, and mode to the blackboard.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
-    auto speeds = config().blackboard->get<std::vector<double>>("waypoint_speeds");
-    auto idx = config().blackboard->get<size_t>("waypoint_index");
-    double cx = config().blackboard->get<double>("current_x");
-    double cy = config().blackboard->get<double>("current_y");
+    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("waypoints").value();
+    auto speeds = getInput<std::vector<double>>("waypoint_speeds").value();
+    auto idx = getInput<size_t>("waypoint_index").value();
+    double cx = getInput<double>("current_x").value();
+    double cy = getInput<double>("current_y").value();
 
     if (wps.empty() || idx >= wps.size()) return BT::NodeStatus::FAILURE;
     const auto& target = wps[idx];
     double dx = target.x - cx;
     double dy = target.y - cy;
-    double speed =
-        (idx < speeds.size()) ? speeds[idx] : config().blackboard->get<double>("default_speed");
+    double speed = (idx < speeds.size()) ? speeds[idx] : getInput<double>("default_speed").value();
 
-    config().blackboard->set("heading", std::atan2(dy, dx) * 180.0 / M_PI);
-    config().blackboard->set("speed", speed);
-    config().blackboard->set("depth", target.z);
-    config().blackboard->set("mode", target.z > 0.0 ? uint8_t{1} : uint8_t{0});
+    setOutput("heading", std::atan2(dy, dx) * 180.0 / M_PI);
+    setOutput("speed", speed);
+    setOutput("depth", target.z);
+    setOutput("mode", target.z > 0.0 ? uint8_t{1} : uint8_t{0});
 
     return BT::NodeStatus::SUCCESS;
   }

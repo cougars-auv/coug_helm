@@ -43,15 +43,20 @@ class CheckMissionComplete : public BT::ConditionNode {
   CheckMissionComplete(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::InputPort<size_t>("waypoint_index"),
+    };
+  }
 
   /**
    * @brief Checks whether the waypoint index has passed the end of the list.
    * @return SUCCESS if the mission is complete, FAILURE otherwise.
    */
   BT::NodeStatus tick() override {
-    auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
-    auto idx = config().blackboard->get<size_t>("waypoint_index");
+    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("waypoints").value();
+    auto idx = getInput<size_t>("waypoint_index").value();
     return (idx >= wps.size()) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
   }
 };

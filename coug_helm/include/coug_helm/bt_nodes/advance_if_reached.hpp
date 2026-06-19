@@ -44,21 +44,32 @@ class AdvanceIfReached : public BT::SyncActionNode {
   AdvanceIfReached(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::InputPort<double>("current_x"),
+        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("current_z"),
+        BT::InputPort<std::vector<double>>("capture_radius"),
+        BT::InputPort<std::vector<double>>("slip_radius"),
+        BT::BidirectionalPort<size_t>("waypoint_index"),
+        BT::BidirectionalPort<double>("prev_norm_dist"),
+    };
+  }
 
   /**
    * @brief Checks distance to the current waypoint and advances the index if reached.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto wps = config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("waypoints");
-    auto idx = config().blackboard->get<size_t>("waypoint_index");
-    double cx = config().blackboard->get<double>("current_x");
-    double cy = config().blackboard->get<double>("current_y");
-    double cz = config().blackboard->get<double>("current_z");
-    double prev_dist = config().blackboard->get<double>("prev_norm_dist");
-    auto cap_r = config().blackboard->get<std::vector<double>>("capture_radius");
-    auto slip_r = config().blackboard->get<std::vector<double>>("slip_radius");
+    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("waypoints").value();
+    auto idx = getInput<size_t>("waypoint_index").value();
+    double cx = getInput<double>("current_x").value();
+    double cy = getInput<double>("current_y").value();
+    double cz = getInput<double>("current_z").value();
+    double prev_dist = getInput<double>("prev_norm_dist").value();
+    auto cap_r = getInput<std::vector<double>>("capture_radius").value();
+    auto slip_r = getInput<std::vector<double>>("slip_radius").value();
 
     if (wps.empty() || idx >= wps.size()) return BT::NodeStatus::FAILURE;
     const auto& target = wps[idx];
@@ -73,10 +84,10 @@ class AdvanceIfReached : public BT::SyncActionNode {
     bool slip = (prev_dist > 0.0 && norm_cap > prev_dist && norm_slip < 1.0);
 
     if (capture || slip) {
-      config().blackboard->set("waypoint_index", idx + 1);
-      config().blackboard->set("prev_norm_dist", -1.0);
+      setOutput("waypoint_index", idx + 1);
+      setOutput("prev_norm_dist", -1.0);
     } else {
-      config().blackboard->set("prev_norm_dist", norm_cap);
+      setOutput("prev_norm_dist", norm_cap);
     }
 
     return BT::NodeStatus::SUCCESS;

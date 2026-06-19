@@ -39,25 +39,32 @@ class SetMissionWaypoints : public BT::SyncActionNode {
   SetMissionWaypoints(const std::string& name, const BT::NodeConfig& config)
       : BT::SyncActionNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static BT::PortsList providedPorts() {
+    return {
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("mission_waypoints"),
+        BT::InputPort<std::vector<double>>("mission_waypoint_speeds"),
+        BT::InputPort<std::vector<double>>("mission_capture_radius"),
+        BT::InputPort<std::vector<double>>("mission_slip_radius"),
+        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::OutputPort<std::vector<double>>("waypoint_speeds"),
+        BT::OutputPort<std::vector<double>>("capture_radius"),
+        BT::OutputPort<std::vector<double>>("slip_radius"),
+    };
+  }
 
   /**
    * @brief Sets waypoints and waypoint_speeds from the stored mission values.
    * @return SUCCESS if a mission exists, FAILURE if none has been published.
    */
   BT::NodeStatus tick() override {
-    auto mission =
-        config().blackboard->get<std::vector<geometry_msgs::msg::Point>>("mission_waypoints");
+    auto mission = getInput<std::vector<geometry_msgs::msg::Point>>("mission_waypoints").value();
     if (mission.empty()) {
       return BT::NodeStatus::FAILURE;
     }
-    config().blackboard->set("waypoints", mission);
-    config().blackboard->set("waypoint_speeds", config().blackboard->get<std::vector<double>>(
-                                                    "mission_waypoint_speeds"));
-    config().blackboard->set(
-        "capture_radius", config().blackboard->get<std::vector<double>>("mission_capture_radius"));
-    config().blackboard->set("slip_radius",
-                             config().blackboard->get<std::vector<double>>("mission_slip_radius"));
+    setOutput("waypoints", mission);
+    setOutput("waypoint_speeds", getInput<std::vector<double>>("mission_waypoint_speeds").value());
+    setOutput("capture_radius", getInput<std::vector<double>>("mission_capture_radius").value());
+    setOutput("slip_radius", getInput<std::vector<double>>("mission_slip_radius").value());
     return BT::NodeStatus::SUCCESS;
   }
 };
