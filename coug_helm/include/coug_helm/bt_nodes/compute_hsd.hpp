@@ -47,8 +47,8 @@ class ComputeHSD : public BT::SyncActionNode {
 
   static BT::PortsList providedPorts() {
     return {
-        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
-        BT::InputPort<std::vector<double>>("waypoint_speeds"),
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("active_waypoints"),
+        BT::InputPort<std::vector<double>>("active_waypoint_speeds"),
         BT::InputPort<size_t>("waypoint_index"),
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
@@ -65,8 +65,8 @@ class ComputeHSD : public BT::SyncActionNode {
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("waypoints").value();
-    auto speeds = getInput<std::vector<double>>("waypoint_speeds").value();
+    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("active_waypoints").value();
+    auto speeds = getInput<std::vector<double>>("active_waypoint_speeds").value();
     auto idx = getInput<size_t>("waypoint_index").value();
     double cx = getInput<double>("current_x").value();
     double cy = getInput<double>("current_y").value();

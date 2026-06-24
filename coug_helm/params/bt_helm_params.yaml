@@ -6,7 +6,7 @@ bt_helm_node:
     validation:
       gt<>: [0]
 
-  capture_radius:
+  default_capture_radius:
     type: double_array
     default_value: [25.0, 2.0]
     validation:
@@ -25,7 +25,7 @@ bt_helm_node:
       fixed_size<>: [2]
       lower_element_bounds<>: [0.0]
 
-  slip_radius:
+  default_slip_radius:
     type: double_array
     default_value: [50.0, 4.0]
     validation:
@@ -44,16 +44,16 @@ bt_helm_node:
       fixed_size<>: [2]
       lower_element_bounds<>: [0.0]
 
-  odom_timeout_sec:
-    type: double
-    default_value: 2.0
-    validation:
-      gt<>: [0.0]
   default_speed_rpm:
     type: double
     default_value: 1500.0
     validation:
       bounds<>: [0.0, 1525.0]
+  odom_timeout_sec:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
 
   publish_diagnostics:
     type: bool

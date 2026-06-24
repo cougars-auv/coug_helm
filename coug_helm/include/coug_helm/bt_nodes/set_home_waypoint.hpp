@@ -31,8 +31,8 @@ namespace coug_helm::bt_nodes {
 /**
  * @class SetHomeWaypoint
  * @brief Replaces the waypoint list with the first mission waypoint at depth 0 and overrides
- *        capture_radius and slip_radius with the home-specific values, causing the vehicle
- *        to navigate back to its launch position and surface there.
+ *        active_capture_radius and active_slip_radius with the home-specific values, causing
+ *        the vehicle to navigate back to its launch position and surface there.
  */
 class SetHomeWaypoint : public BT::SyncActionNode {
  public:
@@ -45,15 +45,17 @@ class SetHomeWaypoint : public BT::SyncActionNode {
         BT::InputPort<double>("default_speed"),
         BT::InputPort<std::vector<double>>("home_capture_radius"),
         BT::InputPort<std::vector<double>>("home_slip_radius"),
-        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
-        BT::OutputPort<std::vector<double>>("waypoint_speeds"),
-        BT::OutputPort<std::vector<double>>("capture_radius"),
-        BT::OutputPort<std::vector<double>>("slip_radius"),
+        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("active_waypoints"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_speeds"),
+        BT::OutputPort<std::vector<double>>("active_capture_radius"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_capture_radii"),
+        BT::OutputPort<std::vector<double>>("active_slip_radius"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_slip_radii"),
     };
   }
 
   /**
-   * @brief Overwrites waypoints with mission_waypoints[0] at depth 0 at the default speed,
+   * @brief Overwrites active_waypoints with mission_waypoints[0] at depth 0 at the default speed,
    * and sets home radii.
    * @return SUCCESS if a mission exists, FAILURE if none has been published.
    */
@@ -64,10 +66,14 @@ class SetHomeWaypoint : public BT::SyncActionNode {
     }
     geometry_msgs::msg::Point home = mission[0];
     home.z = 0.0;
-    setOutput("waypoints", std::vector<geometry_msgs::msg::Point>{home});
-    setOutput("waypoint_speeds", std::vector<double>{getInput<double>("default_speed").value()});
-    setOutput("capture_radius", getInput<std::vector<double>>("home_capture_radius").value());
-    setOutput("slip_radius", getInput<std::vector<double>>("home_slip_radius").value());
+    setOutput("active_waypoints", std::vector<geometry_msgs::msg::Point>{home});
+    setOutput("active_waypoint_speeds",
+              std::vector<double>{getInput<double>("default_speed").value()});
+    setOutput("active_capture_radius",
+              getInput<std::vector<double>>("home_capture_radius").value());
+    setOutput("active_waypoint_capture_radii", std::vector<double>{});
+    setOutput("active_slip_radius", getInput<std::vector<double>>("home_slip_radius").value());
+    setOutput("active_waypoint_slip_radii", std::vector<double>{});
     return BT::NodeStatus::SUCCESS;
   }
 };

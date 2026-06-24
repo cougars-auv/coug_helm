@@ -15,11 +15,11 @@
       <input_port name="odom_timeout_sec"/>
     </Condition>
     <Condition ID="CheckMissionActive">
-      <input_port name="waypoints"/>
+      <input_port name="active_waypoints"/>
       <input_port name="mission_active"/>
     </Condition>
     <Condition ID="CheckMissionComplete">
-      <input_port name="waypoints"/>
+      <input_port name="active_waypoints"/>
       <input_port name="waypoint_index"/>
     </Condition>
     <Condition ID="CheckCommand">
@@ -40,12 +40,16 @@
     <Action ID="SetMissionWaypoints">
       <input_port name="mission_waypoints"/>
       <input_port name="mission_waypoint_speeds"/>
-      <input_port name="mission_capture_radius"/>
-      <input_port name="mission_slip_radius"/>
-      <output_port name="waypoints"/>
-      <output_port name="waypoint_speeds"/>
-      <output_port name="capture_radius"/>
-      <output_port name="slip_radius"/>
+      <input_port name="default_capture_radius"/>
+      <input_port name="mission_waypoint_capture_radii"/>
+      <input_port name="default_slip_radius"/>
+      <input_port name="mission_waypoint_slip_radii"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="active_waypoint_speeds"/>
+      <output_port name="active_capture_radius"/>
+      <output_port name="active_waypoint_capture_radii"/>
+      <output_port name="active_slip_radius"/>
+      <output_port name="active_waypoint_slip_radii"/>
     </Action>
     <Action ID="SetSurfaceWaypoint">
       <input_port name="current_x"/>
@@ -53,24 +57,28 @@
       <input_port name="default_speed"/>
       <input_port name="surface_capture_radius"/>
       <input_port name="surface_slip_radius"/>
-      <output_port name="waypoints"/>
-      <output_port name="waypoint_speeds"/>
-      <output_port name="capture_radius"/>
-      <output_port name="slip_radius"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="active_waypoint_speeds"/>
+      <output_port name="active_capture_radius"/>
+      <output_port name="active_waypoint_capture_radii"/>
+      <output_port name="active_slip_radius"/>
+      <output_port name="active_waypoint_slip_radii"/>
     </Action>
     <Action ID="SetHomeWaypoint">
       <input_port name="mission_waypoints"/>
       <input_port name="default_speed"/>
       <input_port name="home_capture_radius"/>
       <input_port name="home_slip_radius"/>
-      <output_port name="waypoints"/>
-      <output_port name="waypoint_speeds"/>
-      <output_port name="capture_radius"/>
-      <output_port name="slip_radius"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="active_waypoint_speeds"/>
+      <output_port name="active_capture_radius"/>
+      <output_port name="active_waypoint_capture_radii"/>
+      <output_port name="active_slip_radius"/>
+      <output_port name="active_waypoint_slip_radii"/>
     </Action>
     <Action ID="ComputeHSD">
-      <input_port name="waypoints"/>
-      <input_port name="waypoint_speeds"/>
+      <input_port name="active_waypoints"/>
+      <input_port name="active_waypoint_speeds"/>
       <input_port name="waypoint_index"/>
       <input_port name="current_x"/>
       <input_port name="current_y"/>
@@ -87,12 +95,14 @@
       <input_port name="mode"/>
     </Action>
     <Action ID="AdvanceIfReached">
-      <input_port name="waypoints"/>
+      <input_port name="active_waypoints"/>
       <input_port name="current_x"/>
       <input_port name="current_y"/>
       <input_port name="current_z"/>
-      <input_port name="capture_radius"/>
-      <input_port name="slip_radius"/>
+      <input_port name="active_capture_radius"/>
+      <input_port name="active_waypoint_capture_radii"/>
+      <input_port name="active_slip_radius"/>
+      <input_port name="active_waypoint_slip_radii"/>
       <inout_port name="waypoint_index"/>
       <inout_port name="prev_norm_dist"/>
     </Action>
@@ -106,12 +116,16 @@
         <SetMissionWaypoints
             mission_waypoints="{mission_waypoints}"
             mission_waypoint_speeds="{mission_waypoint_speeds}"
-            mission_capture_radius="{mission_capture_radius}"
-            mission_slip_radius="{mission_slip_radius}"
-            waypoints="{waypoints}"
-            waypoint_speeds="{waypoint_speeds}"
-            capture_radius="{capture_radius}"
-            slip_radius="{slip_radius}"/>
+            default_capture_radius="{default_capture_radius}"
+            mission_waypoint_capture_radii="{mission_waypoint_capture_radii}"
+            default_slip_radius="{default_slip_radius}"
+            mission_waypoint_slip_radii="{mission_waypoint_slip_radii}"
+            active_waypoints="{active_waypoints}"
+            active_waypoint_speeds="{active_waypoint_speeds}"
+            active_capture_radius="{active_capture_radius}"
+            active_waypoint_capture_radii="{active_waypoint_capture_radii}"
+            active_slip_radius="{active_slip_radius}"
+            active_waypoint_slip_radii="{active_waypoint_slip_radii}"/>
         <ResetWaypointIndex waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
         <ClearCommand pending_command="{pending_command}"/>
         <SetMissionActive value="true" mission_active="{mission_active}"/>
@@ -129,10 +143,12 @@
             default_speed="{default_speed}"
             surface_capture_radius="{surface_capture_radius}"
             surface_slip_radius="{surface_slip_radius}"
-            waypoints="{waypoints}"
-            waypoint_speeds="{waypoint_speeds}"
-            capture_radius="{capture_radius}"
-            slip_radius="{slip_radius}"/>
+            active_waypoints="{active_waypoints}"
+            active_waypoint_speeds="{active_waypoint_speeds}"
+            active_capture_radius="{active_capture_radius}"
+            active_waypoint_capture_radii="{active_waypoint_capture_radii}"
+            active_slip_radius="{active_slip_radius}"
+            active_waypoint_slip_radii="{active_waypoint_slip_radii}"/>
         <ResetWaypointIndex waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
         <ClearCommand pending_command="{pending_command}"/>
         <SetMissionActive value="true" mission_active="{mission_active}"/>
@@ -144,10 +160,12 @@
             default_speed="{default_speed}"
             home_capture_radius="{home_capture_radius}"
             home_slip_radius="{home_slip_radius}"
-            waypoints="{waypoints}"
-            waypoint_speeds="{waypoint_speeds}"
-            capture_radius="{capture_radius}"
-            slip_radius="{slip_radius}"/>
+            active_waypoints="{active_waypoints}"
+            active_waypoint_speeds="{active_waypoint_speeds}"
+            active_capture_radius="{active_capture_radius}"
+            active_waypoint_capture_radii="{active_waypoint_capture_radii}"
+            active_slip_radius="{active_slip_radius}"
+            active_waypoint_slip_radii="{active_waypoint_slip_radii}"/>
         <ResetWaypointIndex waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
         <ClearCommand pending_command="{pending_command}"/>
         <SetMissionActive value="true" mission_active="{mission_active}"/>
@@ -164,16 +182,16 @@
             last_odom_time="{last_odom_time}"
             current_time="{current_time}"
             odom_timeout_sec="{odom_timeout_sec}"/>
-        <CheckMissionActive waypoints="{waypoints}" mission_active="{mission_active}"/>
+        <CheckMissionActive active_waypoints="{active_waypoints}" mission_active="{mission_active}"/>
         <Inverter>
           <Sequence>
-            <CheckMissionComplete waypoints="{waypoints}" waypoint_index="{waypoint_index}"/>
+            <CheckMissionComplete active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
             <SetMissionActive value="false" mission_active="{mission_active}"/>
           </Sequence>
         </Inverter>
         <ComputeHSD
-            waypoints="{waypoints}"
-            waypoint_speeds="{waypoint_speeds}"
+            active_waypoints="{active_waypoints}"
+            active_waypoint_speeds="{active_waypoint_speeds}"
             waypoint_index="{waypoint_index}"
             current_x="{current_x}"
             current_y="{current_y}"
@@ -188,12 +206,14 @@
             depth="{depth}"
             mode="{mode}"/>
         <AdvanceIfReached
-            waypoints="{waypoints}"
+            active_waypoints="{active_waypoints}"
             current_x="{current_x}"
             current_y="{current_y}"
             current_z="{current_z}"
-            capture_radius="{capture_radius}"
-            slip_radius="{slip_radius}"
+            active_capture_radius="{active_capture_radius}"
+            active_waypoint_capture_radii="{active_waypoint_capture_radii}"
+            active_slip_radius="{active_slip_radius}"
+            active_waypoint_slip_radii="{active_waypoint_slip_radii}"
             waypoint_index="{waypoint_index}"
             prev_norm_dist="{prev_norm_dist}"/>
       </Sequence>

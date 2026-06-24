@@ -32,7 +32,8 @@ namespace coug_helm::bt_nodes {
  * @class SetSurfaceWaypoint
  * @brief Replaces the waypoint list with a single depth-0 waypoint at the vehicle's current
  *        ENU (x, y) position, causing the vehicle to surface in place.
- *        Also overrides capture_radius and slip_radius with the surface-specific values.
+ *        Also overrides active_capture_radius and active_slip_radius with the surface-specific
+ *        values.
  */
 class SetSurfaceWaypoint : public BT::SyncActionNode {
  public:
@@ -51,15 +52,17 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
         BT::InputPort<double>("default_speed"),
         BT::InputPort<std::vector<double>>("surface_capture_radius"),
         BT::InputPort<std::vector<double>>("surface_slip_radius"),
-        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
-        BT::OutputPort<std::vector<double>>("waypoint_speeds"),
-        BT::OutputPort<std::vector<double>>("capture_radius"),
-        BT::OutputPort<std::vector<double>>("slip_radius"),
+        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("active_waypoints"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_speeds"),
+        BT::OutputPort<std::vector<double>>("active_capture_radius"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_capture_radii"),
+        BT::OutputPort<std::vector<double>>("active_slip_radius"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_slip_radii"),
     };
   }
 
   /**
-   * @brief Overwrites waypoints with one entry at (current_x, current_y, z=0) at the default
+   * @brief Overwrites active_waypoints with one entry at (current_x, current_y, z=0) at the default
    * speed, and sets surface radii.
    * @return Always SUCCESS.
    */
@@ -68,10 +71,14 @@ class SetSurfaceWaypoint : public BT::SyncActionNode {
     wp.x = getInput<double>("current_x").value();
     wp.y = getInput<double>("current_y").value();
     wp.z = 0.0;
-    setOutput("waypoints", std::vector<geometry_msgs::msg::Point>{wp});
-    setOutput("waypoint_speeds", std::vector<double>{getInput<double>("default_speed").value()});
-    setOutput("capture_radius", getInput<std::vector<double>>("surface_capture_radius").value());
-    setOutput("slip_radius", getInput<std::vector<double>>("surface_slip_radius").value());
+    setOutput("active_waypoints", std::vector<geometry_msgs::msg::Point>{wp});
+    setOutput("active_waypoint_speeds",
+              std::vector<double>{getInput<double>("default_speed").value()});
+    setOutput("active_capture_radius",
+              getInput<std::vector<double>>("surface_capture_radius").value());
+    setOutput("active_waypoint_capture_radii", std::vector<double>{});
+    setOutput("active_slip_radius", getInput<std::vector<double>>("surface_slip_radius").value());
+    setOutput("active_waypoint_slip_radii", std::vector<double>{});
     return BT::NodeStatus::SUCCESS;
   }
 };

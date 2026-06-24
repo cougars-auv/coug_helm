@@ -30,9 +30,9 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class SetMissionWaypoints
- * @brief Copies mission_waypoints into waypoints and resets the waypoint speeds,
- *        capture_radius, and slip_radius to the mission values, undoing any overrides
- *        left by surface or home commands.
+ * @brief Copies mission_waypoints into active_waypoints and resets active_waypoint_speeds,
+ *        active_capture_radius, active_slip_radius, and the active per-waypoint radii to the
+ *        mission values, undoing any overrides left by surface or home commands.
  */
 class SetMissionWaypoints : public BT::SyncActionNode {
  public:
@@ -43,17 +43,21 @@ class SetMissionWaypoints : public BT::SyncActionNode {
     return {
         BT::InputPort<std::vector<geometry_msgs::msg::Point>>("mission_waypoints"),
         BT::InputPort<std::vector<double>>("mission_waypoint_speeds"),
-        BT::InputPort<std::vector<double>>("mission_capture_radius"),
-        BT::InputPort<std::vector<double>>("mission_slip_radius"),
-        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
-        BT::OutputPort<std::vector<double>>("waypoint_speeds"),
-        BT::OutputPort<std::vector<double>>("capture_radius"),
-        BT::OutputPort<std::vector<double>>("slip_radius"),
+        BT::InputPort<std::vector<double>>("default_capture_radius"),
+        BT::InputPort<std::vector<double>>("mission_waypoint_capture_radii"),
+        BT::InputPort<std::vector<double>>("default_slip_radius"),
+        BT::InputPort<std::vector<double>>("mission_waypoint_slip_radii"),
+        BT::OutputPort<std::vector<geometry_msgs::msg::Point>>("active_waypoints"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_speeds"),
+        BT::OutputPort<std::vector<double>>("active_capture_radius"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_capture_radii"),
+        BT::OutputPort<std::vector<double>>("active_slip_radius"),
+        BT::OutputPort<std::vector<double>>("active_waypoint_slip_radii"),
     };
   }
 
   /**
-   * @brief Sets waypoints and waypoint_speeds from the stored mission values.
+   * @brief Sets active_waypoints and active_waypoint_speeds from the stored mission values.
    * @return SUCCESS if a mission exists, FAILURE if none has been published.
    */
   BT::NodeStatus tick() override {
@@ -61,10 +65,16 @@ class SetMissionWaypoints : public BT::SyncActionNode {
     if (mission.empty()) {
       return BT::NodeStatus::FAILURE;
     }
-    setOutput("waypoints", mission);
-    setOutput("waypoint_speeds", getInput<std::vector<double>>("mission_waypoint_speeds").value());
-    setOutput("capture_radius", getInput<std::vector<double>>("mission_capture_radius").value());
-    setOutput("slip_radius", getInput<std::vector<double>>("mission_slip_radius").value());
+    setOutput("active_waypoints", mission);
+    setOutput("active_waypoint_speeds",
+              getInput<std::vector<double>>("mission_waypoint_speeds").value());
+    setOutput("active_capture_radius",
+              getInput<std::vector<double>>("default_capture_radius").value());
+    setOutput("active_waypoint_capture_radii",
+              getInput<std::vector<double>>("mission_waypoint_capture_radii").value());
+    setOutput("active_slip_radius", getInput<std::vector<double>>("default_slip_radius").value());
+    setOutput("active_waypoint_slip_radii",
+              getInput<std::vector<double>>("mission_waypoint_slip_radii").value());
     return BT::NodeStatus::SUCCESS;
   }
 };

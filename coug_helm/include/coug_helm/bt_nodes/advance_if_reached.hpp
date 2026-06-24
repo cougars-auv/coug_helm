@@ -46,12 +46,14 @@ class AdvanceIfReached : public BT::SyncActionNode {
 
   static BT::PortsList providedPorts() {
     return {
-        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("waypoints"),
+        BT::InputPort<std::vector<geometry_msgs::msg::Point>>("active_waypoints"),
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<double>("current_z"),
-        BT::InputPort<std::vector<double>>("capture_radius"),
-        BT::InputPort<std::vector<double>>("slip_radius"),
+        BT::InputPort<std::vector<double>>("active_capture_radius"),
+        BT::InputPort<std::vector<double>>("active_waypoint_capture_radii"),
+        BT::InputPort<std::vector<double>>("active_slip_radius"),
+        BT::InputPort<std::vector<double>>("active_waypoint_slip_radii"),
         BT::BidirectionalPort<size_t>("waypoint_index"),
         BT::BidirectionalPort<double>("prev_norm_dist"),
     };
@@ -62,23 +64,28 @@ class AdvanceIfReached : public BT::SyncActionNode {
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("waypoints").value();
+    auto wps = getInput<std::vector<geometry_msgs::msg::Point>>("active_waypoints").value();
     auto idx = getInput<size_t>("waypoint_index").value();
     double cx = getInput<double>("current_x").value();
     double cy = getInput<double>("current_y").value();
     double cz = getInput<double>("current_z").value();
     double prev_dist = getInput<double>("prev_norm_dist").value();
-    auto cap_r = getInput<std::vector<double>>("capture_radius").value();
-    auto slip_r = getInput<std::vector<double>>("slip_radius").value();
+    auto cap_r = getInput<std::vector<double>>("active_capture_radius").value();
+    auto wp_cap_r = getInput<std::vector<double>>("active_waypoint_capture_radii").value();
+    auto slip_r = getInput<std::vector<double>>("active_slip_radius").value();
+    auto wp_slip_r = getInput<std::vector<double>>("active_waypoint_slip_radii").value();
 
     if (wps.empty() || idx >= wps.size()) return BT::NodeStatus::FAILURE;
     const auto& target = wps[idx];
     double h_dist = std::hypot(target.x - cx, target.y - cy);
     double v_dist = (target.z > 0.0) ? 0.0 : std::abs(target.z - cz);
 
+    double cap_h = (idx < wp_cap_r.size()) ? wp_cap_r[idx] : cap_r[0];
+    double slip_h = (idx < wp_slip_r.size()) ? wp_slip_r[idx] : slip_r[0];
+
     // Normalized ellipsoidal distance: < 1.0 means inside the ellipse
-    double norm_cap = std::hypot(h_dist / cap_r[0], v_dist / cap_r[1]);
-    double norm_slip = std::hypot(h_dist / slip_r[0], v_dist / slip_r[1]);
+    double norm_cap = std::hypot(h_dist / cap_h, v_dist / cap_r[1]);
+    double norm_slip = std::hypot(h_dist / slip_h, v_dist / slip_r[1]);
 
     bool capture = norm_cap < 1.0;
     bool slip = (prev_dist > 0.0 && norm_cap > prev_dist && norm_slip < 1.0);
