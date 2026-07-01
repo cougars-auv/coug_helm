@@ -144,9 +144,6 @@ class BTHelmNode : public rclcpp::Node {
   std::unique_ptr<BT::Groot2Publisher> groot2_pub_;
   BT::Blackboard::Ptr blackboard_;
 
-  GeographicLib::LocalCartesian local_cartesian_;
-  bool origin_set_{false};
-
   // --- ROS Interfaces ---
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr origin_sub_;
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
@@ -165,6 +162,10 @@ class BTHelmNode : public rclcpp::Node {
   // --- Parameters ---
   std::shared_ptr<bt_helm_node::ParamListener> param_listener_;
   bt_helm_node::Params params_;
+
+  // --- State ---
+  GeographicLib::LocalCartesian local_cartesian_;
+  bool origin_set_{false};
 };
 
 }  // namespace coug_helm

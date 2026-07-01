@@ -57,7 +57,9 @@ using utils::toString;
 using utils::Waypoint;
 
 BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
-    : Node("bt_helm_node", options), diagnostic_updater_(this) {
+    : Node("bt_helm_node", options),
+      diagnostic_updater_(this),
+      local_cartesian_(0.0, 0.0, 0.0, GeographicLib::Geocentric::WGS84()) {
   RCLCPP_INFO(get_logger(), "Starting BT Helm Node...");
 
   param_listener_ = std::make_shared<bt_helm_node::ParamListener>(get_node_parameters_interface());
