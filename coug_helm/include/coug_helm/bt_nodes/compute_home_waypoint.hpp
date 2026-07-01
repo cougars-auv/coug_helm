@@ -23,6 +23,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vector>
@@ -64,6 +65,8 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     }
     utils::Waypoint home = mission[0];
     home.position.z = 0.0;
+    home.mode = coug_interfaces::msg::ControlSetpoint::DEPTH;
+
     home.speed = getInput<double>("default_speed").value();
 
     auto cap = getInput<std::vector<double>>("home_capture_radius").value();

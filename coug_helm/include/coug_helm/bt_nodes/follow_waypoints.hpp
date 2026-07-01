@@ -90,7 +90,9 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
     const auto& target = wps[idx];
     double h_dist = std::hypot(target.position.x - cx, target.position.y - cy);
-    double v_dist = (target.position.z > 0.0) ? 0.0 : std::abs(target.position.z - cz);
+    double v_dist = (target.mode == coug_interfaces::msg::ControlSetpoint::ALTITUDE)
+                        ? 0.0
+                        : std::abs(target.position.z - cz);
 
     double norm_cap = std::hypot(h_dist / target.capture_radius_horizontal,
                                  v_dist / target.capture_radius_vertical);
@@ -126,7 +128,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     msg.heading = std::atan2(dy, dx) * 180.0 / M_PI;
     msg.speed = target.speed;
     msg.depth = target.position.z;
-    msg.mode = target.position.z > 0.0 ? uint8_t{1} : uint8_t{0};
+    msg.mode = target.mode;
     hsd_pub_->publish(msg);
   }
 

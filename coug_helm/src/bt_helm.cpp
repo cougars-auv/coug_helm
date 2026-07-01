@@ -251,7 +251,8 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     double dummy_z;
     local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, wp.position.x, wp.position.y,
                              dummy_z);
-    wp.position.z = gps.altitude;  // depth below surface, altitude above seafloor
+    wp.position.z = gps.altitude;
+    wp.mode = src.mode;
     wp.speed = src.speed_rpm;
     wp.capture_radius_horizontal = src.capture_radius;
     wp.capture_radius_vertical = params_.default_capture_radius[1];
