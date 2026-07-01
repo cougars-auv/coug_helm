@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/waypoint.hpp"
+#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -42,7 +42,7 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
 
   // --- Overrides ---
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::vector<Waypoint>>("mission_waypoints")};
+    return {BT::InputPort<std::vector<utils::Waypoint>>("mission_waypoints")};
   }
 
   /**
@@ -50,7 +50,7 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
    * @return SUCCESS if mission_waypoints is non-empty, FAILURE otherwise.
    */
   BT::NodeStatus tick() override {
-    if (!getInput<std::vector<Waypoint>>("mission_waypoints").value().empty()) {
+    if (!getInput<std::vector<utils::Waypoint>>("mission_waypoints").value().empty()) {
       return BT::NodeStatus::SUCCESS;
     }
     RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000,

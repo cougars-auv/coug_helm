@@ -26,8 +26,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
-#include "coug_helm/behavior.hpp"
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
+#include "coug_helm/utils/behavior_enums.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -56,8 +56,8 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
     int pending = getInput<int>("pending_behavior").value();
     if (pending != last_behavior_) {
       RCLCPP_INFO(node_->get_logger(), "LoadBehavior: %s -> %s",
-                  toString(static_cast<Behavior>(last_behavior_)).c_str(),
-                  toString(static_cast<Behavior>(pending)).c_str());
+                  utils::toString(static_cast<utils::Behavior>(last_behavior_)).c_str(),
+                  utils::toString(static_cast<utils::Behavior>(pending)).c_str());
       last_behavior_ = pending;
     }
     setOutput("active_behavior", pending);
@@ -65,7 +65,7 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
   }
 
  private:
-  int last_behavior_{static_cast<int>(Behavior::STOP)};
+  int last_behavior_{static_cast<int>(utils::Behavior::STOP)};
 };
 
 }  // namespace coug_helm::bt_nodes

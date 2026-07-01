@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/waypoint.hpp"
+#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -44,8 +44,8 @@ class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
-        BT::InputPort<std::vector<Waypoint>>("pending_waypoints"),
-        BT::OutputPort<std::vector<Waypoint>>("active_waypoints"),
+        BT::InputPort<std::vector<utils::Waypoint>>("pending_waypoints"),
+        BT::OutputPort<std::vector<utils::Waypoint>>("active_waypoints"),
         BT::OutputPort<size_t>("current_waypoint"),
         BT::OutputPort<double>("prev_norm_dist"),
     };
@@ -56,7 +56,7 @@ class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto waypoints = getInput<std::vector<Waypoint>>("pending_waypoints").value();
+    auto waypoints = getInput<std::vector<utils::Waypoint>>("pending_waypoints").value();
     RCLCPP_INFO(node_->get_logger(), "LoadWaypoints: loading %zu waypoint(s).", waypoints.size());
     setOutput("active_waypoints", waypoints);
     setOutput("current_waypoint", size_t{0});

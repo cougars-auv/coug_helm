@@ -23,7 +23,7 @@
 
 #include <geometry_msgs/msg/point.hpp>
 
-namespace coug_helm {
+namespace coug_helm::utils {
 
 /**
  * @struct Waypoint
@@ -38,4 +38,4 @@ struct Waypoint {
   double slip_radius_vertical{0.0};
 };
 
-}  // namespace coug_helm
+}  // namespace coug_helm::utils

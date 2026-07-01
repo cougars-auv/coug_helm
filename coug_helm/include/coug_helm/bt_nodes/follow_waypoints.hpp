@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/waypoint.hpp"
+#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -50,7 +50,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
-        BT::InputPort<std::vector<Waypoint>>("active_waypoints"),
+        BT::InputPort<std::vector<utils::Waypoint>>("active_waypoints"),
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<double>("current_z"),
@@ -60,7 +60,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   }
 
   BT::NodeStatus onStart() override {
-    auto wps = getInput<std::vector<Waypoint>>("active_waypoints").value();
+    auto wps = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
     auto idx = getInput<size_t>("current_waypoint").value();
     if (!wps.empty() && idx < wps.size()) {
       RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: navigating %zu waypoint(s).", wps.size());
@@ -69,7 +69,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   }
 
   BT::NodeStatus onRunning() override {
-    auto wps = getInput<std::vector<Waypoint>>("active_waypoints").value();
+    auto wps = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
     auto idx = getInput<size_t>("current_waypoint").value();
 
     if (wps.empty() || idx >= wps.size()) {
@@ -114,7 +114,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { publishStop(); }
 
  private:
-  void publishHSD(const std::vector<Waypoint>& wps, size_t idx) {
+  void publishHSD(const std::vector<utils::Waypoint>& wps, size_t idx) {
     double cx = getInput<double>("current_x").value();
     double cy = getInput<double>("current_y").value();
 

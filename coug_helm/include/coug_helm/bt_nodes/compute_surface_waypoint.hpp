@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/waypoint.hpp"
+#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -49,7 +49,7 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<double>("default_speed"),
         BT::InputPort<std::vector<double>>("surface_capture_radius"),
         BT::InputPort<std::vector<double>>("surface_slip_radius"),
-        BT::OutputPort<std::vector<Waypoint>>("surface_waypoint"),
+        BT::OutputPort<std::vector<utils::Waypoint>>("surface_waypoint"),
     };
   }
 
@@ -58,7 +58,7 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    Waypoint wp;
+    utils::Waypoint wp;
     wp.position.x = getInput<double>("current_x").value();
     wp.position.y = getInput<double>("current_y").value();
     wp.position.z = 0.0;
@@ -75,7 +75,7 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     RCLCPP_INFO(node_->get_logger(),
                 "ComputeSurfaceWaypoint: surface set to (%.1f, %.1f), depth 0.", wp.position.x,
                 wp.position.y);
-    setOutput("surface_waypoint", std::vector<Waypoint>{wp});
+    setOutput("surface_waypoint", std::vector<utils::Waypoint>{wp});
     return BT::NodeStatus::SUCCESS;
   }
 };

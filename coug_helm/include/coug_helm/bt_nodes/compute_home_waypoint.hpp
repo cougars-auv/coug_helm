@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/waypoint.hpp"
+#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -44,11 +44,11 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
-        BT::InputPort<std::vector<Waypoint>>("mission_waypoints"),
+        BT::InputPort<std::vector<utils::Waypoint>>("mission_waypoints"),
         BT::InputPort<double>("default_speed"),
         BT::InputPort<std::vector<double>>("home_capture_radius"),
         BT::InputPort<std::vector<double>>("home_slip_radius"),
-        BT::OutputPort<std::vector<Waypoint>>("home_waypoint"),
+        BT::OutputPort<std::vector<utils::Waypoint>>("home_waypoint"),
     };
   }
 
@@ -57,12 +57,12 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
    * @return SUCCESS if a mission exists, FAILURE otherwise.
    */
   BT::NodeStatus tick() override {
-    auto mission = getInput<std::vector<Waypoint>>("mission_waypoints").value();
+    auto mission = getInput<std::vector<utils::Waypoint>>("mission_waypoints").value();
     if (mission.empty()) {
       RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no mission loaded to home from.");
       return BT::NodeStatus::FAILURE;
     }
-    Waypoint home = mission[0];
+    utils::Waypoint home = mission[0];
     home.position.z = 0.0;
     home.speed = getInput<double>("default_speed").value();
 
@@ -76,7 +76,7 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
 
     RCLCPP_INFO(node_->get_logger(), "ComputeHomeWaypoint: home set to (%.1f, %.1f), depth 0.",
                 home.position.x, home.position.y);
-    setOutput("home_waypoint", std::vector<Waypoint>{home});
+    setOutput("home_waypoint", std::vector<utils::Waypoint>{home});
     return BT::NodeStatus::SUCCESS;
   }
 };

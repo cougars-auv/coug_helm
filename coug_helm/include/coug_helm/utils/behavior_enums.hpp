@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file behavior.hpp
+ * @file behavior_enums.hpp
  * @brief Behavior modes resolved by the tree and shared with diagnostics.
  * @author Nelson Durrant
  * @date June 2026
@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace coug_helm {
+namespace coug_helm::utils {
 
 /**
  * @enum Behavior
@@ -61,4 +61,4 @@ inline std::string toString(Behavior behavior) {
   return "UNKNOWN";
 }
 
-}  // namespace coug_helm
+}  // namespace coug_helm::utils

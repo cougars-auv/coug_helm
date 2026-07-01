@@ -31,7 +31,6 @@
 #include <string>
 #include <vector>
 
-#include "coug_helm/behavior.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
@@ -49,8 +48,13 @@
 #include "coug_helm/bt_nodes/round_robin.hpp"
 #include "coug_helm/bt_nodes/stop.hpp"
 #include "coug_helm/bt_nodes/wait.hpp"
+#include "coug_helm/utils/behavior_enums.hpp"
 
 namespace coug_helm {
+
+using utils::Behavior;
+using utils::toString;
+using utils::Waypoint;
 
 BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
     : Node("bt_helm_node", options), diagnostic_updater_(this) {
@@ -239,37 +243,18 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
 
   std::vector<Waypoint> enu_waypoints;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
-    const auto& gps = msg->waypoints[i].position;
+    const auto& src = msg->waypoints[i];
+    const auto& gps = src.position;
     Waypoint wp;
     double dummy_z;
     local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, wp.position.x, wp.position.y,
                              dummy_z);
     wp.position.z = gps.altitude;  // depth below surface, altitude above seafloor
-    wp.speed = params_.default_speed_rpm;
-    wp.capture_radius_horizontal = params_.default_capture_radius[0];
+    wp.speed = src.speed_rpm;
+    wp.capture_radius_horizontal = src.capture_radius;
     wp.capture_radius_vertical = params_.default_capture_radius[1];
-    wp.slip_radius_horizontal = params_.default_slip_radius[0];
+    wp.slip_radius_horizontal = src.slip_radius;
     wp.slip_radius_vertical = params_.default_slip_radius[1];
-
-    auto parse_prop = [&](const std::string& key, const std::string& value, double& out,
-                          double fallback) {
-      try {
-        out = std::stod(value);
-      } catch (const std::exception&) {
-        RCLCPP_WARN(get_logger(), "Invalid %s '%s' on waypoint %zu. Using default %.1f.",
-                    key.c_str(), value.c_str(), i, fallback);
-      }
-    };
-    for (const auto& kv : msg->waypoints[i].props) {
-      if (kv.key == "speed_rpm") {
-        parse_prop(kv.key, kv.value, wp.speed, params_.default_speed_rpm);
-      } else if (kv.key == "capture_radius") {
-        parse_prop(kv.key, kv.value, wp.capture_radius_horizontal,
-                   params_.default_capture_radius[0]);
-      } else if (kv.key == "slip_radius") {
-        parse_prop(kv.key, kv.value, wp.slip_radius_horizontal, params_.default_slip_radius[0]);
-      }
-    }
     enu_waypoints.push_back(wp);
 
     RCLCPP_INFO(get_logger(),

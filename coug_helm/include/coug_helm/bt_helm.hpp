@@ -34,9 +34,9 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <vector>
 
-#include "coug_helm/behavior.hpp"
 #include "coug_helm/bt_helm_parameters.hpp"
-#include "coug_helm/waypoint.hpp"
+#include "coug_helm/utils/behavior_enums.hpp"
+#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm {
 
