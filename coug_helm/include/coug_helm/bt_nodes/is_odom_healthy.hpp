@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /**
- * @file check_odom_healthy.hpp
+ * @file is_odom_healthy.hpp
  * @brief BT condition node that checks odometry health.
  * @author Nelson Durrant
- * @date May 2026
+ * @date June 2026
  */
 
 #pragma once
@@ -28,24 +28,20 @@
 namespace coug_helm::bt_nodes {
 
 /**
- * @class CheckOdomHealthy
+ * @class IsOdomHealthy
  * @brief Returns SUCCESS if odometry is arriving within the timeout window.
  */
-class CheckOdomHealthy : public BT::ConditionNode {
+class IsOdomHealthy : public BT::ConditionNode {
  public:
-  /**
-   * @brief Constructor for CheckOdomHealthy.
-   * @param name The name of the node.
-   * @param config The BT node configuration.
-   */
-  CheckOdomHealthy(const std::string& name, const BT::NodeConfig& config)
+  IsOdomHealthy(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
+  // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
         BT::InputPort<double>("last_odom_time"),
         BT::InputPort<double>("current_time"),
-        BT::InputPort<double>("odom_timeout_sec"),
+        BT::InputPort<double>("odom_timeout"),
     };
   }
 
@@ -56,9 +52,9 @@ class CheckOdomHealthy : public BT::ConditionNode {
   BT::NodeStatus tick() override {
     double last_odom = getInput<double>("last_odom_time").value();
     double now = getInput<double>("current_time").value();
-    double timeout = getInput<double>("odom_timeout_sec").value();
+    double timeout = getInput<double>("odom_timeout").value();
 
-    if (last_odom == 0.0) {
+    if (last_odom == 0.0) {  // Treat "never received" as unhealthy.
       return BT::NodeStatus::FAILURE;
     }
     return ((now - last_odom) < timeout) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;

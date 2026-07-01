@@ -16,7 +16,7 @@
  * @file bt_helm.hpp
  * @brief ROS 2 node that drives a BehaviorTree.CPP waypoint mission.
  * @author Nelson Durrant
- * @date May 2026
+ * @date June 2026
  */
 
 #pragma once
@@ -25,7 +25,6 @@
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 
 #include <GeographicLib/LocalCartesian.hpp>
-#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <memory>
@@ -35,7 +34,9 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <vector>
 
+#include "coug_helm/behavior.hpp"
 #include "coug_helm/bt_helm_parameters.hpp"
+#include "coug_helm/waypoint.hpp"
 
 namespace coug_helm {
 
@@ -52,32 +53,55 @@ class BTHelmNode : public rclcpp::Node {
   explicit BTHelmNode(const rclcpp::NodeOptions& options);
 
  private:
-  // --- Service Callbacks ---
   /**
    * @brief Queues a "start" command on the blackboard for the BT to dispatch on the next tick.
+   * @param req The service request.
+   * @param res The service response.
    */
   void startCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
                      std_srvs::srv::Trigger::Response::SharedPtr res);
 
   /**
    * @brief Queues a "stop" command on the blackboard for the BT to dispatch on the next tick.
+   * @param req The service request.
+   * @param res The service response.
    */
   void stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
                     std_srvs::srv::Trigger::Response::SharedPtr res);
 
   /**
    * @brief Queues a "surface" command on the blackboard for the BT to dispatch on the next tick.
+   * @param req The service request.
+   * @param res The service response.
    */
   void surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
                        std_srvs::srv::Trigger::Response::SharedPtr res);
 
   /**
    * @brief Queues a "home" command on the blackboard for the BT to dispatch on the next tick.
+   * @param req The service request.
+   * @param res The service response.
    */
   void homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
                     std_srvs::srv::Trigger::Response::SharedPtr res);
 
-  // --- Logic ---
+  /**
+   * @brief Queues an "emergency stop" command on the blackboard for the BT to dispatch next tick.
+   * @param req The service request.
+   * @param res The service response.
+   */
+  void emergencyStopCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                             std_srvs::srv::Trigger::Response::SharedPtr res);
+
+  /**
+   * @brief Queues an "emergency surface" command on the blackboard for the BT to dispatch next
+   * tick.
+   * @param req The service request.
+   * @param res The service response.
+   */
+  void emergencySurfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                                std_srvs::srv::Trigger::Response::SharedPtr res);
+
   /**
    * @brief Callback for the shared GPS origin fix. Sets the ENU projection origin.
    * @param msg The incoming NavSatFix message.
@@ -103,10 +127,10 @@ class BTHelmNode : public rclcpp::Node {
 
   // --- Diagnostics ---
   /**
-   * @brief Diagnostic task to report mission progress and waypoint status.
+   * @brief Diagnostic task to report the active behavior and waypoint progress.
    * @param stat The diagnostic status wrapper to update.
    */
-  void checkMissionStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
+  void checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
   /**
    * @brief Diagnostic task to report odometry health and freshness.
@@ -124,8 +148,6 @@ class BTHelmNode : public rclcpp::Node {
   bool origin_set_{false};
 
   // --- ROS Interfaces ---
-  rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
-
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr origin_sub_;
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
@@ -134,6 +156,8 @@ class BTHelmNode : public rclcpp::Node {
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr surface_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr home_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_stop_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_surface_srv_;
 
   rclcpp::TimerBase::SharedPtr tick_timer_;
   diagnostic_updater::Updater diagnostic_updater_;

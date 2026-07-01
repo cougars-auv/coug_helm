@@ -13,42 +13,42 @@
 // limitations under the License.
 
 /**
- * @file clear_command.hpp
- * @brief BT action node that clears the pending command.
+ * @file back_up.hpp
+ * @brief BT action node that executes a backup maneuver.
  * @author Nelson Durrant
- * @date May 2026
+ * @date June 2026
  */
 
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <rclcpp/rclcpp.hpp>
 #include <string>
+
+#include "coug_helm/bt_nodes/ros_bt_node.hpp"
 
 namespace coug_helm::bt_nodes {
 
 /**
- * @class ClearCommand
- * @brief Clears the pending_command entry on the blackboard so the command is not re-dispatched.
+ * @class BackUp
+ * @brief Performs a backup maneuver.
  */
-class ClearCommand : public BT::SyncActionNode {
+class BackUp : public RosBtNode<BT::SyncActionNode> {
  public:
-  /**
-   * @brief Constructor for ClearCommand.
-   * @param name The name of the node.
-   * @param config The BT node configuration.
-   */
-  ClearCommand(const std::string& name, const BT::NodeConfig& config)
-      : BT::SyncActionNode(name, config) {}
+  BackUp(const std::string& name, const BT::NodeConfig& config)
+      : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() { return {BT::OutputPort<std::string>("pending_command")}; }
+  // --- Overrides ---
+  static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Sets pending_command to an empty string.
+   * @brief Backup maneuver (stub).
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    setOutput("pending_command", std::string{""});
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 2000,
+                         "BackUp: executing backup maneuver (stub).");
     return BT::NodeStatus::SUCCESS;
   }
 };

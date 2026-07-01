@@ -1,0 +1,62 @@
+// Copyright (c) 2026 BYU FROST Lab
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @file is_waypoints_received.hpp
+ * @brief BT condition node that checks whether a non-empty mission is loaded.
+ * @author Nelson Durrant
+ * @date June 2026
+ */
+
+#pragma once
+
+#include <behaviortree_cpp/bt_factory.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <vector>
+
+#include "coug_helm/bt_nodes/ros_bt_node.hpp"
+#include "coug_helm/waypoint.hpp"
+
+namespace coug_helm::bt_nodes {
+
+/**
+ * @class IsWaypointsReceived
+ * @brief Returns SUCCESS when a non-empty mission is loaded.
+ */
+class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
+ public:
+  IsWaypointsReceived(const std::string& name, const BT::NodeConfig& config)
+      : RosBtNode<BT::ConditionNode>(name, config) {}
+
+  // --- Overrides ---
+  static BT::PortsList providedPorts() {
+    return {BT::InputPort<std::vector<Waypoint>>("mission_waypoints")};
+  }
+
+  /**
+   * @brief Checks whether a non-empty mission is loaded.
+   * @return SUCCESS if mission_waypoints is non-empty, FAILURE otherwise.
+   */
+  BT::NodeStatus tick() override {
+    if (!getInput<std::vector<Waypoint>>("mission_waypoints").value().empty()) {
+      return BT::NodeStatus::SUCCESS;
+    }
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000,
+                         "IsWaypointsReceived: no waypoints received.");
+    return BT::NodeStatus::FAILURE;
+  }
+};
+
+}  // namespace coug_helm::bt_nodes

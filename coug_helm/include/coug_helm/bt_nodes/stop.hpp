@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /**
- * @file stop_vehicle.hpp
+ * @file stop.hpp
  * @brief BT action node that halts the vehicle by publishing zero commands.
  * @author Nelson Durrant
- * @date May 2026
+ * @date June 2026
  */
 
 #pragma once
@@ -27,24 +27,23 @@
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
+#include "coug_helm/bt_nodes/ros_bt_node.hpp"
+
 namespace coug_helm::bt_nodes {
 
 /**
- * @class StopVehicle
+ * @class Stop
  * @brief Publishes a zero ControlSetpoint to halt the vehicle.
  */
-class StopVehicle : public BT::SyncActionNode {
+class Stop : public RosBtNode<BT::SyncActionNode> {
  public:
-  /**
-   * @brief Constructor for StopVehicle.
-   * @param name The name of the node.
-   * @param config The BT node configuration.
-   * @param hsd_pub Publisher for the combined HSD setpoint.
-   */
-  StopVehicle(const std::string& name, const BT::NodeConfig& config,
-              rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub)
-      : BT::SyncActionNode(name, config), hsd_pub_(std::move(hsd_pub)) {}
+  Stop(const std::string& name, const BT::NodeConfig& config)
+      : RosBtNode<BT::SyncActionNode>(name, config) {
+    hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
+        config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
+  }
 
+  // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
   /**

@@ -1,63 +1,89 @@
 bt_helm_node:
   # --- Node Settings ---
-  tick_rate_ms:
-    type: int
-    default_value: 50
+  tick_rate_hz:
+    type: double
+    default_value: 20.0
     validation:
-      gt<>: [0]
+      gt<>: [0.0]
+  publish_diagnostics:
+    type: bool
+    default_value: false
 
   default_capture_radius:
     type: double_array
     default_value: [25.0, 2.0]
     validation:
       fixed_size<>: [2]
-      lower_element_bounds<>: [0.0]
+      lower_element_bounds<>: [0.1]
   surface_capture_radius:
     type: double_array
     default_value: [1000.0, 0.5]
     validation:
       fixed_size<>: [2]
-      lower_element_bounds<>: [0.0]
+      lower_element_bounds<>: [0.1]
   home_capture_radius:
     type: double_array
     default_value: [5.0, 0.5]
     validation:
       fixed_size<>: [2]
-      lower_element_bounds<>: [0.0]
+      lower_element_bounds<>: [0.1]
 
   default_slip_radius:
     type: double_array
     default_value: [50.0, 4.0]
     validation:
       fixed_size<>: [2]
-      lower_element_bounds<>: [0.0]
+      lower_element_bounds<>: [0.1]
   surface_slip_radius:
     type: double_array
     default_value: [1000.0, 0.5]
     validation:
       fixed_size<>: [2]
-      lower_element_bounds<>: [0.0]
+      lower_element_bounds<>: [0.1]
   home_slip_radius:
     type: double_array
     default_value: [10.0, 1.0]
     validation:
       fixed_size<>: [2]
-      lower_element_bounds<>: [0.0]
+      lower_element_bounds<>: [0.1]
 
   default_speed_rpm:
     type: double
     default_value: 1500.0
     validation:
       bounds<>: [0.0, 1525.0]
+
   odom_timeout_sec:
     type: double
     default_value: 2.0
     validation:
       gt<>: [0.0]
+  odom_recovery_timeout_sec:
+    type: double
+    default_value: 30.0
+    validation:
+      gt_eq<>: [0.0]
 
-  publish_diagnostics:
-    type: bool
-    default_value: false
+  progress_timeout_sec:
+    type: double
+    default_value: 15.0
+    validation:
+      gt_eq<>: [0.0]
+  progress_threshold:
+    type: double
+    default_value: 0.5
+    validation:
+      gt_eq<>: [0.0]
+  number_of_retries:
+    type: int
+    default_value: 6
+    validation:
+      gt_eq<>: [0]
+  wait_duration_sec:
+    type: double
+    default_value: 5.0
+    validation:
+      gt_eq<>: [0.0]
 
   # --- Groot2 Connection ---
   publish_groot2:
@@ -109,5 +135,26 @@ bt_helm_node:
   home_service:
     type: string
     default_value: "home"
+    validation:
+      not_empty<>: []
+  emergency_stop_service:
+    type: string
+    default_value: "emergency_stop"
+    validation:
+      not_empty<>: []
+  emergency_surface_service:
+    type: string
+    default_value: "emergency_surface"
+    validation:
+      not_empty<>: []
+
+  arm_thruster_service:
+    type: string
+    default_value: "thruster/arm"
+    validation:
+      not_empty<>: []
+  reset_localization_service:
+    type: string
+    default_value: "factor_graph_node/reset"
     validation:
       not_empty<>: []

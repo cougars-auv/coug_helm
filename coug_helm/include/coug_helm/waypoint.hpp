@@ -13,18 +13,29 @@
 // limitations under the License.
 
 /**
- * @file bt_helm_node.cpp
- * @brief Standalone executable for the BTHelmNode.
+ * @file waypoint.hpp
+ * @brief Waypoint structure grouping target parameters.
  * @author Nelson Durrant
  * @date June 2026
  */
 
-#include "coug_helm/bt_helm.hpp"
+#pragma once
 
-int main(int argc, char* argv[]) {
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<coug_helm::BTHelmNode>(rclcpp::NodeOptions());
-  rclcpp::spin(node);
-  rclcpp::shutdown();
-  return 0;
-}
+#include <geometry_msgs/msg/point.hpp>
+
+namespace coug_helm {
+
+/**
+ * @struct Waypoint
+ * @brief Container representing a vehicle waypoint with associated target speed and radii.
+ */
+struct Waypoint {
+  geometry_msgs::msg::Point position;
+  double speed{0.0};
+  double capture_radius_horizontal{0.0};
+  double capture_radius_vertical{0.0};
+  double slip_radius_horizontal{0.0};
+  double slip_radius_vertical{0.0};
+};
+
+}  // namespace coug_helm

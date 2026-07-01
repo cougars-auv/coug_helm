@@ -13,46 +13,42 @@
 // limitations under the License.
 
 /**
- * @file set_mission_active.hpp
- * @brief BT action node that sets the mission_active flag.
+ * @file emergency_surface.hpp
+ * @brief BT action node that drives the vehicle to the surface in an emergency.
  * @author Nelson Durrant
- * @date May 2026
+ * @date June 2026
  */
 
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <rclcpp/rclcpp.hpp>
+#include <string>
+
+#include "coug_helm/bt_nodes/ros_bt_node.hpp"
+
 namespace coug_helm::bt_nodes {
 
 /**
- * @class SetMissionActive
- * @brief Enables or disables mission execution by writing the "value" port to mission_active.
+ * @class EmergencySurface
+ * @brief Surfaces the vehicle without relying on odometry.
  */
-class SetMissionActive : public BT::SyncActionNode {
+class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
  public:
-  /**
-   * @brief Constructor for SetMissionActive.
-   * @param name The name of the node.
-   * @param config The BT node configuration.
-   */
-  SetMissionActive(const std::string& name, const BT::NodeConfig& config)
-      : BT::SyncActionNode(name, config) {}
+  EmergencySurface(const std::string& name, const BT::NodeConfig& config)
+      : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
-    return {
-        BT::InputPort<bool>("value"),
-        BT::OutputPort<bool>("mission_active"),
-    };
-  }
+  // --- Overrides ---
+  static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Writes the "value" port to mission_active on the blackboard.
+   * @brief Emergency-surface maneuver (stub).
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    auto value = getInput<bool>("value").value();
-    setOutput("mission_active", value);
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 2000,
+                         "EmergencySurface: surfacing (stub).");
     return BT::NodeStatus::SUCCESS;
   }
 };

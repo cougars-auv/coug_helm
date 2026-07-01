@@ -16,7 +16,7 @@
  * @file bt_helm.cpp
  * @brief Implementation of the BTHelmNode.
  * @author Nelson Durrant
- * @date May 2026
+ * @date June 2026
  */
 
 #include "coug_helm/bt_helm.hpp"
@@ -31,84 +31,80 @@
 #include <string>
 #include <vector>
 
-#include "coug_helm/bt_nodes/advance_if_reached.hpp"
-#include "coug_helm/bt_nodes/check_command.hpp"
-#include "coug_helm/bt_nodes/check_mission_active.hpp"
-#include "coug_helm/bt_nodes/check_mission_complete.hpp"
-#include "coug_helm/bt_nodes/check_odom_healthy.hpp"
-#include "coug_helm/bt_nodes/clear_command.hpp"
-#include "coug_helm/bt_nodes/compute_hsd.hpp"
-#include "coug_helm/bt_nodes/publish_hsd.hpp"
-#include "coug_helm/bt_nodes/reset_waypoint_index.hpp"
-#include "coug_helm/bt_nodes/set_home_waypoint.hpp"
-#include "coug_helm/bt_nodes/set_mission_active.hpp"
-#include "coug_helm/bt_nodes/set_mission_waypoints.hpp"
-#include "coug_helm/bt_nodes/set_surface_waypoint.hpp"
-#include "coug_helm/bt_nodes/stop_vehicle.hpp"
+#include "coug_helm/behavior.hpp"
+#include "coug_helm/bt_nodes/back_up.hpp"
+#include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
+#include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
+#include "coug_helm/bt_nodes/disarm_thruster.hpp"
+#include "coug_helm/bt_nodes/emergency_surface.hpp"
+#include "coug_helm/bt_nodes/follow_waypoints.hpp"
+#include "coug_helm/bt_nodes/is_odom_healthy.hpp"
+#include "coug_helm/bt_nodes/is_origin_set.hpp"
+#include "coug_helm/bt_nodes/is_waypoints_received.hpp"
+#include "coug_helm/bt_nodes/load_behavior.hpp"
+#include "coug_helm/bt_nodes/load_waypoints.hpp"
+#include "coug_helm/bt_nodes/progress_checker.hpp"
+#include "coug_helm/bt_nodes/recovery_node.hpp"
+#include "coug_helm/bt_nodes/reset_localization.hpp"
+#include "coug_helm/bt_nodes/round_robin.hpp"
+#include "coug_helm/bt_nodes/stop.hpp"
+#include "coug_helm/bt_nodes/wait.hpp"
 
 namespace coug_helm {
 
 BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
     : Node("bt_helm_node", options), diagnostic_updater_(this) {
-  RCLCPP_INFO(get_logger(), "Starting Mission Helm Node...");
+  RCLCPP_INFO(get_logger(), "Starting BT Helm Node...");
 
   param_listener_ = std::make_shared<bt_helm_node::ParamListener>(get_node_parameters_interface());
   params_ = param_listener_->get_params();
 
   // --- Blackboard ---
   blackboard_ = BT::Blackboard::create();
-  blackboard_->set("pending_command", std::string{""});
-  blackboard_->set("mission_active", false);
-  blackboard_->set("waypoint_index", size_t{0});
+
+  blackboard_->set("node", static_cast<rclcpp::Node*>(this));
+  blackboard_->set("hsd_topic", params_.hsd_topic);
+  blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
+  blackboard_->set("reset_localization_service", params_.reset_localization_service);
+
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::STOP));
+  blackboard_->set("active_behavior", static_cast<int>(Behavior::STOP));
+
+  blackboard_->set("current_waypoint", size_t{0});
   blackboard_->set("prev_norm_dist", -1.0);
 
-  blackboard_->set("active_waypoints", std::vector<geometry_msgs::msg::Point>{});
-  blackboard_->set("mission_waypoints", std::vector<geometry_msgs::msg::Point>{});
+  blackboard_->set("active_waypoints", std::vector<Waypoint>{});
+  blackboard_->set("mission_waypoints", std::vector<Waypoint>{});
 
   blackboard_->set("current_x", 0.0);
   blackboard_->set("current_y", 0.0);
   blackboard_->set("current_z", 0.0);
+  blackboard_->set("origin_set", false);
   blackboard_->set("last_odom_time", 0.0);
   blackboard_->set("current_time", 0.0);
-  blackboard_->set("heading", 0.0);
-  blackboard_->set("speed", 0.0);
-  blackboard_->set("depth", 0.0);
-  blackboard_->set("mode", uint8_t{0});
 
-  blackboard_->set("active_waypoint_speeds", std::vector<double>{});
-  blackboard_->set("mission_waypoint_speeds", std::vector<double>{});
-  blackboard_->set("default_speed", params_.default_speed_rpm);
-
-  blackboard_->set("active_capture_radius", params_.default_capture_radius);
-  blackboard_->set("default_capture_radius", params_.default_capture_radius);
   blackboard_->set("surface_capture_radius", params_.surface_capture_radius);
   blackboard_->set("home_capture_radius", params_.home_capture_radius);
-
-  blackboard_->set("active_waypoint_capture_radii", std::vector<double>{});
-  blackboard_->set("mission_waypoint_capture_radii", std::vector<double>{});
-
-  blackboard_->set("active_slip_radius", params_.default_slip_radius);
-  blackboard_->set("default_slip_radius", params_.default_slip_radius);
   blackboard_->set("surface_slip_radius", params_.surface_slip_radius);
   blackboard_->set("home_slip_radius", params_.home_slip_radius);
 
-  blackboard_->set("active_waypoint_slip_radii", std::vector<double>{});
-  blackboard_->set("mission_waypoint_slip_radii", std::vector<double>{});
+  blackboard_->set("default_speed", params_.default_speed_rpm);
 
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
+  blackboard_->set("odom_recovery_timeout_sec", params_.odom_recovery_timeout_sec);
+
+  blackboard_->set("progress_timeout_sec", params_.progress_timeout_sec);
+  blackboard_->set("progress_threshold", params_.progress_threshold);
+  blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
+  blackboard_->set("wait_duration_sec", params_.wait_duration_sec);
 
   // --- ROS Interfaces ---
-  hsd_pub_ = create_publisher<coug_interfaces::msg::ControlSetpoint>(params_.hsd_topic,
-                                                                     rclcpp::SystemDefaultsQoS());
-
   origin_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
       params_.origin_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BTHelmNode::originCallback, this, std::placeholders::_1));
-
   waypoint_sub_ = create_subscription<coug_interfaces::msg::WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BTHelmNode::waypointCallback, this, std::placeholders::_1));
-
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BTHelmNode::odomCallback, this, std::placeholders::_1));
@@ -125,33 +121,36 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   home_srv_ = create_service<std_srvs::srv::Trigger>(
       params_.home_service,
       std::bind(&BTHelmNode::homeCallback, this, std::placeholders::_1, std::placeholders::_2));
+  emergency_stop_srv_ = create_service<std_srvs::srv::Trigger>(
+      params_.emergency_stop_service, std::bind(&BTHelmNode::emergencyStopCallback, this,
+                                                std::placeholders::_1, std::placeholders::_2));
+  emergency_surface_srv_ = create_service<std_srvs::srv::Trigger>(
+      params_.emergency_surface_service, std::bind(&BTHelmNode::emergencySurfaceCallback, this,
+                                                   std::placeholders::_1, std::placeholders::_2));
 
-  tick_timer_ = create_wall_timer(std::chrono::milliseconds(params_.tick_rate_ms),
+  tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
                                   std::bind(&BTHelmNode::tickTree, this));
 
   // --- BT Node Registration ---
-  factory_.registerNodeType<bt_nodes::CheckOdomHealthy>("CheckOdomHealthy");
-  factory_.registerNodeType<bt_nodes::CheckMissionActive>("CheckMissionActive");
-  factory_.registerNodeType<bt_nodes::CheckMissionComplete>("CheckMissionComplete");
-  factory_.registerNodeType<bt_nodes::CheckCommand>("CheckCommand");
-  factory_.registerNodeType<bt_nodes::ClearCommand>("ClearCommand");
-  factory_.registerNodeType<bt_nodes::SetMissionActive>("SetMissionActive");
-  factory_.registerNodeType<bt_nodes::ResetWaypointIndex>("ResetWaypointIndex");
-  factory_.registerNodeType<bt_nodes::SetMissionWaypoints>("SetMissionWaypoints");
-  factory_.registerNodeType<bt_nodes::SetSurfaceWaypoint>("SetSurfaceWaypoint");
-  factory_.registerNodeType<bt_nodes::SetHomeWaypoint>("SetHomeWaypoint");
-  factory_.registerNodeType<bt_nodes::ComputeHSD>("ComputeHSD");
-  factory_.registerNodeType<bt_nodes::AdvanceIfReached>("AdvanceIfReached");
+  factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
+  factory_.registerNodeType<bt_nodes::IsOriginSet>("IsOriginSet");
+  factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
+  factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
+  factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
+  factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
+  factory_.registerNodeType<bt_nodes::DisarmThruster>("DisarmThruster");
+  factory_.registerNodeType<bt_nodes::EmergencySurface>("EmergencySurface");
+  factory_.registerNodeType<bt_nodes::FollowWaypoints>("FollowWaypoints");
+  factory_.registerNodeType<bt_nodes::LoadBehavior>("LoadBehavior");
+  factory_.registerNodeType<bt_nodes::LoadWaypoints>("LoadWaypoints");
+  factory_.registerNodeType<bt_nodes::ResetLocalization>("ResetLocalization");
+  factory_.registerNodeType<bt_nodes::Stop>("Stop");
+  factory_.registerNodeType<bt_nodes::Wait>("Wait");
+  factory_.registerNodeType<bt_nodes::RecoveryNode>("RecoveryNode");
+  factory_.registerNodeType<bt_nodes::RoundRobin>("RoundRobin");
+  factory_.registerNodeType<bt_nodes::ProgressChecker>("ProgressChecker");
 
-  factory_.registerBuilder<bt_nodes::PublishHSD>(
-      "PublishHSD", [p = hsd_pub_](const std::string& name, const BT::NodeConfig& config) {
-        return std::make_unique<bt_nodes::PublishHSD>(name, config, p);
-      });
-
-  factory_.registerBuilder<bt_nodes::StopVehicle>(
-      "StopVehicle", [p = hsd_pub_](const std::string& name, const BT::NodeConfig& config) {
-        return std::make_unique<bt_nodes::StopVehicle>(name, config, p);
-      });
+  factory_.registerScriptingEnums<Behavior>();
 
   std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
   tree_ = factory_.createTreeFromFile(pkg_share + "/trees/bt_helm_tree.xml", blackboard_);
@@ -169,8 +168,8 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
     diagnostic_updater_.setHardwareID(clean_ns + "/bt_helm_node");
 
     std::string prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
-    diagnostic_updater_.add(prefix + "Mission Status", this, &BTHelmNode::checkMissionStatus);
-    diagnostic_updater_.add(prefix + "Odometry Link", this, &BTHelmNode::checkOdometryStatus);
+    diagnostic_updater_.add(prefix + "Behavior Status", this, &BTHelmNode::checkBehaviorStatus);
+    diagnostic_updater_.add(prefix + "Odometry Status", this, &BTHelmNode::checkOdometryStatus);
   }
 
   RCLCPP_INFO(get_logger(), "Startup complete! Waiting for mission...");
@@ -178,72 +177,80 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
 
 void BTHelmNode::startCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                                std_srvs::srv::Trigger::Response::SharedPtr res) {
-  blackboard_->set("pending_command", std::string{"start"});
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::MISSION));
   res->success = true;
-  res->message = "Start command queued";
+  res->message = "Mission requested";
 }
 
 void BTHelmNode::stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                               std_srvs::srv::Trigger::Response::SharedPtr res) {
-  blackboard_->set("pending_command", std::string{"stop"});
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::STOP));
   res->success = true;
-  res->message = "Stop command queued";
+  res->message = "Stop requested";
 }
 
 void BTHelmNode::surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                                  std_srvs::srv::Trigger::Response::SharedPtr res) {
-  blackboard_->set("pending_command", std::string{"surface"});
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::SURFACE));
   res->success = true;
-  res->message = "Surface command queued";
+  res->message = "Surface requested";
 }
 
 void BTHelmNode::homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                               std_srvs::srv::Trigger::Response::SharedPtr res) {
-  blackboard_->set("pending_command", std::string{"home"});
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::HOME));
   res->success = true;
-  res->message = "Home command queued";
+  res->message = "Home requested";
+}
+
+void BTHelmNode::emergencyStopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
+                                       std_srvs::srv::Trigger::Response::SharedPtr res) {
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::EMERGENCY_STOP));
+  res->success = true;
+  res->message = "Emergency stop requested";
+}
+
+void BTHelmNode::emergencySurfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
+                                          std_srvs::srv::Trigger::Response::SharedPtr res) {
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::EMERGENCY_SURFACE));
+  res->success = true;
+  res->message = "Emergency surface requested";
 }
 
 void BTHelmNode::originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
   if (!origin_set_ && msg->status.status >= sensor_msgs::msg::NavSatStatus::STATUS_FIX) {
     local_cartesian_.Reset(msg->latitude, msg->longitude, msg->altitude);
     origin_set_ = true;
+    blackboard_->set("origin_set", true);
     RCLCPP_INFO(get_logger(), "GPS Origin Set: Lat %.6f, Lon %.6f, Alt %.2f", msg->latitude,
                 msg->longitude, msg->altitude);
   }
 }
 
 void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg) {
-  blackboard_->set("waypoint_index", size_t{0});
-  blackboard_->set("prev_norm_dist", -1.0);
-
   if (msg->waypoints.empty()) {
-    RCLCPP_WARN(get_logger(), "Received empty mission. Stopping.");
-    blackboard_->set("active_waypoints", std::vector<geometry_msgs::msg::Point>{});
     return;
   }
 
   if (!origin_set_) {
     RCLCPP_WARN(get_logger(), "Origin not set. Dropping mission.");
-    blackboard_->set("active_waypoints", std::vector<geometry_msgs::msg::Point>{});
     return;
   }
 
-  std::vector<geometry_msgs::msg::Point> enu_waypoints;
-  std::vector<double> waypoint_speeds;
-  std::vector<double> waypoint_capture_radii;
-  std::vector<double> waypoint_slip_radii;
+  std::vector<Waypoint> enu_waypoints;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& gps = msg->waypoints[i].position;
-    geometry_msgs::msg::Point p;
+    Waypoint wp;
     double dummy_z;
-    local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, p.x, p.y, dummy_z);
-    p.z = gps.altitude;  // depth below surface, altitude above seafloor
-    enu_waypoints.push_back(p);
+    local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, wp.position.x, wp.position.y,
+                             dummy_z);
+    wp.position.z = gps.altitude;  // depth below surface, altitude above seafloor
+    wp.speed = params_.default_speed_rpm;
+    wp.capture_radius_horizontal = params_.default_capture_radius[0];
+    wp.capture_radius_vertical = params_.default_capture_radius[1];
+    wp.slip_radius_horizontal = params_.default_slip_radius[0];
+    wp.slip_radius_vertical = params_.default_slip_radius[1];
 
-    double speed = params_.default_speed_rpm;
-    double capture_radius = params_.default_capture_radius[0];
-    double slip_radius = params_.default_slip_radius[0];
     auto parse_prop = [&](const std::string& key, const std::string& value, double& out,
                           double fallback) {
       try {
@@ -255,31 +262,24 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     };
     for (const auto& kv : msg->waypoints[i].props) {
       if (kv.key == "speed_rpm") {
-        parse_prop(kv.key, kv.value, speed, params_.default_speed_rpm);
+        parse_prop(kv.key, kv.value, wp.speed, params_.default_speed_rpm);
       } else if (kv.key == "capture_radius") {
-        parse_prop(kv.key, kv.value, capture_radius, params_.default_capture_radius[0]);
+        parse_prop(kv.key, kv.value, wp.capture_radius_horizontal,
+                   params_.default_capture_radius[0]);
       } else if (kv.key == "slip_radius") {
-        parse_prop(kv.key, kv.value, slip_radius, params_.default_slip_radius[0]);
+        parse_prop(kv.key, kv.value, wp.slip_radius_horizontal, params_.default_slip_radius[0]);
       }
     }
-    waypoint_speeds.push_back(speed);
-    waypoint_capture_radii.push_back(capture_radius);
-    waypoint_slip_radii.push_back(slip_radius);
+    enu_waypoints.push_back(wp);
 
     RCLCPP_INFO(get_logger(),
                 "Waypoint %zu: Lat %.6f, Lon %.6f, Depth %.2f, Speed %.1f RPM, "
                 "Capture %.1f m, Slip %.1f m",
-                i, gps.latitude, gps.longitude, gps.altitude, speed, capture_radius, slip_radius);
+                i, gps.latitude, gps.longitude, gps.altitude, wp.speed,
+                wp.capture_radius_horizontal, wp.slip_radius_horizontal);
   }
 
-  blackboard_->set("active_waypoints", enu_waypoints);
   blackboard_->set("mission_waypoints", enu_waypoints);
-  blackboard_->set("active_waypoint_speeds", waypoint_speeds);
-  blackboard_->set("mission_waypoint_speeds", waypoint_speeds);
-  blackboard_->set("active_waypoint_capture_radii", waypoint_capture_radii);
-  blackboard_->set("mission_waypoint_capture_radii", waypoint_capture_radii);
-  blackboard_->set("active_waypoint_slip_radii", waypoint_slip_radii);
-  blackboard_->set("mission_waypoint_slip_radii", waypoint_slip_radii);
   RCLCPP_INFO(get_logger(), "Mission Received: %zu waypoint(s).", msg->waypoints.size());
 }
 
@@ -295,28 +295,34 @@ void BTHelmNode::tickTree() {
   tree_.tickOnce();
 }
 
-void BTHelmNode::checkMissionStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
-  auto wps = blackboard_->get<std::vector<geometry_msgs::msg::Point>>("active_waypoints");
-  auto idx = blackboard_->get<size_t>("waypoint_index");
-  bool active = blackboard_->get<bool>("mission_active");
+void BTHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
+  auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
+
+  bool emergency = (active == Behavior::EMERGENCY_STOP || active == Behavior::EMERGENCY_SURFACE);
+  stat.summary(emergency ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
+                         : diagnostic_msgs::msg::DiagnosticStatus::OK,
+               toString(active));
+
+  bool navigating =
+      (active == Behavior::MISSION || active == Behavior::SURFACE || active == Behavior::HOME);
+  auto wps = blackboard_->get<std::vector<Waypoint>>("active_waypoints");
+  if (!navigating || wps.empty()) {
+    return;
+  }
+
+  auto idx = blackboard_->get<size_t>("current_waypoint");
+  if (idx >= wps.size()) {
+    return;
+  }
+
   double cx = blackboard_->get<double>("current_x");
   double cy = blackboard_->get<double>("current_y");
   double cz = blackboard_->get<double>("current_z");
-
-  if (wps.empty()) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "No mission received.");
-  } else if (idx >= wps.size()) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Mission complete.");
-    stat.add("Waypoints Completed", wps.size());
-  } else if (!active) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Mission inactive.");
-  } else {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Navigating to waypoint " +
-                                                                 std::to_string(idx + 1) + "/" +
-                                                                 std::to_string(wps.size()) + ".");
-    stat.add("Horizontal Distance (m)", std::hypot(wps[idx].x - cx, wps[idx].y - cy));
-    stat.add("Vertical Distance (m)", std::abs(wps[idx].z - cz));
-  }
+  const auto& target = wps[idx];
+  stat.addf("Waypoint", "%zu/%zu", idx + 1, wps.size());
+  stat.addf("Horizontal Distance (m)", "%.1f",
+            std::hypot(target.position.x - cx, target.position.y - cy));
+  stat.addf("Vertical Distance (m)", "%.1f", std::abs(target.position.z - cz));
 }
 
 void BTHelmNode::checkOdometryStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
@@ -330,9 +336,9 @@ void BTHelmNode::checkOdometryStatus(diagnostic_updater::DiagnosticStatusWrapper
   double time_since = this->get_clock()->now().seconds() - last_odom;
   stat.add("Time Since Last (s)", time_since);
   if (time_since > odom_timeout) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Odometry link lost.");
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Odometry lost.");
   } else {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Odometry link online.");
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Odometry online.");
   }
 }
 
