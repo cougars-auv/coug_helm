@@ -183,6 +183,7 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
 
 void BTHelmNode::startCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                                std_srvs::srv::Trigger::Response::SharedPtr res) {
+  tree_.haltTree();
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::MISSION));
   res->success = true;
   res->message = "Mission requested";
@@ -190,6 +191,7 @@ void BTHelmNode::startCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
 
 void BTHelmNode::stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                               std_srvs::srv::Trigger::Response::SharedPtr res) {
+  tree_.haltTree();
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::STOP));
   res->success = true;
   res->message = "Stop requested";
@@ -197,6 +199,7 @@ void BTHelmNode::stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
 
 void BTHelmNode::surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                                  std_srvs::srv::Trigger::Response::SharedPtr res) {
+  tree_.haltTree();
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::SURFACE));
   res->success = true;
   res->message = "Surface requested";
@@ -204,6 +207,7 @@ void BTHelmNode::surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPt
 
 void BTHelmNode::homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                               std_srvs::srv::Trigger::Response::SharedPtr res) {
+  tree_.haltTree();
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::HOME));
   res->success = true;
   res->message = "Home requested";
@@ -211,6 +215,7 @@ void BTHelmNode::homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
 
 void BTHelmNode::emergencyStopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                                        std_srvs::srv::Trigger::Response::SharedPtr res) {
+  tree_.haltTree();
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::EMERGENCY_STOP));
   res->success = true;
   res->message = "Emergency stop requested";
@@ -218,6 +223,7 @@ void BTHelmNode::emergencyStopCallback(const std_srvs::srv::Trigger::Request::Sh
 
 void BTHelmNode::emergencySurfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
                                           std_srvs::srv::Trigger::Response::SharedPtr res) {
+  tree_.haltTree();
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::EMERGENCY_SURFACE));
   res->success = true;
   res->message = "Emergency surface requested";
