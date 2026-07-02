@@ -318,7 +318,7 @@ void BTHelmNode::checkOdometryStatus(diagnostic_updater::DiagnosticStatusWrapper
   double odom_timeout = blackboard_->get<double>("odom_timeout_sec");
 
   if (last_odom == 0.0) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "No odometry received.");
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Waiting for odometry.");
     return;
   }
   double time_since = this->get_clock()->now().seconds() - last_odom;
@@ -326,7 +326,7 @@ void BTHelmNode::checkOdometryStatus(diagnostic_updater::DiagnosticStatusWrapper
   if (time_since > odom_timeout) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Odometry lost.");
   } else {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Odometry online.");
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Odometry acquired.");
   }
 }
 
