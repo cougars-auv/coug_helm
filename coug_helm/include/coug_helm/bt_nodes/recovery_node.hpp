@@ -44,6 +44,10 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
     return {BT::InputPort<int>("number_of_retries", 1, "Number of retries")};
   }
 
+  /**
+   * @brief Ticks the main child, running the recovery child on FAILURE up to the retry limit.
+   * @return The main child's terminal status, or FAILURE once retries are exhausted.
+   */
   BT::NodeStatus tick() override {
     const int number_of_retries = getInput<int>("number_of_retries").value();
     const size_t children_count = children_nodes_.size();

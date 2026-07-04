@@ -115,24 +115,14 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BTHelmNode::odomCallback, this, std::placeholders::_1));
 
-  start_srv_ = create_service<std_srvs::srv::Trigger>(
-      params_.start_service,
-      std::bind(&BTHelmNode::startCallback, this, std::placeholders::_1, std::placeholders::_2));
-  stop_srv_ = create_service<std_srvs::srv::Trigger>(
-      params_.stop_service,
-      std::bind(&BTHelmNode::stopCallback, this, std::placeholders::_1, std::placeholders::_2));
-  surface_srv_ = create_service<std_srvs::srv::Trigger>(
-      params_.surface_service,
-      std::bind(&BTHelmNode::surfaceCallback, this, std::placeholders::_1, std::placeholders::_2));
-  home_srv_ = create_service<std_srvs::srv::Trigger>(
-      params_.home_service,
-      std::bind(&BTHelmNode::homeCallback, this, std::placeholders::_1, std::placeholders::_2));
-  emergency_stop_srv_ = create_service<std_srvs::srv::Trigger>(
-      params_.emergency_stop_service, std::bind(&BTHelmNode::emergencyStopCallback, this,
-                                                std::placeholders::_1, std::placeholders::_2));
-  emergency_surface_srv_ = create_service<std_srvs::srv::Trigger>(
-      params_.emergency_surface_service, std::bind(&BTHelmNode::emergencySurfaceCallback, this,
-                                                   std::placeholders::_1, std::placeholders::_2));
+  start_srv_ = createBehaviorService(params_.start_service, Behavior::MISSION, "Mission");
+  stop_srv_ = createBehaviorService(params_.stop_service, Behavior::STOP, "Stop");
+  surface_srv_ = createBehaviorService(params_.surface_service, Behavior::SURFACE, "Surface");
+  home_srv_ = createBehaviorService(params_.home_service, Behavior::HOME, "Home");
+  emergency_stop_srv_ = createBehaviorService(params_.emergency_stop_service,
+                                              Behavior::EMERGENCY_STOP, "Emergency stop");
+  emergency_surface_srv_ = createBehaviorService(params_.emergency_surface_service,
+                                                 Behavior::EMERGENCY_SURFACE, "Emergency surface");
 
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
                                   std::bind(&BTHelmNode::tickTree, this));
@@ -181,52 +171,16 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   RCLCPP_INFO(get_logger(), "Startup complete! Waiting for mission...");
 }
 
-void BTHelmNode::startCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
-                               std_srvs::srv::Trigger::Response::SharedPtr res) {
-  tree_.haltTree();
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::MISSION));
-  res->success = true;
-  res->message = "Mission requested";
-}
-
-void BTHelmNode::stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
-                              std_srvs::srv::Trigger::Response::SharedPtr res) {
-  tree_.haltTree();
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::STOP));
-  res->success = true;
-  res->message = "Stop requested";
-}
-
-void BTHelmNode::surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
-                                 std_srvs::srv::Trigger::Response::SharedPtr res) {
-  tree_.haltTree();
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::SURFACE));
-  res->success = true;
-  res->message = "Surface requested";
-}
-
-void BTHelmNode::homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
-                              std_srvs::srv::Trigger::Response::SharedPtr res) {
-  tree_.haltTree();
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::HOME));
-  res->success = true;
-  res->message = "Home requested";
-}
-
-void BTHelmNode::emergencyStopCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
+rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BTHelmNode::createBehaviorService(
+    const std::string& service, Behavior behavior, const std::string& label) {
+  return create_service<std_srvs::srv::Trigger>(
+      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr,
                                        std_srvs::srv::Trigger::Response::SharedPtr res) {
-  tree_.haltTree();
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::EMERGENCY_STOP));
-  res->success = true;
-  res->message = "Emergency stop requested";
-}
-
-void BTHelmNode::emergencySurfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr,
-                                          std_srvs::srv::Trigger::Response::SharedPtr res) {
-  tree_.haltTree();
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::EMERGENCY_SURFACE));
-  res->success = true;
-  res->message = "Emergency surface requested";
+        tree_.haltTree();
+        blackboard_->set("pending_behavior", static_cast<int>(behavior));
+        res->success = true;
+        res->message = label + " requested";
+      });
 }
 
 void BTHelmNode::originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
@@ -260,9 +214,11 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     wp.position.z = gps.altitude;
     wp.mode = src.mode;
     wp.speed = src.speed_rpm;
-    wp.capture_radius_horizontal = src.capture_radius;
+    wp.capture_radius_horizontal =
+        src.capture_radius > 0.0 ? src.capture_radius : params_.default_capture_radius[0];
     wp.capture_radius_vertical = params_.default_capture_radius[1];
-    wp.slip_radius_horizontal = src.slip_radius;
+    wp.slip_radius_horizontal =
+        src.slip_radius > 0.0 ? src.slip_radius : params_.default_slip_radius[0];
     wp.slip_radius_vertical = params_.default_slip_radius[1];
     enu_waypoints.push_back(wp);
 

@@ -32,6 +32,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <string>
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
@@ -47,60 +48,21 @@ namespace coug_helm {
 class BTHelmNode : public rclcpp::Node {
  public:
   /**
-   * @brief BTHelmNode constructor.
+   * @brief Constructs the blackboard, behavior tree, and ROS interfaces.
    * @param options The node options.
    */
   explicit BTHelmNode(const rclcpp::NodeOptions& options);
 
  private:
   /**
-   * @brief Queues a "start" command on the blackboard for the BT to dispatch on the next tick.
-   * @param req The service request.
-   * @param res The service response.
+   * @brief Creates a Trigger service that halts the tree and queues a behavior for the next tick.
+   * @param service The service name.
+   * @param behavior The behavior to queue on the blackboard.
+   * @param label Human-readable behavior name for the service response.
+   * @return The created service handle.
    */
-  void startCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
-                     std_srvs::srv::Trigger::Response::SharedPtr res);
-
-  /**
-   * @brief Queues a "stop" command on the blackboard for the BT to dispatch on the next tick.
-   * @param req The service request.
-   * @param res The service response.
-   */
-  void stopCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
-                    std_srvs::srv::Trigger::Response::SharedPtr res);
-
-  /**
-   * @brief Queues a "surface" command on the blackboard for the BT to dispatch on the next tick.
-   * @param req The service request.
-   * @param res The service response.
-   */
-  void surfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
-                       std_srvs::srv::Trigger::Response::SharedPtr res);
-
-  /**
-   * @brief Queues a "home" command on the blackboard for the BT to dispatch on the next tick.
-   * @param req The service request.
-   * @param res The service response.
-   */
-  void homeCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
-                    std_srvs::srv::Trigger::Response::SharedPtr res);
-
-  /**
-   * @brief Queues an "emergency stop" command on the blackboard for the BT to dispatch next tick.
-   * @param req The service request.
-   * @param res The service response.
-   */
-  void emergencyStopCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
-                             std_srvs::srv::Trigger::Response::SharedPtr res);
-
-  /**
-   * @brief Queues an "emergency surface" command on the blackboard for the BT to dispatch next
-   * tick.
-   * @param req The service request.
-   * @param res The service response.
-   */
-  void emergencySurfaceCallback(const std_srvs::srv::Trigger::Request::SharedPtr req,
-                                std_srvs::srv::Trigger::Response::SharedPtr res);
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr createBehaviorService(
+      const std::string& service, utils::Behavior behavior, const std::string& label);
 
   /**
    * @brief Callback for the shared GPS origin fix. Sets the ENU projection origin.

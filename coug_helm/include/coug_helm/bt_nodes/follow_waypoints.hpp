@@ -59,6 +59,10 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     };
   }
 
+  /**
+   * @brief Logs the mission size and delegates to onRunning.
+   * @return The status of the first onRunning tick.
+   */
   BT::NodeStatus onStart() override {
     auto wps = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
     auto idx = getInput<size_t>("current_waypoint").value();
@@ -68,6 +72,10 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     return onRunning();
   }
 
+  /**
+   * @brief Publishes a setpoint toward the current waypoint, advancing on capture or slip.
+   * @return RUNNING while navigating, SUCCESS once past the final waypoint.
+   */
   BT::NodeStatus onRunning() override {
     auto wps = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
     auto idx = getInput<size_t>("current_waypoint").value();
@@ -81,14 +89,13 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
       return BT::NodeStatus::SUCCESS;
     }
 
-    publishHSD(wps, idx);
-
     double cx = getInput<double>("current_x").value();
     double cy = getInput<double>("current_y").value();
     double cz = getInput<double>("current_z").value();
     double prev_dist = getInput<double>("prev_norm_dist").value();
 
     const auto& target = wps[idx];
+    publishHSD(target, cx, cy);
     double h_dist = std::hypot(target.position.x - cx, target.position.y - cy);
     double v_dist = (target.mode == coug_interfaces::msg::ControlSetpoint::ALTITUDE)
                         ? 0.0
@@ -116,11 +123,13 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { publishStop(); }
 
  private:
-  void publishHSD(const std::vector<utils::Waypoint>& wps, size_t idx) {
-    double cx = getInput<double>("current_x").value();
-    double cy = getInput<double>("current_y").value();
-
-    const auto& target = wps[idx];
+  /**
+   * @brief Publishes a heading/speed/depth setpoint from the current position toward the target.
+   * @param target The waypoint to steer toward.
+   * @param cx The current ENU x position.
+   * @param cy The current ENU y position.
+   */
+  void publishHSD(const utils::Waypoint& target, double cx, double cy) {
     double dx = target.position.x - cx;
     double dy = target.position.y - cy;
 
@@ -132,6 +141,9 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     hsd_pub_->publish(msg);
   }
 
+  /**
+   * @brief Publishes a zero setpoint to stop the vehicle.
+   */
   void publishStop() {
     coug_interfaces::msg::ControlSetpoint msg;
     hsd_pub_->publish(msg);

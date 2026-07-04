@@ -39,6 +39,10 @@ class RoundRobin : public BT::ControlNode {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
+  /**
+   * @brief Ticks children from the current index until one succeeds or all fail this round.
+   * @return SUCCESS or RUNNING from a child, FAILURE once every child has failed.
+   */
   BT::NodeStatus tick() override {
     const size_t num_children = children_nodes_.size();
     setStatus(BT::NodeStatus::RUNNING);
