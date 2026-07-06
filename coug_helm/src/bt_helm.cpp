@@ -60,8 +60,6 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
     : Node("bt_helm_node", options),
       diagnostic_updater_(this),
       local_cartesian_(0.0, 0.0, 0.0, GeographicLib::Geocentric::WGS84()) {
-  RCLCPP_INFO(get_logger(), "Starting BT Helm Node...");
-
   param_listener_ = std::make_shared<bt_helm_node::ParamListener>(get_node_parameters_interface());
   params_ = param_listener_->get_params();
 
@@ -168,7 +166,7 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
     diagnostic_updater_.add(prefix + "Odometry Status", this, &BTHelmNode::checkOdometryStatus);
   }
 
-  RCLCPP_INFO(get_logger(), "Startup complete! Waiting for mission...");
+  RCLCPP_INFO(get_logger(), "Initialization complete.");
 }
 
 rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BTHelmNode::createBehaviorService(
@@ -188,7 +186,7 @@ void BTHelmNode::originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg
     local_cartesian_.Reset(msg->latitude, msg->longitude, msg->altitude);
     origin_set_ = true;
     blackboard_->set("origin_set", true);
-    RCLCPP_INFO(get_logger(), "GPS Origin Set: Lat %.6f, Lon %.6f, Alt %.2f", msg->latitude,
+    RCLCPP_INFO(get_logger(), "GPS origin set: Lat %.6f, Lon %.6f, Alt %.2f", msg->latitude,
                 msg->longitude, msg->altitude);
   }
 }
@@ -230,7 +228,7 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
   }
 
   blackboard_->set("mission_waypoints", enu_waypoints);
-  RCLCPP_INFO(get_logger(), "Mission Received: %zu waypoint(s).", msg->waypoints.size());
+  RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s).", msg->waypoints.size());
 }
 
 void BTHelmNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {

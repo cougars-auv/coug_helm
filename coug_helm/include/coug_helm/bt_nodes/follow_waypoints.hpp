@@ -83,8 +83,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     if (wps.empty() || idx >= wps.size()) {
       publishStop();
       if (!wps.empty()) {
-        RCLCPP_INFO(node_->get_logger(),
-                    "FollowWaypoints: reached final waypoint. Navigation complete!");
+        RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: completed waypoint navigation.");
       }
       return BT::NodeStatus::SUCCESS;
     }
