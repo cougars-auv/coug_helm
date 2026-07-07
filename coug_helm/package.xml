@@ -3,7 +3,7 @@
 <package format="3">
   <name>coug_helm</name>
   <version>0.0.0</version>
-  <description>Behavior tree helm for the CougUV</description>
+  <description>CoUGARs Behavior Tree helm for mission control and autonomy.</description>
   <maintainer email="snelsond@byu.edu">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
 
