@@ -51,7 +51,7 @@ class IsOriginSet : public RosBtNode<BT::ConditionNode> {
       return BT::NodeStatus::SUCCESS;
     }
     RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000,
-                         "IsOriginSet: waiting for GPS origin.");
+                         "IsOriginSet: No origin set.");
     return BT::NodeStatus::FAILURE;
   }
 };

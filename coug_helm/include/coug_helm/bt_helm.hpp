@@ -94,12 +94,6 @@ class BTHelmNode : public rclcpp::Node {
    */
   void checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
-  /**
-   * @brief Diagnostic task to report odometry health and freshness.
-   * @param stat The diagnostic status wrapper to update.
-   */
-  void checkOdometryStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
-
   // --- Behavior Tree ---
   BT::BehaviorTreeFactory factory_;
   BT::Tree tree_;

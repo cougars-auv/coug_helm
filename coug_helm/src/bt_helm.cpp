@@ -163,7 +163,6 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
 
     std::string prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
     diagnostic_updater_.add(prefix + "Behavior Status", this, &BTHelmNode::checkBehaviorStatus);
-    diagnostic_updater_.add(prefix + "Odometry Status", this, &BTHelmNode::checkOdometryStatus);
   }
 
   RCLCPP_INFO(get_logger(), "Initialization complete.");
@@ -271,23 +270,6 @@ void BTHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
   stat.addf("Horizontal Distance (m)", "%.1f",
             std::hypot(target.position.x - cx, target.position.y - cy));
   stat.addf("Vertical Distance (m)", "%.1f", std::abs(target.position.z - cz));
-}
-
-void BTHelmNode::checkOdometryStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
-  double last_odom = blackboard_->get<double>("last_odom_time");
-  double odom_timeout = blackboard_->get<double>("odom_timeout_sec");
-
-  if (last_odom == 0.0) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Waiting for odometry.");
-    return;
-  }
-  double time_since = this->get_clock()->now().seconds() - last_odom;
-  stat.add("Time Since Last (s)", time_since);
-  if (time_since > odom_timeout) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Odometry lost.");
-  } else {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Odometry acquired.");
-  }
 }
 
 }  // namespace coug_helm
