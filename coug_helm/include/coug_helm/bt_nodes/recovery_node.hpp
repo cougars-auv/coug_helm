@@ -14,7 +14,7 @@
 
 /**
  * @file recovery_node.hpp
- * @brief Local implementation of Nav2's RecoveryNode control node.
+ * @brief RecoveryNode control node reimplemented from Nav2.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -32,7 +32,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class RecoveryNode
- * @brief Ticks the main child; on FAILURE runs the recovery child, up to number_of_retries retries.
+ * @brief RecoveryNode control node reimplemented from Nav2.
  */
 class RecoveryNode : public RosBtNode<BT::ControlNode> {
  public:

@@ -32,7 +32,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class IsOriginSet
- * @brief Returns SUCCESS once the ENU projection origin has been initialized from a GPS fix.
+ * @brief BT condition node that checks whether the GPS origin has been set.
  */
 class IsOriginSet : public RosBtNode<BT::ConditionNode> {
  public:

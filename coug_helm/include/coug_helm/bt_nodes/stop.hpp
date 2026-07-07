@@ -14,7 +14,7 @@
 
 /**
  * @file stop.hpp
- * @brief BT action node that halts the vehicle by publishing zero commands.
+ * @brief BT action node that halts the AUV by publishing zero commands.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -33,7 +33,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class Stop
- * @brief Publishes a zero ControlSetpoint to halt the vehicle.
+ * @brief BT action node that halts the AUV by publishing zero commands.
  */
 class Stop : public RosBtNode<BT::SyncActionNode> {
  public:
@@ -47,7 +47,7 @@ class Stop : public RosBtNode<BT::SyncActionNode> {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Publishes a zero ControlSetpoint to stop the vehicle.
+   * @brief Publishes a zero ControlSetpoint to stop the AUV.
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {

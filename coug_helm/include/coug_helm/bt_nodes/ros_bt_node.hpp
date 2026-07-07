@@ -14,7 +14,7 @@
 
 /**
  * @file ros_bt_node.hpp
- * @brief Base mixin that gives a BT leaf access to the shared ROS node.
+ * @brief Base class giving a BT leaf access to the shared ROS node.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -30,8 +30,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class RosBtNode
- * @brief Gives a BT leaf the shared rclcpp::Node from the blackboard.
- * @tparam BTBase The BehaviorTree.CPP base class (ConditionNode, SyncActionNode, ...).
+ * @brief Base class giving a BT leaf access to the shared ROS node.
  */
 template <class BTBase>
 class RosBtNode : public BTBase {

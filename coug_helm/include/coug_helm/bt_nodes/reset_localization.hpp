@@ -35,7 +35,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class ResetLocalization
- * @brief Calls the reset localization service to recover after odometry is lost.
+ * @brief BT action node that resets the localization stack after an odometry dropout.
  */
 class ResetLocalization : public RosBtNode<BT::StatefulActionNode> {
  public:

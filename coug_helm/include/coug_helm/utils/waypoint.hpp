@@ -29,7 +29,7 @@ namespace coug_helm::utils {
 
 /**
  * @struct Waypoint
- * @brief Container representing a vehicle waypoint with associated target speed and radii.
+ * @brief Container representing an AUV waypoint with associated target speed and radii.
  */
 struct Waypoint {
   geometry_msgs::msg::Point position;

@@ -14,7 +14,7 @@
 
 /**
  * @file is_waypoints_received.hpp
- * @brief BT condition node that checks whether a non-empty mission is loaded.
+ * @brief BT condition node that checks whether waypoints have been received.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -33,7 +33,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class IsWaypointsReceived
- * @brief Returns SUCCESS when a non-empty mission is loaded.
+ * @brief BT condition node that checks whether waypoints have been received.
  */
 class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
  public:

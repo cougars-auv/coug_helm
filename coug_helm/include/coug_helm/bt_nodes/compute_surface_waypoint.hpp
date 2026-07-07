@@ -14,7 +14,7 @@
 
 /**
  * @file compute_surface_waypoint.hpp
- * @brief BT action node that computes a single surface waypoint.
+ * @brief BT action node that computes a surface waypoint.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -34,7 +34,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class ComputeSurfaceWaypoint
- * @brief Generates a single depth-0 surface waypoint at the vehicle's current position.
+ * @brief BT action node that computes a surface waypoint.
  */
 class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:

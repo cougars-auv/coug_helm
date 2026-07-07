@@ -14,7 +14,7 @@
 
 /**
  * @file follow_waypoints.hpp
- * @brief BT action node that steers the vehicle through a waypoint list.
+ * @brief BT action node that steers the AUV through a waypoint list.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -37,7 +37,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class FollowWaypoints
- * @brief Publishes HSD setpoints toward active waypoints, advancing on capture or slip.
+ * @brief BT action node that steers the AUV through a waypoint list.
  */
 class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
  public:
@@ -141,7 +141,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   }
 
   /**
-   * @brief Publishes a zero setpoint to stop the vehicle.
+   * @brief Publishes a zero setpoint to stop the AUV.
    */
   void publishStop() {
     coug_interfaces::msg::ControlSetpoint msg;

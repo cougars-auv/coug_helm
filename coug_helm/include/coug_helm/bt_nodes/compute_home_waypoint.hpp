@@ -35,7 +35,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class ComputeHomeWaypoint
- * @brief Generates a home waypoint based on the first mission waypoint at depth 0.
+ * @brief BT action node that computes the home waypoint.
  */
 class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:

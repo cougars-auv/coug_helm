@@ -14,7 +14,7 @@
 
 /**
  * @file round_robin.hpp
- * @brief Local RoundRobin control node (not provided by this BehaviorTree.CPP build).
+ * @brief RoundRobin control node reimplemented from Nav2.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -29,7 +29,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class RoundRobin
- * @brief Ticks one child per round, advancing on SUCCESS; FAILURE when all fail in a round.
+ * @brief RoundRobin control node reimplemented from Nav2.
  */
 class RoundRobin : public BT::ControlNode {
  public:

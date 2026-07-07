@@ -14,7 +14,7 @@
 
 /**
  * @file progress_checker.hpp
- * @brief BT decorator that fails its child when the vehicle stops making progress.
+ * @brief BT decorator that fails its child when the AUV stops making progress.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -33,7 +33,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class ProgressChecker
- * @brief Ticks its child, but FAILS if the vehicle hasn't advanced.
+ * @brief BT decorator that fails its child when the AUV stops making progress.
  */
 class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
  public:
@@ -50,7 +50,7 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   }
 
   /**
-   * @brief Fails if the vehicle hasn't moved progress_threshold (m) within progress_timeout (s).
+   * @brief Fails if the AUV hasn't moved progress_threshold (m) within progress_timeout (s).
    * @return The child's status while progressing, FAILURE once stalled.
    */
   BT::NodeStatus tick() override {
@@ -61,7 +61,7 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     double threshold = getInput<double>("progress_threshold").value();
     double timeout = getInput<double>("progress_timeout").value();
 
-    // Re-seed the baseline on entry and whenever the vehicle advances by threshold.
+    // Re-seed the baseline on entry and whenever the AUV advances by threshold.
     if (!seeded_ || std::hypot(cx - base_x_, cy - base_y_, cz - base_z_) >= threshold) {
       base_x_ = cx;
       base_y_ = cy;

@@ -14,7 +14,7 @@
 
 /**
  * @file load_behavior.hpp
- * @brief BT action node that loads the pending behavior into the active behavior.
+ * @brief BT action node that activates the pending behavior.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -33,7 +33,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class LoadBehavior
- * @brief Copies the pending behavior into the active behavior for the tree to dispatch on.
+ * @brief BT action node that activates the pending behavior.
  */
 class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
  public:

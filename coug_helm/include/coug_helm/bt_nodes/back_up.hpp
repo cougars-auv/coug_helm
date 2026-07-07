@@ -32,7 +32,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class BackUp
- * @brief Performs a backup maneuver.
+ * @brief BT action node that executes a backup maneuver.
  */
 class BackUp : public RosBtNode<BT::SyncActionNode> {
  public:

@@ -14,7 +14,7 @@
 
 /**
  * @file wait.hpp
- * @brief BT recovery action that holds the vehicle idle for a fixed duration.
+ * @brief BT recovery action that holds the AUV idle for a fixed duration.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -33,7 +33,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class Wait
- * @brief Idles the vehicle for wait_duration seconds, then SUCCESS (recovery action).
+ * @brief BT recovery action that holds the AUV idle for a fixed duration.
  */
 class Wait : public RosBtNode<BT::StatefulActionNode> {
  public:
@@ -75,7 +75,7 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
 
  private:
   /**
-   * @brief Publishes a zero setpoint to stop the vehicle.
+   * @brief Publishes a zero setpoint to stop the AUV.
    */
   void publishStop() {
     coug_interfaces::msg::ControlSetpoint msg;

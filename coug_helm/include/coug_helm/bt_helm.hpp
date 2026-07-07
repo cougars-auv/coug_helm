@@ -14,7 +14,7 @@
 
 /**
  * @file bt_helm.hpp
- * @brief ROS 2 node that drives a BehaviorTree.CPP waypoint mission.
+ * @brief ROS 2 node that executes AUV waypoint missions with a BehaviorTree.CPP behavior tree.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -43,7 +43,7 @@ namespace coug_helm {
 
 /**
  * @class BTHelmNode
- * @brief Behavior tree helm for AUV waypoint mission execution.
+ * @brief ROS 2 node that executes AUV waypoint missions with a BehaviorTree.CPP behavior tree.
  */
 class BTHelmNode : public rclcpp::Node {
  public:

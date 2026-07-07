@@ -35,7 +35,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class DisarmThruster
- * @brief Calls the thruster arm service to cut thruster power for an emergency stop.
+ * @brief BT action node that disarms the thruster.
  */
 class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
  public:

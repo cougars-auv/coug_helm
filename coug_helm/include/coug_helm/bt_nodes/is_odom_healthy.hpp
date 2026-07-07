@@ -29,7 +29,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class IsOdomHealthy
- * @brief Returns SUCCESS if odometry is arriving within the timeout window.
+ * @brief BT condition node that checks odometry health.
  */
 class IsOdomHealthy : public BT::ConditionNode {
  public:
