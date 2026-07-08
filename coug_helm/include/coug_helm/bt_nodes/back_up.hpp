@@ -43,12 +43,11 @@ class BackUp : public RosBtNode<BT::SyncActionNode> {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Backup maneuver (stub).
+   * @brief Backup maneuver (not implemented).
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 2000,
-                         "BackUp: executing backup maneuver (stub).");
+    RCLCPP_WARN(node_->get_logger(), "BackUp: executing backup maneuver (not implemented).");
     return BT::NodeStatus::SUCCESS;
   }
 };

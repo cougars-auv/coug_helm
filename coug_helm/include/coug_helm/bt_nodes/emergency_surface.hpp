@@ -43,12 +43,11 @@ class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
   static BT::PortsList providedPorts() { return {}; }
 
   /**
-   * @brief Emergency-surface maneuver (stub).
+   * @brief Emergency-surface maneuver (not implemented).
    * @return Always SUCCESS.
    */
   BT::NodeStatus tick() override {
-    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 2000,
-                         "EmergencySurface: surfacing (stub).");
+    RCLCPP_WARN(node_->get_logger(), "EmergencySurface: surfacing (not implemented).");
     return BT::NodeStatus::SUCCESS;
   }
 };

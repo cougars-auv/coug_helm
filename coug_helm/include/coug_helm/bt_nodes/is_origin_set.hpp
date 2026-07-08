@@ -50,8 +50,7 @@ class IsOriginSet : public RosBtNode<BT::ConditionNode> {
     if (getInput<bool>("origin_set").value()) {
       return BT::NodeStatus::SUCCESS;
     }
-    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000,
-                         "IsOriginSet: No origin set.");
+    RCLCPP_WARN(node_->get_logger(), "IsOriginSet: No origin set.");
     return BT::NodeStatus::FAILURE;
   }
 };

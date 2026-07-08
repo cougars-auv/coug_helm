@@ -53,8 +53,7 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
     if (!getInput<std::vector<utils::Waypoint>>("mission_waypoints").value().empty()) {
       return BT::NodeStatus::SUCCESS;
     }
-    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000,
-                         "IsWaypointsReceived: no waypoints received.");
+    RCLCPP_WARN(node_->get_logger(), "IsWaypointsReceived: no waypoints received.");
     return BT::NodeStatus::FAILURE;
   }
 };
