@@ -14,7 +14,7 @@
 
 /**
  * @file waypoint.hpp
- * @brief Waypoint structure grouping target parameters.
+ * @brief Simple waypoint structure (should mirror WayPoint.msg).
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -29,7 +29,7 @@ namespace coug_helm::utils {
 
 /**
  * @struct Waypoint
- * @brief Container representing an AUV waypoint with associated target speed and radii.
+ * @brief Container representing an AUV waypoint with associated mode, speed, and radii.
  */
 struct Waypoint {
   geometry_msgs::msg::Point position;

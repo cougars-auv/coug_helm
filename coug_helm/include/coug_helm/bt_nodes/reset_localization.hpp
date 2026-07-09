@@ -14,7 +14,7 @@
 
 /**
  * @file reset_localization.hpp
- * @brief BT action node that resets the localization stack after an odometry dropout.
+ * @brief BT action node that resets the localization stack.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -35,7 +35,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class ResetLocalization
- * @brief BT action node that resets the localization stack after an odometry dropout.
+ * @brief BT action node that resets the localization stack.
  */
 class ResetLocalization : public RosBtNode<BT::StatefulActionNode> {
  public:
