@@ -176,7 +176,7 @@ rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BTHelmNode::createBehaviorSer
         tree_.haltTree();
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;
-        res->message = label + " requested";
+        res->message = label + " requested.";
       });
 }
 
