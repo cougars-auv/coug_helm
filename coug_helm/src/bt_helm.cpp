@@ -200,6 +200,7 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     return;
   }
 
+  // Transform waypoints from lat/lon into the shared map frame
   std::vector<Waypoint> enu_waypoints;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& src = msg->waypoints[i];
