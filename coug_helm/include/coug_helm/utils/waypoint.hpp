@@ -35,10 +35,10 @@ struct Waypoint {
   geometry_msgs::msg::Point position;
   uint8_t mode{coug_interfaces::msg::ControlSetpoint::DEPTH};
   double speed{0.0};
-  double capture_radius_horizontal{0.0};
-  double capture_radius_vertical{0.0};
-  double slip_radius_horizontal{0.0};
-  double slip_radius_vertical{0.0};
+  double capture_radius{0.0};
+  double capture_radius_z{0.0};
+  double slip_radius{0.0};
+  double slip_radius_z{0.0};
 };
 
 }  // namespace coug_helm::utils

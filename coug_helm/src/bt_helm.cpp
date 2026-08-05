@@ -88,9 +88,13 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_time", 0.0);
 
   blackboard_->set("surface_capture_radius", params_.surface_capture_radius);
+  blackboard_->set("surface_capture_radius_z", params_.surface_capture_radius_z);
   blackboard_->set("home_capture_radius", params_.home_capture_radius);
+  blackboard_->set("home_capture_radius_z", params_.home_capture_radius_z);
   blackboard_->set("surface_slip_radius", params_.surface_slip_radius);
+  blackboard_->set("surface_slip_radius_z", params_.surface_slip_radius_z);
   blackboard_->set("home_slip_radius", params_.home_slip_radius);
+  blackboard_->set("home_slip_radius_z", params_.home_slip_radius_z);
 
   blackboard_->set("default_speed", params_.default_speed_rpm);
 
@@ -212,19 +216,19 @@ void BTHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     wp.position.z = gps.altitude;
     wp.mode = src.mode;
     wp.speed = src.speed_rpm;
-    wp.capture_radius_horizontal =
-        src.capture_radius > 0.0 ? src.capture_radius : params_.default_capture_radius[0];
-    wp.capture_radius_vertical = params_.default_capture_radius[1];
-    wp.slip_radius_horizontal =
-        src.slip_radius > 0.0 ? src.slip_radius : params_.default_slip_radius[0];
-    wp.slip_radius_vertical = params_.default_slip_radius[1];
+    wp.capture_radius =
+        src.capture_radius > 0.0 ? src.capture_radius : params_.default_capture_radius;
+    wp.capture_radius_z =
+        src.capture_radius_z > 0.0 ? src.capture_radius_z : params_.default_capture_radius_z;
+    wp.slip_radius = src.slip_radius > 0.0 ? src.slip_radius : params_.default_slip_radius;
+    wp.slip_radius_z = src.slip_radius_z > 0.0 ? src.slip_radius_z : params_.default_slip_radius_z;
     enu_waypoints.push_back(wp);
 
     RCLCPP_INFO(get_logger(),
                 "Waypoint %zu: Lat %.6f, Lon %.6f, Depth %.2f, Speed %.1f RPM, "
-                "Capture %.1f m, Slip %.1f m",
-                i, gps.latitude, gps.longitude, gps.altitude, wp.speed,
-                wp.capture_radius_horizontal, wp.slip_radius_horizontal);
+                "Capture %.1f/%.1f m, Slip %.1f/%.1f m",
+                i, gps.latitude, gps.longitude, gps.altitude, wp.speed, wp.capture_radius,
+                wp.capture_radius_z, wp.slip_radius, wp.slip_radius_z);
   }
 
   blackboard_->set("mission_waypoints", enu_waypoints);

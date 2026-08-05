@@ -47,8 +47,10 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<double>("default_speed"),
-        BT::InputPort<std::vector<double>>("surface_capture_radius"),
-        BT::InputPort<std::vector<double>>("surface_slip_radius"),
+        BT::InputPort<double>("surface_capture_radius"),
+        BT::InputPort<double>("surface_capture_radius_z"),
+        BT::InputPort<double>("surface_slip_radius"),
+        BT::InputPort<double>("surface_slip_radius_z"),
         BT::OutputPort<std::vector<utils::Waypoint>>("surface_waypoint"),
     };
   }
@@ -64,13 +66,10 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     wp.position.z = 0.0;
     wp.speed = getInput<double>("default_speed").value();
 
-    auto cap = getInput<std::vector<double>>("surface_capture_radius").value();
-    wp.capture_radius_horizontal = cap[0];
-    wp.capture_radius_vertical = cap[1];
-
-    auto slip = getInput<std::vector<double>>("surface_slip_radius").value();
-    wp.slip_radius_horizontal = slip[0];
-    wp.slip_radius_vertical = slip[1];
+    wp.capture_radius = getInput<double>("surface_capture_radius").value();
+    wp.capture_radius_z = getInput<double>("surface_capture_radius_z").value();
+    wp.slip_radius = getInput<double>("surface_slip_radius").value();
+    wp.slip_radius_z = getInput<double>("surface_slip_radius_z").value();
 
     RCLCPP_INFO(node_->get_logger(),
                 "ComputeSurfaceWaypoint: surface set to (%.1f, %.1f), depth 0.", wp.position.x,

@@ -100,10 +100,8 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
                         ? 0.0
                         : std::abs(target.position.z - cz);
 
-    double norm_cap = std::hypot(h_dist / target.capture_radius_horizontal,
-                                 v_dist / target.capture_radius_vertical);
-    double norm_slip =
-        std::hypot(h_dist / target.slip_radius_horizontal, v_dist / target.slip_radius_vertical);
+    double norm_cap = std::hypot(h_dist / target.capture_radius, v_dist / target.capture_radius_z);
+    double norm_slip = std::hypot(h_dist / target.slip_radius, v_dist / target.slip_radius_z);
 
     bool capture = norm_cap < 1.0;
     bool slip = (prev_dist > 0.0 && norm_cap > prev_dist && norm_slip < 1.0);

@@ -25,7 +25,9 @@
       <input_port name="mission_waypoints"/>
       <input_port name="default_speed"/>
       <input_port name="home_capture_radius"/>
+      <input_port name="home_capture_radius_z"/>
       <input_port name="home_slip_radius"/>
+      <input_port name="home_slip_radius_z"/>
       <output_port name="home_waypoint"/>
     </Action>
     <Action ID="ComputeSurfaceWaypoint">
@@ -33,7 +35,9 @@
       <input_port name="current_y"/>
       <input_port name="default_speed"/>
       <input_port name="surface_capture_radius"/>
+      <input_port name="surface_capture_radius_z"/>
       <input_port name="surface_slip_radius"/>
+      <input_port name="surface_slip_radius_z"/>
       <output_port name="surface_waypoint"/>
     </Action>
     <Action ID="DisarmThruster"/>
@@ -138,7 +142,9 @@
           mission_waypoints="{mission_waypoints}"
           default_speed="{default_speed}"
           home_capture_radius="{home_capture_radius}"
+          home_capture_radius_z="{home_capture_radius_z}"
           home_slip_radius="{home_slip_radius}"
+          home_slip_radius_z="{home_slip_radius_z}"
           home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
           current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
@@ -153,7 +159,9 @@
           current_y="{current_y}"
           default_speed="{default_speed}"
           surface_capture_radius="{surface_capture_radius}"
+          surface_capture_radius_z="{surface_capture_radius_z}"
           surface_slip_radius="{surface_slip_radius}"
+          surface_slip_radius_z="{surface_slip_radius_z}"
           surface_waypoint="{surface_waypoint}"/>
       <LoadWaypoints pending_waypoints="{surface_waypoint}" active_waypoints="{active_waypoints}"
           current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>

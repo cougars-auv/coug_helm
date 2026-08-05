@@ -47,8 +47,10 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     return {
         BT::InputPort<std::vector<utils::Waypoint>>("mission_waypoints"),
         BT::InputPort<double>("default_speed"),
-        BT::InputPort<std::vector<double>>("home_capture_radius"),
-        BT::InputPort<std::vector<double>>("home_slip_radius"),
+        BT::InputPort<double>("home_capture_radius"),
+        BT::InputPort<double>("home_capture_radius_z"),
+        BT::InputPort<double>("home_slip_radius"),
+        BT::InputPort<double>("home_slip_radius_z"),
         BT::OutputPort<std::vector<utils::Waypoint>>("home_waypoint"),
     };
   }
@@ -69,13 +71,10 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
 
     home.speed = getInput<double>("default_speed").value();
 
-    auto cap = getInput<std::vector<double>>("home_capture_radius").value();
-    home.capture_radius_horizontal = cap[0];
-    home.capture_radius_vertical = cap[1];
-
-    auto slip = getInput<std::vector<double>>("home_slip_radius").value();
-    home.slip_radius_horizontal = slip[0];
-    home.slip_radius_vertical = slip[1];
+    home.capture_radius = getInput<double>("home_capture_radius").value();
+    home.capture_radius_z = getInput<double>("home_capture_radius_z").value();
+    home.slip_radius = getInput<double>("home_slip_radius").value();
+    home.slip_radius_z = getInput<double>("home_slip_radius_z").value();
 
     RCLCPP_INFO(node_->get_logger(), "ComputeHomeWaypoint: home set to (%.1f, %.1f), depth 0.",
                 home.position.x, home.position.y);
