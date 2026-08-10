@@ -3,7 +3,7 @@
     ros__parameters:
       # --- Node Settings ---
       tick_rate_hz: 20.0 # [Hz] Behavior tree tick rate.
-      publish_diagnostics: true # Publish diagnostic information.
+      publish_diagnostics: false # Publish diagnostic information.
 
       # Waypoint reached if normalized ellipse distance < 1.0 (direct hit).
       default_capture_radius: 25.0 # [m]

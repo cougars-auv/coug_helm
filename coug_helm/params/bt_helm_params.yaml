@@ -31,7 +31,7 @@ bt_helm_node:
       gt_eq<>: [0.1]
   home_capture_radius:
     type: double
-    default_value: 5.0
+    default_value: 25.0
     validation:
       gt_eq<>: [0.1]
   home_capture_radius_z:
@@ -62,12 +62,12 @@ bt_helm_node:
       gt_eq<>: [0.1]
   home_slip_radius:
     type: double
-    default_value: 10.0
+    default_value: 50.0
     validation:
       gt_eq<>: [0.1]
   home_slip_radius_z:
     type: double
-    default_value: 1.0
+    default_value: 0.5
     validation:
       gt_eq<>: [0.1]
 
@@ -112,7 +112,7 @@ bt_helm_node:
   # --- Groot2 Connection ---
   publish_groot2:
     type: bool
-    default_value: true
+    default_value: false
   groot2_port:
     type: int
     default_value: 1667
