@@ -14,7 +14,7 @@
 
 /**
  * @file progress_checker.hpp
- * @brief BT decorator that fails its child when the AUV stops making progress.
+ * @brief BT decorator that fails and resets its child when the AUV stops making progress.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -33,7 +33,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class ProgressChecker
- * @brief BT decorator that fails its child when the AUV stops making progress.
+ * @brief BT decorator that fails and resets its child when the AUV stops making progress.
  */
 class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
  public:

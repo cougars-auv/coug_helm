@@ -14,7 +14,7 @@
 
 /**
  * @file back_up.hpp
- * @brief BT action node that executes a backup maneuver.
+ * @brief BT action node that executes a backup maneuver (not implemented).
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -32,7 +32,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class BackUp
- * @brief BT action node that executes a backup maneuver.
+ * @brief BT action node that executes a backup maneuver (not implemented).
  */
 class BackUp : public RosBtNode<BT::SyncActionNode> {
  public:

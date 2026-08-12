@@ -14,7 +14,7 @@
 
 /**
  * @file emergency_surface.hpp
- * @brief BT action node that drives the AUV to the surface in an emergency.
+ * @brief BT action node that drives the AUV to the surface in an emergency (not implemented).
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -32,7 +32,7 @@ namespace coug_helm::bt_nodes {
 
 /**
  * @class EmergencySurface
- * @brief BT action node that drives the AUV to the surface in an emergency.
+ * @brief BT action node that drives the AUV to the surface in an emergency (not implemented).
  */
 class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
  public:
