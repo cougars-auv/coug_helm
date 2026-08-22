@@ -39,14 +39,16 @@ class BTHelmNode : public rclcpp::Node {
   explicit BTHelmNode(const rclcpp::NodeOptions& options);
 
  private:
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr createBehaviorService(
-      const std::string& service, utils::Behavior behavior, const std::string& label);
-
+  // --- Callbacks ---
   void originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
 
   void waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg);
 
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+
+  // --- Helpers ---
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr createBehaviorService(
+      const std::string& service, utils::Behavior behavior, const std::string& label);
 
   void tickTree();
 

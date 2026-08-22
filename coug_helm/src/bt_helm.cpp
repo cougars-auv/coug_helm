@@ -165,18 +165,6 @@ BTHelmNode::BTHelmNode(const rclcpp::NodeOptions& options)
   RCLCPP_INFO(get_logger(), "Initialization complete.");
 }
 
-rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BTHelmNode::createBehaviorService(
-    const std::string& service, Behavior behavior, const std::string& label) {
-  return create_service<std_srvs::srv::Trigger>(
-      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr,
-                                       std_srvs::srv::Trigger::Response::SharedPtr res) {
-        tree_.haltTree();
-        blackboard_->set("pending_behavior", static_cast<int>(behavior));
-        res->success = true;
-        res->message = label + " requested.";
-      });
-}
-
 void BTHelmNode::originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
   if (!origin_set_ && msg->status.status >= sensor_msgs::msg::NavSatStatus::STATUS_FIX) {
     local_cartesian_.Reset(msg->latitude, msg->longitude, msg->altitude);
@@ -233,6 +221,18 @@ void BTHelmNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
   blackboard_->set("current_x", msg->pose.pose.position.x);
   blackboard_->set("current_y", msg->pose.pose.position.y);
   blackboard_->set("current_z", msg->pose.pose.position.z);
+}
+
+rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BTHelmNode::createBehaviorService(
+    const std::string& service, Behavior behavior, const std::string& label) {
+  return create_service<std_srvs::srv::Trigger>(
+      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr,
+                                       std_srvs::srv::Trigger::Response::SharedPtr res) {
+        tree_.haltTree();
+        blackboard_->set("pending_behavior", static_cast<int>(behavior));
+        res->success = true;
+        res->message = label + " requested.";
+      });
 }
 
 void BTHelmNode::tickTree() {
