@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file recovery_node.hpp
- * @brief RecoveryNode control node reimplemented from Nav2.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/control_node.h>
@@ -30,10 +23,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class RecoveryNode
- * @brief RecoveryNode control node reimplemented from Nav2.
- */
 class RecoveryNode : public RosBtNode<BT::ControlNode> {
  public:
   RecoveryNode(const std::string& name, const BT::NodeConfig& config)
@@ -44,10 +33,6 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
     return {BT::InputPort<int>("number_of_retries", 1, "Number of retries")};
   }
 
-  /**
-   * @brief Ticks the main child, running the recovery child on FAILURE up to the retry limit.
-   * @return The main child's terminal status, or FAILURE once retries are exhausted.
-   */
   BT::NodeStatus tick() override {
     const int number_of_retries = getInput<int>("number_of_retries").value();
     const size_t children_count = children_nodes_.size();

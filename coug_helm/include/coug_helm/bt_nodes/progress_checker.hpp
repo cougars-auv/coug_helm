@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file progress_checker.hpp
- * @brief BT decorator that fails and resets its child when the AUV stops making progress.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/decorator_node.h>
@@ -31,10 +24,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class ProgressChecker
- * @brief BT decorator that fails and resets its child when the AUV stops making progress.
- */
 class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
  public:
   ProgressChecker(const std::string& name, const BT::NodeConfig& config)
@@ -49,10 +38,6 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     };
   }
 
-  /**
-   * @brief Fails if the AUV hasn't moved progress_threshold (m) within progress_timeout (s).
-   * @return The child's status while progressing, FAILURE once stalled.
-   */
   BT::NodeStatus tick() override {
     double cx = getInput<double>("current_x").value();
     double cy = getInput<double>("current_y").value();

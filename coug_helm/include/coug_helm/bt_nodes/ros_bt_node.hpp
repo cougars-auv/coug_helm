@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file ros_bt_node.hpp
- * @brief Base class giving a BT leaf access to the shared ROS node.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -28,18 +21,9 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class RosBtNode
- * @brief Base class giving a BT leaf access to the shared ROS node.
- */
 template <class BTBase>
 class RosBtNode : public BTBase {
  public:
-  /**
-   * @brief Constructs the BT node and caches the shared rclcpp::Node from the blackboard.
-   * @param name The BT node instance name.
-   * @param config The BT node configuration (provides the blackboard).
-   */
   RosBtNode(const std::string& name, const BT::NodeConfig& config)
       : BTBase(name, config), node_(config.blackboard->template get<rclcpp::Node*>("node")) {}
 

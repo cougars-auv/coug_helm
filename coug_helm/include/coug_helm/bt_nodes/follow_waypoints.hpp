@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file follow_waypoints.hpp
- * @brief BT action node that steers the AUV through a waypoint list.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -35,10 +28,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class FollowWaypoints
- * @brief BT action node that steers the AUV through a waypoint list.
- */
 class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
  public:
   FollowWaypoints(const std::string& name, const BT::NodeConfig& config)
@@ -59,10 +48,6 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     };
   }
 
-  /**
-   * @brief Logs the mission size and delegates to onRunning.
-   * @return The status of the first onRunning tick.
-   */
   BT::NodeStatus onStart() override {
     auto wps = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
     auto idx = getInput<size_t>("current_waypoint").value();
@@ -72,10 +57,6 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     return onRunning();
   }
 
-  /**
-   * @brief Publishes a setpoint toward the current waypoint, advancing on capture or slip.
-   * @return RUNNING while navigating, SUCCESS once past the final waypoint.
-   */
   BT::NodeStatus onRunning() override {
     auto wps = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
     auto idx = getInput<size_t>("current_waypoint").value();
@@ -120,12 +101,6 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { publishStop(); }
 
  private:
-  /**
-   * @brief Publishes a heading/speed/depth setpoint from the current position toward the target.
-   * @param target The waypoint to steer toward.
-   * @param cx The current ENU x position.
-   * @param cy The current ENU y position.
-   */
   void publishHSD(const utils::Waypoint& target, double cx, double cy) {
     double dx = target.position.x - cx;
     double dy = target.position.y - cy;
@@ -138,9 +113,6 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     hsd_pub_->publish(msg);
   }
 
-  /**
-   * @brief Publishes a zero setpoint to stop the AUV.
-   */
   void publishStop() {
     coug_interfaces::msg::ControlSetpoint msg;
     hsd_pub_->publish(msg);

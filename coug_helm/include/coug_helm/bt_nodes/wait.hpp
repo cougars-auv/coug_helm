@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file wait.hpp
- * @brief BT recovery action that holds the AUV idle for a fixed duration.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -31,10 +24,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class Wait
- * @brief BT recovery action that holds the AUV idle for a fixed duration.
- */
 class Wait : public RosBtNode<BT::StatefulActionNode> {
  public:
   Wait(const std::string& name, const BT::NodeConfig& config)
@@ -46,10 +35,6 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {BT::InputPort<double>("wait_duration")}; }
 
-  /**
-   * @brief Records the start time and publishes a stop setpoint.
-   * @return Always RUNNING.
-   */
   BT::NodeStatus onStart() override {
     start_time_ = node_->now().seconds();
     RCLCPP_INFO(node_->get_logger(), "Wait: waiting %.1f s.",
@@ -58,10 +43,6 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
     return BT::NodeStatus::RUNNING;
   }
 
-  /**
-   * @brief Holds the stop setpoint until the wait duration elapses.
-   * @return RUNNING until the duration elapses, then SUCCESS.
-   */
   BT::NodeStatus onRunning() override {
     publishStop();
     double duration = getInput<double>("wait_duration").value();
@@ -74,9 +55,6 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override {}
 
  private:
-  /**
-   * @brief Publishes a zero setpoint to stop the AUV.
-   */
   void publishStop() {
     coug_interfaces::msg::ControlSetpoint msg;
     hsd_pub_->publish(msg);

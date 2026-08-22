@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file load_behavior.hpp
- * @brief BT action node that activates the pending behavior.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -31,10 +24,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class LoadBehavior
- * @brief BT action node that activates the pending behavior.
- */
 class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
  public:
   LoadBehavior(const std::string& name, const BT::NodeConfig& config)
@@ -48,10 +37,6 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  /**
-   * @brief Copies the pending behavior into the active behavior, logging on change.
-   * @return Always SUCCESS.
-   */
   BT::NodeStatus tick() override {
     int pending = getInput<int>("pending_behavior").value();
     if (pending != last_behavior_) {

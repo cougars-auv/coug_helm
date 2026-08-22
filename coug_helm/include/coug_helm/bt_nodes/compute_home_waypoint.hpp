@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file compute_home_waypoint.hpp
- * @brief BT action node that computes the home waypoint.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -33,10 +26,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class ComputeHomeWaypoint
- * @brief BT action node that computes the home waypoint.
- */
 class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
   ComputeHomeWaypoint(const std::string& name, const BT::NodeConfig& config)
@@ -55,10 +44,6 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  /**
-   * @brief Stages a home waypoint at mission_waypoints[0], depth 0.
-   * @return SUCCESS if a mission exists, FAILURE otherwise.
-   */
   BT::NodeStatus tick() override {
     auto mission = getInput<std::vector<utils::Waypoint>>("mission_waypoints").value();
     if (mission.empty()) {

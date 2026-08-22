@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file bt_helm_node.cpp
- * @brief Standalone executable for the BTHelmNode.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #include "coug_helm/bt_helm.hpp"
 
 int main(int argc, char* argv[]) {

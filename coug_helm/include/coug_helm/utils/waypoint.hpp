@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file waypoint.hpp
- * @brief Simple waypoint structure (should mirror WayPoint.msg).
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <coug_interfaces/msg/control_setpoint.hpp>
@@ -27,10 +20,6 @@
 
 namespace coug_helm::utils {
 
-/**
- * @struct Waypoint
- * @brief Container representing an AUV waypoint with associated mode, speed, and radii.
- */
 struct Waypoint {
   geometry_msgs::msg::Point position;
   uint8_t mode{coug_interfaces::msg::ControlSetpoint::DEPTH};

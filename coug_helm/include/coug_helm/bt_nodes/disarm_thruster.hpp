@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file disarm_thruster.hpp
- * @brief BT action node that disarms the thruster.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -33,10 +26,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class DisarmThruster
- * @brief BT action node that disarms the thruster.
- */
 class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
  public:
   DisarmThruster(const std::string& name, const BT::NodeConfig& config)
@@ -48,10 +37,6 @@ class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
-  /**
-   * @brief Dispatch the disarm request to the thruster arm service.
-   * @return FAILURE if the service is unavailable, otherwise RUNNING while awaiting the response.
-   */
   BT::NodeStatus onStart() override {
     if (!client_->service_is_ready()) {
       RCLCPP_ERROR(node_->get_logger(), "DisarmThruster: service '%s' unavailable.",
@@ -64,10 +49,6 @@ class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
     return BT::NodeStatus::RUNNING;
   }
 
-  /**
-   * @brief Poll for the disarm response.
-   * @return RUNNING until the response arrives, then SUCCESS or FAILURE based on the result.
-   */
   BT::NodeStatus onRunning() override {
     if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
       return BT::NodeStatus::RUNNING;

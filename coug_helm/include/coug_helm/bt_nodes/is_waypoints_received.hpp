@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file is_waypoints_received.hpp
- * @brief BT condition node that checks whether waypoints have been received.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -31,10 +24,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class IsWaypointsReceived
- * @brief BT condition node that checks whether waypoints have been received.
- */
 class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
  public:
   IsWaypointsReceived(const std::string& name, const BT::NodeConfig& config)
@@ -45,10 +34,6 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
     return {BT::InputPort<std::vector<utils::Waypoint>>("mission_waypoints")};
   }
 
-  /**
-   * @brief Checks whether a non-empty mission is loaded.
-   * @return SUCCESS if mission_waypoints is non-empty, FAILURE otherwise.
-   */
   BT::NodeStatus tick() override {
     if (!getInput<std::vector<utils::Waypoint>>("mission_waypoints").value().empty()) {
       return BT::NodeStatus::SUCCESS;

@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file stop.hpp
- * @brief BT action node that halts the AUV by publishing zero commands.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -31,10 +24,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class Stop
- * @brief BT action node that halts the AUV by publishing zero commands.
- */
 class Stop : public RosBtNode<BT::SyncActionNode> {
  public:
   Stop(const std::string& name, const BT::NodeConfig& config)
@@ -46,10 +35,6 @@ class Stop : public RosBtNode<BT::SyncActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
-  /**
-   * @brief Publishes a zero ControlSetpoint to stop the AUV.
-   * @return Always SUCCESS.
-   */
   BT::NodeStatus tick() override {
     coug_interfaces::msg::ControlSetpoint msg;
     hsd_pub_->publish(msg);

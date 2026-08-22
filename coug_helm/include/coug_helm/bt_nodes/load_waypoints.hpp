@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file load_waypoints.hpp
- * @brief BT action node that loads the pending waypoint list.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -32,10 +25,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class LoadWaypoints
- * @brief BT action node that loads the pending waypoint list.
- */
 class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
  public:
   LoadWaypoints(const std::string& name, const BT::NodeConfig& config)
@@ -51,10 +40,6 @@ class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  /**
-   * @brief Copies pending waypoints to active_waypoints and resets navigation progress.
-   * @return Always SUCCESS.
-   */
   BT::NodeStatus tick() override {
     auto waypoints = getInput<std::vector<utils::Waypoint>>("pending_waypoints").value();
     RCLCPP_INFO(node_->get_logger(), "LoadWaypoints: loading %zu waypoint(s).", waypoints.size());

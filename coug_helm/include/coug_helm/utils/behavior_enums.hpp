@@ -12,23 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file behavior_enums.hpp
- * @brief Behavior modes resolved by the tree and shared with diagnostics.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <string>
 
 namespace coug_helm::utils {
 
-/**
- * @enum Behavior
- * @brief Mission mode the tree dispatches on (registered as a BT scripting enum).
- */
 enum class Behavior : int {
   STOP = 0,
   MISSION,
@@ -38,11 +27,6 @@ enum class Behavior : int {
   EMERGENCY_SURFACE,
 };
 
-/**
- * @brief Maps a Behavior to its name for logging and diagnostics.
- * @param behavior The Behavior enum value to convert.
- * @return The string representation of the Behavior.
- */
 inline std::string toString(Behavior behavior) {
   switch (behavior) {
     case Behavior::STOP:

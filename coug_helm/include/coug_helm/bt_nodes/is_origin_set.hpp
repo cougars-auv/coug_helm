@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file is_origin_set.hpp
- * @brief BT condition node that checks whether the GPS origin has been set.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -30,10 +23,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class IsOriginSet
- * @brief BT condition node that checks whether the GPS origin has been set.
- */
 class IsOriginSet : public RosBtNode<BT::ConditionNode> {
  public:
   IsOriginSet(const std::string& name, const BT::NodeConfig& config)
@@ -42,10 +31,6 @@ class IsOriginSet : public RosBtNode<BT::ConditionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {BT::InputPort<bool>("origin_set")}; }
 
-  /**
-   * @brief Checks whether the GPS origin has been set.
-   * @return SUCCESS if the origin is set, FAILURE otherwise.
-   */
   BT::NodeStatus tick() override {
     if (getInput<bool>("origin_set").value()) {
       return BT::NodeStatus::SUCCESS;

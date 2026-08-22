@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file is_odom_healthy.hpp
- * @brief BT condition node that checks odometry health.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -27,10 +20,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class IsOdomHealthy
- * @brief BT condition node that checks odometry health.
- */
 class IsOdomHealthy : public BT::ConditionNode {
  public:
   IsOdomHealthy(const std::string& name, const BT::NodeConfig& config)
@@ -45,10 +34,6 @@ class IsOdomHealthy : public BT::ConditionNode {
     };
   }
 
-  /**
-   * @brief Checks whether odometry is being received within the timeout.
-   * @return SUCCESS if odometry is healthy, FAILURE otherwise.
-   */
   BT::NodeStatus tick() override {
     double last_odom = getInput<double>("last_odom_time").value();
     double now = getInput<double>("current_time").value();

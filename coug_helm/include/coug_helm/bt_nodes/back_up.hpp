@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file back_up.hpp
- * @brief BT action node that executes a backup maneuver (not implemented).
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -30,10 +23,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class BackUp
- * @brief BT action node that executes a backup maneuver (not implemented).
- */
 class BackUp : public RosBtNode<BT::SyncActionNode> {
  public:
   BackUp(const std::string& name, const BT::NodeConfig& config)
@@ -42,10 +31,6 @@ class BackUp : public RosBtNode<BT::SyncActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
-  /**
-   * @brief Backup maneuver (not implemented).
-   * @return Always SUCCESS.
-   */
   BT::NodeStatus tick() override {
     RCLCPP_WARN(node_->get_logger(), "BackUp: executing backup maneuver (not implemented).");
     return BT::NodeStatus::SUCCESS;

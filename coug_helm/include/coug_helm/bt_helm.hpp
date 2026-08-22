@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file bt_helm.hpp
- * @brief ROS 2 node that executes AUV waypoint missions with a BehaviorTree.CPP behavior tree.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -41,57 +34,23 @@
 
 namespace coug_helm {
 
-/**
- * @class BTHelmNode
- * @brief ROS 2 node that executes AUV waypoint missions with a BehaviorTree.CPP behavior tree.
- */
 class BTHelmNode : public rclcpp::Node {
  public:
-  /**
-   * @brief Constructs the blackboard, behavior tree, and ROS interfaces.
-   * @param options The node options.
-   */
   explicit BTHelmNode(const rclcpp::NodeOptions& options);
 
  private:
-  /**
-   * @brief Creates a Trigger service that halts the tree and queues a behavior for the next tick.
-   * @param service The service name.
-   * @param behavior The behavior to queue on the blackboard.
-   * @param label Human-readable behavior name for the service response.
-   * @return The created service handle.
-   */
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr createBehaviorService(
       const std::string& service, utils::Behavior behavior, const std::string& label);
 
-  /**
-   * @brief Callback for the shared GPS origin fix. Sets the ENU projection origin.
-   * @param msg The incoming NavSatFix message.
-   */
   void originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
 
-  /**
-   * @brief Callback for receiving a new waypoint mission. Projects GPS waypoints to ENU.
-   * @param msg The incoming WayPointList message.
-   */
   void waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg);
 
-  /**
-   * @brief Callback for odometry updates. Updates position on the blackboard.
-   * @param msg The incoming Odometry message.
-   */
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
 
-  /**
-   * @brief Timer callback that ticks the behavior tree once per cycle.
-   */
   void tickTree();
 
   // --- Diagnostics ---
-  /**
-   * @brief Diagnostic task to report the active behavior and waypoint progress.
-   * @param stat The diagnostic status wrapper to update.
-   */
   void checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
   // --- Behavior Tree ---

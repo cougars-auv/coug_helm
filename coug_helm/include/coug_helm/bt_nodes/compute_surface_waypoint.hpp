@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file compute_surface_waypoint.hpp
- * @brief BT action node that computes a surface waypoint.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -32,10 +25,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class ComputeSurfaceWaypoint
- * @brief BT action node that computes a surface waypoint.
- */
 class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
   ComputeSurfaceWaypoint(const std::string& name, const BT::NodeConfig& config)
@@ -55,10 +44,6 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  /**
-   * @brief Stages a surface waypoint at (current_x, current_y, z=0).
-   * @return Always SUCCESS.
-   */
   BT::NodeStatus tick() override {
     utils::Waypoint wp;
     wp.position.x = getInput<double>("current_x").value();

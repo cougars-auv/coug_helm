@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file round_robin.hpp
- * @brief RoundRobin control node reimplemented from Nav2.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/control_node.h>
@@ -27,10 +20,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class RoundRobin
- * @brief RoundRobin control node reimplemented from Nav2.
- */
 class RoundRobin : public BT::ControlNode {
  public:
   RoundRobin(const std::string& name, const BT::NodeConfig& config)
@@ -39,10 +28,6 @@ class RoundRobin : public BT::ControlNode {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
-  /**
-   * @brief Ticks children from the current index until one succeeds or all fail this round.
-   * @return SUCCESS or RUNNING from a child, FAILURE once every child has failed.
-   */
   BT::NodeStatus tick() override {
     const size_t num_children = children_nodes_.size();
     setStatus(BT::NodeStatus::RUNNING);

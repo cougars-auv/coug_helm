@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file bt_helm.cpp
- * @brief Implementation of the BTHelmNode.
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #include "coug_helm/bt_helm.hpp"
 
 #include <GeographicLib/LocalCartesian.hpp>

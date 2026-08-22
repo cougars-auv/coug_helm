@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file emergency_surface.hpp
- * @brief BT action node that drives the AUV to the surface in an emergency (not implemented).
- * @author Nelson Durrant
- * @date June 2026
- */
-
 #pragma once
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -30,10 +23,6 @@
 
 namespace coug_helm::bt_nodes {
 
-/**
- * @class EmergencySurface
- * @brief BT action node that drives the AUV to the surface in an emergency (not implemented).
- */
 class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
  public:
   EmergencySurface(const std::string& name, const BT::NodeConfig& config)
@@ -42,10 +31,6 @@ class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
   // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
-  /**
-   * @brief Emergency-surface maneuver (not implemented).
-   * @return Always SUCCESS.
-   */
   BT::NodeStatus tick() override {
     RCLCPP_WARN(node_->get_logger(), "EmergencySurface: surfacing (not implemented).");
     return BT::NodeStatus::SUCCESS;
