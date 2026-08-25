@@ -36,7 +36,7 @@ target_link_libraries(bt_helm_component
 )
 
 rclcpp_components_register_nodes(bt_helm_component
-  "coug_helm::BTHelmNode"
+  "coug_helm::BtHelmNode"
 )
 
 # --- Executables ---

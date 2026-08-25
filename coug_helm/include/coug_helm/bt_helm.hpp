@@ -34,9 +34,9 @@
 
 namespace coug_helm {
 
-class BTHelmNode : public rclcpp::Node {
+class BtHelmNode : public rclcpp::Node {
  public:
-  explicit BTHelmNode(const rclcpp::NodeOptions& options);
+  explicit BtHelmNode(const rclcpp::NodeOptions& options);
 
  private:
   // --- Callbacks ---

@@ -36,13 +36,14 @@ class IsOdomHealthy : public BT::ConditionNode {
 
   BT::NodeStatus tick() override {
     double last_odom = getInput<double>("last_odom_time").value();
-    double now = getInput<double>("current_time").value();
+    double current_time = getInput<double>("current_time").value();
     double timeout = getInput<double>("odom_timeout").value();
 
     if (last_odom == 0.0) {  // Treat "never received" as unhealthy.
       return BT::NodeStatus::FAILURE;
     }
-    return ((now - last_odom) < timeout) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+    return ((current_time - last_odom) < timeout) ? BT::NodeStatus::SUCCESS
+                                                  : BT::NodeStatus::FAILURE;
   }
 };
 

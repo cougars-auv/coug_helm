@@ -45,21 +45,21 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
   }
 
   BT::NodeStatus tick() override {
-    utils::Waypoint wp;
-    wp.position.x = getInput<double>("current_x").value();
-    wp.position.y = getInput<double>("current_y").value();
-    wp.position.z = 0.0;
-    wp.speed = getInput<double>("default_speed").value();
+    utils::Waypoint waypoint;
+    waypoint.position.x = getInput<double>("current_x").value();
+    waypoint.position.y = getInput<double>("current_y").value();
+    waypoint.position.z = 0.0;
+    waypoint.speed = getInput<double>("default_speed").value();
 
-    wp.capture_radius = getInput<double>("surface_capture_radius").value();
-    wp.capture_radius_z = getInput<double>("surface_capture_radius_z").value();
-    wp.slip_radius = getInput<double>("surface_slip_radius").value();
-    wp.slip_radius_z = getInput<double>("surface_slip_radius_z").value();
+    waypoint.capture_radius = getInput<double>("surface_capture_radius").value();
+    waypoint.capture_radius_z = getInput<double>("surface_capture_radius_z").value();
+    waypoint.slip_radius = getInput<double>("surface_slip_radius").value();
+    waypoint.slip_radius_z = getInput<double>("surface_slip_radius_z").value();
 
     RCLCPP_INFO(node_->get_logger(),
-                "ComputeSurfaceWaypoint: surface set to (%.1f, %.1f), depth 0.", wp.position.x,
-                wp.position.y);
-    setOutput("surface_waypoint", std::vector<utils::Waypoint>{wp});
+                "ComputeSurfaceWaypoint: surface set to (%.1f, %.1f), depth 0.",
+                waypoint.position.x, waypoint.position.y);
+    setOutput("surface_waypoint", std::vector<utils::Waypoint>{waypoint});
     return BT::NodeStatus::SUCCESS;
   }
 };

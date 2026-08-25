@@ -39,24 +39,25 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   }
 
   BT::NodeStatus tick() override {
-    double cx = getInput<double>("current_x").value();
-    double cy = getInput<double>("current_y").value();
-    double cz = getInput<double>("current_z").value();
-    double now = getInput<double>("current_time").value();
+    double current_x = getInput<double>("current_x").value();
+    double current_y = getInput<double>("current_y").value();
+    double current_z = getInput<double>("current_z").value();
+    double current_time = getInput<double>("current_time").value();
     double threshold = getInput<double>("progress_threshold").value();
     double timeout = getInput<double>("progress_timeout").value();
 
     // Re-seed the baseline on entry and whenever the AUV advances by threshold.
-    if (!seeded_ || std::hypot(cx - base_x_, cy - base_y_, cz - base_z_) >= threshold) {
-      base_x_ = cx;
-      base_y_ = cy;
-      base_z_ = cz;
-      last_progress_time_ = now;
+    if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
+                               current_z - baseline_z_) >= threshold) {
+      baseline_x_ = current_x;
+      baseline_y_ = current_y;
+      baseline_z_ = current_z;
+      last_progress_time_ = current_time;
       seeded_ = true;
-    } else if (timeout > 0.0 && (now - last_progress_time_) > timeout) {
+    } else if (timeout > 0.0 && (current_time - last_progress_time_) > timeout) {
       RCLCPP_WARN(node_->get_logger(),
                   "ProgressChecker: no progress for %.1f s; triggering recovery.",
-                  now - last_progress_time_);
+                  current_time - last_progress_time_);
       resetChild();
       return BT::NodeStatus::FAILURE;
     }
@@ -72,9 +73,9 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
 
  private:
   bool seeded_{false};
-  double base_x_{0.0};
-  double base_y_{0.0};
-  double base_z_{0.0};
+  double baseline_x_{0.0};
+  double baseline_y_{0.0};
+  double baseline_z_{0.0};
   double last_progress_time_{0.0};
 };
 
