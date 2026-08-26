@@ -107,11 +107,13 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
  private:
   void publishHsd(const utils::Waypoint& target, double current_x, double current_y) {
+    static constexpr double kRadToDeg = 180.0 / M_PI;
+
     double delta_x = target.position.x - current_x;
     double delta_y = target.position.y - current_y;
 
     coug_interfaces::msg::ControlSetpoint hsd_msg;
-    hsd_msg.heading = std::atan2(delta_y, delta_x) * 180.0 / M_PI;
+    hsd_msg.heading = std::atan2(delta_y, delta_x) * kRadToDeg;
     hsd_msg.speed = target.speed;
     hsd_msg.depth = target.position.z;
     hsd_msg.mode = target.mode;

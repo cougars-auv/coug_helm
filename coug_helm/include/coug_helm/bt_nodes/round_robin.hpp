@@ -33,7 +33,7 @@ class RoundRobin : public BT::ControlNode {
     setStatus(BT::NodeStatus::RUNNING);
 
     while (num_failures_ < num_children) {
-      const BT::NodeStatus child_status = children_nodes_[current_child_idx_]->executeTick();
+      const BT::NodeStatus child_status = children_nodes_[curr_child_idx_]->executeTick();
 
       switch (child_status) {
         case BT::NodeStatus::SUCCESS:
@@ -58,17 +58,15 @@ class RoundRobin : public BT::ControlNode {
   }
 
   void halt() override {
-    current_child_idx_ = 0;
+    curr_child_idx_ = 0;
     num_failures_ = 0;
     BT::ControlNode::halt();
   }
 
  private:
-  void advance(size_t num_children) {
-    current_child_idx_ = (current_child_idx_ + 1) % num_children;
-  }
+  void advance(size_t num_children) { curr_child_idx_ = (curr_child_idx_ + 1) % num_children; }
 
-  size_t current_child_idx_{0};
+  size_t curr_child_idx_{0};
   size_t num_failures_{0};
 };
 

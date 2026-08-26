@@ -43,10 +43,10 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
 
     setStatus(BT::NodeStatus::RUNNING);
 
-    while (current_child_idx_ < children_count) {
-      const BT::NodeStatus child_status = children_nodes_[current_child_idx_]->executeTick();
+    while (curr_child_idx_ < children_count) {
+      const BT::NodeStatus child_status = children_nodes_[curr_child_idx_]->executeTick();
 
-      if (current_child_idx_ == 0) {  // main behavior
+      if (curr_child_idx_ == 0) {  // main behavior
         switch (child_status) {
           case BT::NodeStatus::SUCCESS:
             if (retry_count_ > 0) {
@@ -54,20 +54,20 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
                           retry_count_);
             }
             haltChildren();
-            current_child_idx_ = 0;
+            curr_child_idx_ = 0;
             retry_count_ = 0;
             return BT::NodeStatus::SUCCESS;
           case BT::NodeStatus::FAILURE:
             if (retry_count_ < number_of_retries) {
               haltChildren();
-              current_child_idx_ = 1;
+              curr_child_idx_ = 1;
               RCLCPP_WARN(node_->get_logger(),
                           "RecoveryNode: behavior failed; running recovery (%d/%d).",
                           retry_count_ + 1, number_of_retries);
               break;
             }
             haltChildren();
-            current_child_idx_ = 0;
+            curr_child_idx_ = 0;
             retry_count_ = 0;
             RCLCPP_ERROR(node_->get_logger(), "RecoveryNode: retries exhausted (%d).",
                          number_of_retries);
@@ -82,11 +82,11 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
           case BT::NodeStatus::SUCCESS:
             haltChildren();
             retry_count_++;
-            current_child_idx_ = 0;
+            curr_child_idx_ = 0;
             break;
           case BT::NodeStatus::FAILURE:
             haltChildren();
-            current_child_idx_ = 0;
+            curr_child_idx_ = 0;
             retry_count_ = 0;
             return BT::NodeStatus::FAILURE;
           case BT::NodeStatus::RUNNING:
@@ -98,19 +98,19 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
     }
 
     haltChildren();
-    current_child_idx_ = 0;
+    curr_child_idx_ = 0;
     retry_count_ = 0;
     return BT::NodeStatus::FAILURE;
   }
 
   void halt() override {
-    current_child_idx_ = 0;
+    curr_child_idx_ = 0;
     retry_count_ = 0;
     BT::ControlNode::halt();
   }
 
  private:
-  size_t current_child_idx_{0};
+  size_t curr_child_idx_{0};
   int retry_count_{0};
 };
 
