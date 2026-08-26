@@ -103,9 +103,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   origin_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
       params_.origin_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::originCallback, this, std::placeholders::_1));
+
   waypoint_sub_ = create_subscription<coug_interfaces::msg::WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::waypointCallback, this, std::placeholders::_1));
+
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::odomCallback, this, std::placeholders::_1));
@@ -159,7 +161,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     diagnostic_updater_.setHardwareID(clean_ns + "/bt_helm_node");
 
     std::string prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
-    diagnostic_updater_.add(prefix + "Behavior Status", this, &BtHelmNode::checkBehaviorStatus);
+
+    std::string behavior_task = prefix + "Behavior Status";
+    diagnostic_updater_.add(behavior_task, this, &BtHelmNode::checkBehaviorStatus);
   }
 
   RCLCPP_INFO(get_logger(), "Initialization complete.");
