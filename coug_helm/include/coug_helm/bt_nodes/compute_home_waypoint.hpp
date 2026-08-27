@@ -44,12 +44,12 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
   }
 
   BT::NodeStatus tick() override {
-    auto mission = getInput<std::vector<utils::Waypoint>>("mission_waypoints").value();
-    if (mission.empty()) {
-      RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no mission loaded to home from.");
+    auto waypoints = getInput<std::vector<utils::Waypoint>>("mission_waypoints").value();
+    if (waypoints.empty()) {
+      RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no waypoints available to home from.");
       return BT::NodeStatus::FAILURE;
     }
-    utils::Waypoint home = mission[0];
+    utils::Waypoint home = waypoints[0];
     home.position.z = 0.0;
     home.mode = coug_interfaces::msg::ControlSetpoint::DEPTH;
 
