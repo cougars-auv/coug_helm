@@ -49,7 +49,7 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
   }
 
  private:
-  int last_behavior_{static_cast<int>(utils::Behavior::STOP)};
+  int last_behavior_{static_cast<int>(utils::Behavior::kStop)};
 };
 
 }  // namespace coug_helm::bt_nodes

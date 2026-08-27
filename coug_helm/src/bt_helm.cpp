@@ -64,8 +64,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
   blackboard_->set("reset_localization_service", params_.reset_localization_service);
 
-  blackboard_->set("pending_behavior", static_cast<int>(Behavior::STOP));
-  blackboard_->set("active_behavior", static_cast<int>(Behavior::STOP));
+  blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
+  blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
 
   blackboard_->set("current_waypoint", size_t{0});
   blackboard_->set("prev_norm_dist", -1.0);
@@ -111,14 +111,14 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::odomCallback, this, std::placeholders::_1));
 
-  start_srv_ = createBehaviorService(params_.start_service, Behavior::MISSION, "Mission");
-  stop_srv_ = createBehaviorService(params_.stop_service, Behavior::STOP, "Stop");
-  surface_srv_ = createBehaviorService(params_.surface_service, Behavior::SURFACE, "Surface");
-  home_srv_ = createBehaviorService(params_.home_service, Behavior::HOME, "Home");
+  start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
+  stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
+  surface_srv_ = createBehaviorService(params_.surface_service, Behavior::kSurface, "Surface");
+  home_srv_ = createBehaviorService(params_.home_service, Behavior::kHome, "Home");
   emergency_stop_srv_ = createBehaviorService(params_.emergency_stop_service,
-                                              Behavior::EMERGENCY_STOP, "Emergency stop");
+                                              Behavior::kEmergencyStop, "Emergency stop");
   emergency_surface_srv_ = createBehaviorService(params_.emergency_surface_service,
-                                                 Behavior::EMERGENCY_SURFACE, "Emergency surface");
+                                                 Behavior::kEmergencySurface, "Emergency surface");
 
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
                                   std::bind(&BtHelmNode::tickTree, this));
@@ -247,13 +247,13 @@ void BtHelmNode::tickTree() {
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
-  bool emergency = (active == Behavior::EMERGENCY_STOP || active == Behavior::EMERGENCY_SURFACE);
+  bool emergency = (active == Behavior::kEmergencyStop || active == Behavior::kEmergencySurface);
   stat.summary(emergency ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
                          : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
   bool navigating =
-      (active == Behavior::MISSION || active == Behavior::SURFACE || active == Behavior::HOME);
+      (active == Behavior::kMission || active == Behavior::kSurface || active == Behavior::kHome);
   auto waypoints = blackboard_->get<std::vector<Waypoint>>("active_waypoints");
   if (!navigating || waypoints.empty()) {
     return;

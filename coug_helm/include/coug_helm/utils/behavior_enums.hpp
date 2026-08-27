@@ -19,27 +19,27 @@
 namespace coug_helm::utils {
 
 enum class Behavior : int {
-  STOP = 0,
-  MISSION,
-  SURFACE,
-  HOME,
-  EMERGENCY_STOP,
-  EMERGENCY_SURFACE,
+  kStop = 0,
+  kMission,
+  kSurface,
+  kHome,
+  kEmergencyStop,
+  kEmergencySurface,
 };
 
 inline std::string toString(Behavior behavior) {
   switch (behavior) {
-    case Behavior::STOP:
+    case Behavior::kStop:
       return "STOP";
-    case Behavior::MISSION:
+    case Behavior::kMission:
       return "MISSION";
-    case Behavior::SURFACE:
+    case Behavior::kSurface:
       return "SURFACE";
-    case Behavior::HOME:
+    case Behavior::kHome:
       return "HOME";
-    case Behavior::EMERGENCY_STOP:
+    case Behavior::kEmergencyStop:
       return "EMERGENCY_STOP";
-    case Behavior::EMERGENCY_SURFACE:
+    case Behavior::kEmergencySurface:
       return "EMERGENCY_SURFACE";
   }
   return "UNKNOWN";
