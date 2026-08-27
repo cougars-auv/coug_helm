@@ -166,50 +166,50 @@
       <LoadBehavior pending_behavior="{pending_behavior}" active_behavior="{active_behavior}"/>
       <ReactiveFallback>
         <ReactiveSequence>
-          <ScriptCondition code="active_behavior == EMERGENCY_STOP"/>
+          <ScriptCondition code="active_behavior == kEmergencyStop"/>
           <Sequence>
             <Stop/>
             <ForceSuccess>
               <DisarmThruster/>
             </ForceSuccess>
-            <Script code="pending_behavior := STOP"/>
+            <Script code="pending_behavior := kStop"/>
           </Sequence>
         </ReactiveSequence>
         <ReactiveSequence>
-          <ScriptCondition code="active_behavior == EMERGENCY_SURFACE"/>
+          <ScriptCondition code="active_behavior == kEmergencySurface"/>
           <Sequence>
             <Stop/>
             <ForceSuccess>
               <EmergencySurface/>
             </ForceSuccess>
-            <Script code="pending_behavior := STOP"/>
+            <Script code="pending_behavior := kStop"/>
           </Sequence>
         </ReactiveSequence>
         <ReactiveSequence>
-          <ScriptCondition code="active_behavior == MISSION"/>
+          <ScriptCondition code="active_behavior == kMission"/>
           <Sequence>
             <ForceSuccess>
               <SubTree ID="MissionBehavior" _autoremap="true"/>
             </ForceSuccess>
-            <Script code="pending_behavior := STOP"/>
+            <Script code="pending_behavior := kStop"/>
           </Sequence>
         </ReactiveSequence>
         <ReactiveSequence>
-          <ScriptCondition code="active_behavior == HOME"/>
+          <ScriptCondition code="active_behavior == kHome"/>
           <Sequence>
             <ForceSuccess>
               <SubTree ID="HomeBehavior" _autoremap="true"/>
             </ForceSuccess>
-            <Script code="pending_behavior := STOP"/>
+            <Script code="pending_behavior := kStop"/>
           </Sequence>
         </ReactiveSequence>
         <ReactiveSequence>
-          <ScriptCondition code="active_behavior == SURFACE"/>
+          <ScriptCondition code="active_behavior == kSurface"/>
           <Sequence>
             <ForceSuccess>
               <SubTree ID="SurfaceBehavior" _autoremap="true"/>
             </ForceSuccess>
-            <Script code="pending_behavior := STOP"/>
+            <Script code="pending_behavior := kStop"/>
           </Sequence>
         </ReactiveSequence>
         <Stop/>
