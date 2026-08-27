@@ -6,7 +6,6 @@
   <description>Behavior Tree helm for mission control and autonomy.</description>
   <maintainer email="snelsond@byu.edu">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
-  <url type="repository">https://github.com/cougars-auv/coug_helm</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>

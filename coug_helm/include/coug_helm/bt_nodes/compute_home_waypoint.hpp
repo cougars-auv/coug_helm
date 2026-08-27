@@ -31,7 +31,6 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
   ComputeHomeWaypoint(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
         BT::InputPort<std::vector<utils::Waypoint>>("mission_waypoints"),

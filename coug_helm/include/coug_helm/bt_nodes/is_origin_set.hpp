@@ -28,7 +28,6 @@ class IsOriginSet : public RosBtNode<BT::ConditionNode> {
   IsOriginSet(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::ConditionNode>(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {BT::InputPort<bool>("origin_set")}; }
 
   BT::NodeStatus tick() override {

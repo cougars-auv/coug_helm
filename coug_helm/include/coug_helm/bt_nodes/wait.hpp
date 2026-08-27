@@ -32,7 +32,6 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
         config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
   }
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {BT::InputPort<double>("wait_duration")}; }
 
   BT::NodeStatus onStart() override {
@@ -60,7 +59,6 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
     hsd_pub_->publish(msg);
   }
 
-  // --- ROS Interfaces ---
   rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
   double start_time_{0.0};
 };

@@ -1,5 +1,4 @@
 bt_helm_node:
-  # --- Node Settings ---
   tick_rate_hz:
     type: double
     default_value: 20.0
@@ -8,7 +7,6 @@ bt_helm_node:
   publish_diagnostics:
     type: bool
     default_value: false
-
   default_capture_radius:
     type: double
     default_value: 25.0
@@ -39,7 +37,6 @@ bt_helm_node:
     default_value: 0.5
     validation:
       gt_eq<>: [0.1]
-
   default_slip_radius:
     type: double
     default_value: 50.0
@@ -70,13 +67,11 @@ bt_helm_node:
     default_value: 0.5
     validation:
       gt_eq<>: [0.1]
-
   default_speed_rpm:
     type: double
     default_value: 1500.0
     validation:
       bounds<>: [0.0, 1525.0]
-
   odom_timeout_sec:
     type: double
     default_value: 2.0
@@ -87,7 +82,6 @@ bt_helm_node:
     default_value: 30.0
     validation:
       gt_eq<>: [0.0]
-
   progress_timeout_sec:
     type: double
     default_value: 15.0
@@ -108,8 +102,6 @@ bt_helm_node:
     default_value: 5.0
     validation:
       gt_eq<>: [0.0]
-
-  # --- Groot2 Connection ---
   publish_groot2:
     type: bool
     default_value: false
@@ -118,8 +110,6 @@ bt_helm_node:
     default_value: 1667
     validation:
       bounds<>: [1024, 65535]
-
-  # --- ROS Topics and Services ---
   origin_topic:
     type: string
     default_value: "/origin"
@@ -140,7 +130,6 @@ bt_helm_node:
     default_value: "cmd_hsd"
     validation:
       not_empty<>: []
-
   start_service:
     type: string
     default_value: "start"
@@ -171,7 +160,6 @@ bt_helm_node:
     default_value: "emergency_surface"
     validation:
       not_empty<>: []
-
   arm_thruster_service:
     type: string
     default_value: "thruster/arm"

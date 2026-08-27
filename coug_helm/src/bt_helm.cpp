@@ -99,7 +99,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
   blackboard_->set("wait_duration_sec", params_.wait_duration_sec);
 
-  // --- ROS Interfaces ---
   origin_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
       params_.origin_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::originCallback, this, std::placeholders::_1));
@@ -124,7 +123,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
                                   std::bind(&BtHelmNode::tickTree, this));
 
-  // --- BT Node Registration ---
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsOriginSet>("IsOriginSet");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
@@ -148,13 +146,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
   tree_ = factory_.createTreeFromFile(pkg_share + "/trees/bt_helm_tree.xml", blackboard_);
 
-  // --- Groot2 Publisher ---
   if (params_.publish_groot2) {
     groot2_pub_ = std::make_unique<BT::Groot2Publisher>(tree_, params_.groot2_port);
     RCLCPP_INFO(get_logger(), "Groot2 Publisher: Port %ld", params_.groot2_port);
   }
 
-  // --- ROS Diagnostics ---
   if (params_.publish_diagnostics) {
     std::string ns = this->get_namespace();
     std::string clean_ns = (ns == "/") ? "" : ns;
@@ -189,7 +185,7 @@ void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     return;
   }
 
-  // Transform waypoints from lat/lon into the shared map frame
+  // Transform waypoints from lat/lon into the map frame
   std::vector<Waypoint> map_waypoints;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& src_waypoint = msg->waypoints[i];

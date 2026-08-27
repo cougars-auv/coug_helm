@@ -34,7 +34,6 @@ class ResetLocalization : public RosBtNode<BT::StatefulActionNode> {
     client_ = node_->create_client<std_srvs::srv::Trigger>(service_name_);
   }
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
   BT::NodeStatus onStart() override {

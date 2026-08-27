@@ -28,7 +28,6 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
   RecoveryNode(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::ControlNode>(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {BT::InputPort<int>("number_of_retries", 1, "Number of retries")};
   }

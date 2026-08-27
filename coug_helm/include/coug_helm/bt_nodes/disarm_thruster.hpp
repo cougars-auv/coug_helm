@@ -34,7 +34,6 @@ class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
     client_ = node_->create_client<std_srvs::srv::SetBool>(service_name_);
   }
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
   BT::NodeStatus onStart() override {

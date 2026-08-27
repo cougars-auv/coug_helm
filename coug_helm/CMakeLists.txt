@@ -10,20 +10,17 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# --- Dependencies ---
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GeographicLib REQUIRED IMPORTED_TARGET geographiclib)
 
-# --- Parameters ---
 generate_parameter_library(
   bt_helm_parameters
   "params/bt_helm_params.yaml"
 )
 
-# --- Component Library ---
 ament_auto_add_library(bt_helm_component SHARED NO_TARGET_LINK_LIBRARIES
   src/bt_helm.cpp
 )
@@ -39,7 +36,6 @@ rclcpp_components_register_nodes(bt_helm_component
   "coug_helm::BtHelmNode"
 )
 
-# --- Executables ---
 ament_auto_add_executable(bt_helm NO_TARGET_LINK_LIBRARIES
   src/bt_helm_node.cpp
 )

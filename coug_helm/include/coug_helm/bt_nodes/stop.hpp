@@ -32,7 +32,6 @@ class Stop : public RosBtNode<BT::SyncActionNode> {
         config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
   }
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
   BT::NodeStatus tick() override {
@@ -42,7 +41,6 @@ class Stop : public RosBtNode<BT::SyncActionNode> {
   }
 
  private:
-  // --- ROS Interfaces ---
   rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
 };
 

@@ -25,7 +25,6 @@ class IsOdomHealthy : public BT::ConditionNode {
   IsOdomHealthy(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
         BT::InputPort<double>("last_odom_time"),
@@ -39,7 +38,7 @@ class IsOdomHealthy : public BT::ConditionNode {
     double current_time = getInput<double>("current_time").value();
     double timeout = getInput<double>("odom_timeout").value();
 
-    if (last_odom == 0.0) {  // Treat "never received" as unhealthy.
+    if (last_odom == 0.0) {
       return BT::NodeStatus::FAILURE;
     }
     return ((current_time - last_odom) < timeout) ? BT::NodeStatus::SUCCESS

@@ -28,7 +28,6 @@ class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
   EmergencySurface(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
   BT::NodeStatus tick() override {

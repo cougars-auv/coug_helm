@@ -29,7 +29,6 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   ProgressChecker(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::DecoratorNode>(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
         BT::InputPort<double>("current_x"),          BT::InputPort<double>("current_y"),

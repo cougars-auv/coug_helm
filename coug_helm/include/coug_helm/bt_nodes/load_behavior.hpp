@@ -29,7 +29,6 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
   LoadBehavior(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() {
     return {
         BT::InputPort<int>("pending_behavior"),

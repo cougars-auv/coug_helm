@@ -25,7 +25,6 @@ class RoundRobin : public BT::ControlNode {
   RoundRobin(const std::string& name, const BT::NodeConfig& config)
       : BT::ControlNode(name, config) {}
 
-  // --- Overrides ---
   static BT::PortsList providedPorts() { return {}; }
 
   BT::NodeStatus tick() override {
