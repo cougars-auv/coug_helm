@@ -60,7 +60,7 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
   }
 
   rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
-  double start_time_{0.0};
+  double start_time_;
 };
 
 }  // namespace coug_helm::bt_nodes

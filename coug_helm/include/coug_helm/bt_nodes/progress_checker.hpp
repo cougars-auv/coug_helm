@@ -72,10 +72,10 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
 
  private:
   bool seeded_{false};
-  double baseline_x_{0.0};
-  double baseline_y_{0.0};
-  double baseline_z_{0.0};
-  double last_progress_time_{0.0};
+  double baseline_x_;
+  double baseline_y_;
+  double baseline_z_;
+  double last_progress_time_;
 };
 
 }  // namespace coug_helm::bt_nodes
