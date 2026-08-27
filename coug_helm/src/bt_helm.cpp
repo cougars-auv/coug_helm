@@ -181,7 +181,7 @@ void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
   }
 
   if (!origin_set_) {
-    RCLCPP_WARN(get_logger(), "Origin not set. Dropping mission.");
+    RCLCPP_WARN(get_logger(), "Origin not set. Dropping waypoints.");
     return;
   }
 
