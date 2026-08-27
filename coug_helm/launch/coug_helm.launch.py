@@ -25,7 +25,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration("use_sim_time")
-    auv_ns = LaunchConfiguration("auv_ns")
+    agent_ns = LaunchConfiguration("agent_ns")
 
     fleet_params = PathJoinSubstitution(
         [
@@ -34,10 +34,10 @@ def generate_launch_description() -> LaunchDescription:
             "coug_helm_params.yaml",
         ]
     )
-    auv_params = PathJoinSubstitution(
+    agent_params = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
-            PythonExpression(["'", auv_ns, "' + '_params.yaml'"]),
+            PythonExpression(["'", agent_ns, "' + '_params.yaml'"]),
         ]
     )
 
@@ -49,9 +49,9 @@ def generate_launch_description() -> LaunchDescription:
                 description="Use simulation/rosbag clock if true",
             ),
             DeclareLaunchArgument(
-                "auv_ns",
+                "agent_ns",
                 default_value="auv0",
-                description="Namespace for the AUV (e.g. auv0)",
+                description="Namespace for the agent (e.g. auv0)",
             ),
             Node(
                 package="coug_helm",
@@ -59,7 +59,7 @@ def generate_launch_description() -> LaunchDescription:
                 name="bt_helm_node",
                 parameters=[
                     fleet_params,
-                    auv_params,
+                    agent_params,
                     {"use_sim_time": use_sim_time},
                 ],
             ),

@@ -45,7 +45,7 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     double threshold = getInput<double>("progress_threshold").value();
     double timeout = getInput<double>("progress_timeout").value();
 
-    // Re-seed the baseline on entry and whenever the AUV advances by threshold.
+    // Re-seed the baseline on entry and whenever the agent advances by threshold.
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
                                current_z - baseline_z_) >= threshold) {
       baseline_x_ = current_x;
