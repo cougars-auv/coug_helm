@@ -16,11 +16,11 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <coug_interfaces/msg/way_point.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -30,11 +30,13 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
       : RosBtNode<BT::ConditionNode>(name, config) {}
 
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::vector<utils::Waypoint>>("mission_waypoints")};
+    return {BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints")};
   }
 
   BT::NodeStatus tick() override {
-    if (!getInput<std::vector<utils::Waypoint>>("mission_waypoints").value().empty()) {
+    if (!getInput<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints")
+             .value()
+             .empty()) {
       return BT::NodeStatus::SUCCESS;
     }
     RCLCPP_WARN(node_->get_logger(), "IsWaypointsReceived: no waypoints received.");

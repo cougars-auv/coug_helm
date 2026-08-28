@@ -18,13 +18,13 @@
 
 #include <cmath>
 #include <coug_interfaces/msg/control_setpoint.hpp>
+#include <coug_interfaces/msg/way_point.hpp>
 #include <cstdint>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/utils/waypoint.hpp"
 
 namespace coug_helm::bt_nodes {
 
@@ -38,7 +38,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
   static BT::PortsList providedPorts() {
     return {
-        BT::InputPort<std::vector<utils::Waypoint>>("active_waypoints"),
+        BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<double>("current_z"),
@@ -48,7 +48,8 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   }
 
   BT::NodeStatus onStart() override {
-    auto waypoints = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
+    auto waypoints =
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
     auto waypoint_idx = getInput<size_t>("current_waypoint").value();
     if (!waypoints.empty() && waypoint_idx < waypoints.size()) {
       RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: navigating %zu waypoint(s).",
@@ -58,7 +59,8 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   }
 
   BT::NodeStatus onRunning() override {
-    auto waypoints = getInput<std::vector<utils::Waypoint>>("active_waypoints").value();
+    auto waypoints =
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
     auto waypoint_idx = getInput<size_t>("current_waypoint").value();
 
     if (waypoints.empty() || waypoint_idx >= waypoints.size()) {
@@ -78,7 +80,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     publishHsd(target, current_x, current_y);
     double horizontal_dist =
         std::hypot(target.position.x - current_x, target.position.y - current_y);
-    double vertical_dist = (target.mode == coug_interfaces::msg::ControlSetpoint::ALTITUDE)
+    double vertical_dist = (target.mode == coug_interfaces::msg::WayPoint::ALTITUDE)
                                ? 0.0
                                : std::abs(target.position.z - current_z);
 
@@ -105,7 +107,8 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { publishStop(); }
 
  private:
-  void publishHsd(const utils::Waypoint& target, double current_x, double current_y) {
+  void publishHsd(const coug_interfaces::msg::WayPoint& target, double current_x,
+                  double current_y) {
     static constexpr double kRadToDeg = 180.0 / M_PI;
 
     double delta_x = target.position.x - current_x;
@@ -113,7 +116,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
     coug_interfaces::msg::ControlSetpoint hsd_msg;
     hsd_msg.heading = std::atan2(delta_y, delta_x) * kRadToDeg;
-    hsd_msg.speed = target.speed;
+    hsd_msg.speed = target.speed_rpm;
     hsd_msg.depth = target.position.z;
     hsd_msg.mode = target.mode;
     hsd_pub_->publish(hsd_msg);

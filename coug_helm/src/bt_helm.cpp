@@ -42,9 +42,9 @@
 
 namespace coug_helm {
 
+using coug_interfaces::msg::WayPoint;
 using utils::Behavior;
 using utils::toString;
-using utils::Waypoint;
 
 BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     : Node("bt_helm_node", options), diagnostic_updater_(this) {
@@ -65,8 +65,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_waypoint", size_t{0});
   blackboard_->set("prev_norm_dist", -1.0);
 
-  blackboard_->set("active_waypoints", std::vector<Waypoint>{});
-  blackboard_->set("mission_waypoints", std::vector<Waypoint>{});
+  blackboard_->set("active_waypoints", std::vector<WayPoint>{});
+  blackboard_->set("mission_waypoints", std::vector<WayPoint>{});
 
   blackboard_->set("current_x", 0.0);
   blackboard_->set("current_y", 0.0);
@@ -159,13 +159,13 @@ void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     return;
   }
 
-  std::vector<Waypoint> map_waypoints;
+  std::vector<WayPoint> map_waypoints;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& src_waypoint = msg->waypoints[i];
-    Waypoint waypoint;
+    WayPoint waypoint;
     waypoint.position = src_waypoint.position;
     waypoint.mode = src_waypoint.mode;
-    waypoint.speed = src_waypoint.speed_rpm;
+    waypoint.speed_rpm = src_waypoint.speed_rpm;
     waypoint.capture_radius = src_waypoint.capture_radius > 0.0 ? src_waypoint.capture_radius
                                                                 : params_.default_capture_radius;
     waypoint.capture_radius_z = src_waypoint.capture_radius_z > 0.0
@@ -180,9 +180,9 @@ void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     RCLCPP_INFO(get_logger(),
                 "Waypoint %zu: X %.2f, Y %.2f, Z %.2f, Speed %.1f RPM, "
                 "Capture %.1f/%.1f m, Slip %.1f/%.1f m",
-                i, waypoint.position.x, waypoint.position.y, waypoint.position.z, waypoint.speed,
-                waypoint.capture_radius, waypoint.capture_radius_z, waypoint.slip_radius,
-                waypoint.slip_radius_z);
+                i, waypoint.position.x, waypoint.position.y, waypoint.position.z,
+                waypoint.speed_rpm, waypoint.capture_radius, waypoint.capture_radius_z,
+                waypoint.slip_radius, waypoint.slip_radius_z);
   }
 
   blackboard_->set("mission_waypoints", map_waypoints);
@@ -223,7 +223,7 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
 
   bool navigating =
       (active == Behavior::kMission || active == Behavior::kSurface || active == Behavior::kHome);
-  auto waypoints = blackboard_->get<std::vector<Waypoint>>("active_waypoints");
+  auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
   if (!navigating || waypoints.empty()) {
     return;
   }
