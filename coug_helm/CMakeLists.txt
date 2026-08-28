@@ -13,9 +13,6 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GeographicLib REQUIRED IMPORTED_TARGET geographiclib)
-
 generate_parameter_library(
   bt_helm_parameters
   "params/bt_helm_params.yaml"
@@ -29,7 +26,6 @@ target_compile_features(bt_helm_component PUBLIC cxx_std_17)
 
 target_link_libraries(bt_helm_component
   bt_helm_parameters
-  PkgConfig::GeographicLib
 )
 
 rclcpp_components_register_nodes(bt_helm_component

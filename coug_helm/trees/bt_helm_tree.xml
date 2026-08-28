@@ -6,9 +6,6 @@
       <input_port name="current_time"/>
       <input_port name="odom_timeout"/>
     </Condition>
-    <Condition ID="IsOriginSet">
-      <input_port name="origin_set"/>
-    </Condition>
     <Condition ID="IsWaypointsReceived">
       <input_port name="mission_waypoints"/>
     </Condition>
@@ -73,7 +70,6 @@
 
   <BehaviorTree ID="FollowWaypointsWithRecovery">
     <ReactiveSequence>
-      <IsOriginSet origin_set="{origin_set}"/>
       <Fallback>
         <IsOdomHealthy
             last_odom_time="{last_odom_time}"

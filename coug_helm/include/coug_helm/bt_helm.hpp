@@ -17,13 +17,11 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 
-#include <GeographicLib/LocalCartesian.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <memory>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
 #include <vector>
@@ -40,8 +38,6 @@ class BtHelmNode : public rclcpp::Node {
 
  private:
   // --- Callbacks ---
-  void originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
-
   void waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg);
 
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
@@ -62,7 +58,6 @@ class BtHelmNode : public rclcpp::Node {
   BT::Blackboard::Ptr blackboard_;
 
   // --- ROS Interfaces ---
-  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr origin_sub_;
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 
@@ -79,10 +74,6 @@ class BtHelmNode : public rclcpp::Node {
   // --- Parameters ---
   std::shared_ptr<bt_helm_node::ParamListener> param_listener_;
   bt_helm_node::Params params_;
-
-  // --- State ---
-  GeographicLib::LocalCartesian local_cartesian_;
-  bool origin_set_{false};
 };
 
 }  // namespace coug_helm

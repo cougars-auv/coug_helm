@@ -14,12 +14,10 @@
 
 #include "coug_helm/bt_helm.hpp"
 
-#include <GeographicLib/LocalCartesian.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <cmath>
 #include <cstdint>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <geometry_msgs/msg/point.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
 #include <vector>
@@ -31,7 +29,6 @@
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
 #include "coug_helm/bt_nodes/follow_waypoints.hpp"
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
-#include "coug_helm/bt_nodes/is_origin_set.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
 #include "coug_helm/bt_nodes/load_behavior.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
@@ -50,9 +47,7 @@ using utils::toString;
 using utils::Waypoint;
 
 BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
-    : Node("bt_helm_node", options),
-      diagnostic_updater_(this),
-      local_cartesian_(0.0, 0.0, 0.0, GeographicLib::Geocentric::WGS84()) {
+    : Node("bt_helm_node", options), diagnostic_updater_(this) {
   param_listener_ = std::make_shared<bt_helm_node::ParamListener>(get_node_parameters_interface());
   params_ = param_listener_->get_params();
 
@@ -76,7 +71,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_x", 0.0);
   blackboard_->set("current_y", 0.0);
   blackboard_->set("current_z", 0.0);
-  blackboard_->set("origin_set", false);
   blackboard_->set("last_odom_time", 0.0);
   blackboard_->set("current_time", 0.0);
 
@@ -99,10 +93,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
   blackboard_->set("wait_duration_sec", params_.wait_duration_sec);
 
-  origin_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
-      params_.origin_topic, rclcpp::SystemDefaultsQoS(),
-      std::bind(&BtHelmNode::originCallback, this, std::placeholders::_1));
-
   waypoint_sub_ = create_subscription<coug_interfaces::msg::WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::waypointCallback, this, std::placeholders::_1));
@@ -124,7 +114,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
                                   std::bind(&BtHelmNode::tickTree, this));
 
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
-  factory_.registerNodeType<bt_nodes::IsOriginSet>("IsOriginSet");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
@@ -165,36 +154,16 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   RCLCPP_INFO(get_logger(), "Initialization complete.");
 }
 
-void BtHelmNode::originCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
-  if (!origin_set_ && msg->status.status >= sensor_msgs::msg::NavSatStatus::STATUS_FIX) {
-    local_cartesian_.Reset(msg->latitude, msg->longitude, msg->altitude);
-    origin_set_ = true;
-    blackboard_->set("origin_set", true);
-    RCLCPP_INFO(get_logger(), "GPS origin set: Lat %.6f, Lon %.6f, Alt %.2f", msg->latitude,
-                msg->longitude, msg->altitude);
-  }
-}
-
 void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg) {
   if (msg->waypoints.empty()) {
     return;
   }
 
-  if (!origin_set_) {
-    RCLCPP_WARN(get_logger(), "Origin not set. Dropping waypoints.");
-    return;
-  }
-
-  // Transform waypoints from lat/lon into the map frame
   std::vector<Waypoint> map_waypoints;
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& src_waypoint = msg->waypoints[i];
-    const auto& gps = src_waypoint.position;
     Waypoint waypoint;
-    double dummy_z;
-    local_cartesian_.Forward(gps.latitude, gps.longitude, 0.0, waypoint.position.x,
-                             waypoint.position.y, dummy_z);
-    waypoint.position.z = gps.altitude;
+    waypoint.position = src_waypoint.position;
     waypoint.mode = src_waypoint.mode;
     waypoint.speed = src_waypoint.speed_rpm;
     waypoint.capture_radius = src_waypoint.capture_radius > 0.0 ? src_waypoint.capture_radius
@@ -209,9 +178,9 @@ void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     map_waypoints.push_back(waypoint);
 
     RCLCPP_INFO(get_logger(),
-                "Waypoint %zu: Lat %.6f, Lon %.6f, Depth %.2f, Speed %.1f RPM, "
+                "Waypoint %zu: X %.2f, Y %.2f, Z %.2f, Speed %.1f RPM, "
                 "Capture %.1f/%.1f m, Slip %.1f/%.1f m",
-                i, gps.latitude, gps.longitude, gps.altitude, waypoint.speed,
+                i, waypoint.position.x, waypoint.position.y, waypoint.position.z, waypoint.speed,
                 waypoint.capture_radius, waypoint.capture_radius_z, waypoint.slip_radius,
                 waypoint.slip_radius_z);
   }

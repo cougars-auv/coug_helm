@@ -110,11 +110,6 @@ bt_helm_node:
     default_value: 1667
     validation:
       bounds<>: [1024, 65535]
-  origin_topic:
-    type: string
-    default_value: "/origin"
-    validation:
-      not_empty<>: []
   waypoint_topic:
     type: string
     default_value: "waypoints"
