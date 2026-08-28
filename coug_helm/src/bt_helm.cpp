@@ -159,24 +159,9 @@ void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::Shar
     return;
   }
 
-  std::vector<WayPoint> map_waypoints;
-  for (size_t i = 0; i < msg->waypoints.size(); ++i) {
-    const auto& src_waypoint = msg->waypoints[i];
-    WayPoint waypoint;
-    waypoint.position = src_waypoint.position;
-    waypoint.mode = src_waypoint.mode;
-    waypoint.speed_rpm = src_waypoint.speed_rpm;
-    waypoint.capture_radius = src_waypoint.capture_radius > 0.0 ? src_waypoint.capture_radius
-                                                                : params_.default_capture_radius;
-    waypoint.capture_radius_z = src_waypoint.capture_radius_z > 0.0
-                                    ? src_waypoint.capture_radius_z
-                                    : params_.default_capture_radius_z;
-    waypoint.slip_radius =
-        src_waypoint.slip_radius > 0.0 ? src_waypoint.slip_radius : params_.default_slip_radius;
-    waypoint.slip_radius_z = src_waypoint.slip_radius_z > 0.0 ? src_waypoint.slip_radius_z
-                                                              : params_.default_slip_radius_z;
-    map_waypoints.push_back(waypoint);
-
+  std::vector<WayPoint> map_waypoints = msg->waypoints;
+  for (size_t i = 0; i < map_waypoints.size(); ++i) {
+    const auto& waypoint = map_waypoints[i];
     RCLCPP_INFO(get_logger(),
                 "Waypoint %zu: X %.2f, Y %.2f, Z %.2f, Speed %.1f RPM, "
                 "Capture %.1f/%.1f m, Slip %.1f/%.1f m",

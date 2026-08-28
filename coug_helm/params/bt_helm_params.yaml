@@ -7,16 +7,6 @@ bt_helm_node:
   publish_diagnostics:
     type: bool
     default_value: false
-  default_capture_radius:
-    type: double
-    default_value: 25.0
-    validation:
-      gt_eq<>: [0.1]
-  default_capture_radius_z:
-    type: double
-    default_value: 2.0
-    validation:
-      gt_eq<>: [0.1]
   surface_capture_radius:
     type: double
     default_value: 1000.0
@@ -35,16 +25,6 @@ bt_helm_node:
   home_capture_radius_z:
     type: double
     default_value: 0.5
-    validation:
-      gt_eq<>: [0.1]
-  default_slip_radius:
-    type: double
-    default_value: 50.0
-    validation:
-      gt_eq<>: [0.1]
-  default_slip_radius_z:
-    type: double
-    default_value: 4.0
     validation:
       gt_eq<>: [0.1]
   surface_slip_radius:
