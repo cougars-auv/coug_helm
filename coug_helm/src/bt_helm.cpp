@@ -43,6 +43,7 @@
 namespace coug_helm {
 
 using coug_interfaces::msg::WayPoint;
+using coug_interfaces::msg::WayPointList;
 using utils::Behavior;
 using utils::toString;
 
@@ -93,7 +94,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
   blackboard_->set("wait_duration_sec", params_.wait_duration_sec);
 
-  waypoint_sub_ = create_subscription<coug_interfaces::msg::WayPointList>(
+  waypoint_sub_ = create_subscription<WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
       std::bind(&BtHelmNode::waypointCallback, this, std::placeholders::_1));
 
@@ -154,7 +155,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   RCLCPP_INFO(get_logger(), "Initialization complete.");
 }
 
-void BtHelmNode::waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg) {
+void BtHelmNode::waypointCallback(const WayPointList::SharedPtr msg) {
   if (msg->waypoints.empty()) {
     return;
   }
