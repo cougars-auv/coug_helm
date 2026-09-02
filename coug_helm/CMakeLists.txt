@@ -41,8 +41,8 @@ target_link_libraries(bt_helm
 
 ament_auto_package(
   INSTALL_TO_SHARE
-  launch
   config
+  launch
   trees
   USE_SCOPED_HEADER_INSTALL_DIR
 )
