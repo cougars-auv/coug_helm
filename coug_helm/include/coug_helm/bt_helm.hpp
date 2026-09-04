@@ -37,9 +37,9 @@ class BtHelmNode : public rclcpp::Node {
 
  private:
   // --- Callbacks ---
-  void waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr msg);
+  void waypointCallback(const coug_interfaces::msg::WayPointList::SharedPtr& msg);
 
-  void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void odomCallback(const nav_msgs::msg::Odometry::SharedPtr& msg);
 
   // --- Helpers ---
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr createBehaviorService(
