@@ -112,11 +112,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   waypoint_sub_ = create_subscription<WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
-      [this](WayPointList::SharedPtr msg) { waypointCallback(msg); });
+      [this](const WayPointList::ConstSharedPtr& msg) { waypointCallback(msg); });
 
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
-      [this](nav_msgs::msg::Odometry::SharedPtr msg) { odomCallback(msg); });
+      [this](const nav_msgs::msg::Odometry::ConstSharedPtr& msg) { odomCallback(msg); });
 
   start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
   stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
@@ -171,7 +171,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   RCLCPP_INFO(get_logger(), "Initialization complete.");
 }
 
-void BtHelmNode::waypointCallback(const WayPointList::SharedPtr& msg) {
+void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
   if (msg->waypoints.empty()) {
     return;
   }
@@ -191,7 +191,7 @@ void BtHelmNode::waypointCallback(const WayPointList::SharedPtr& msg) {
   RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s).", msg->waypoints.size());
 }
 
-void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr& msg) {
+void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg) {
   blackboard_->set("last_odom_time", this->get_clock()->now().seconds());
   blackboard_->set("current_x", msg->pose.pose.position.x);
   blackboard_->set("current_y", msg->pose.pose.position.y);
@@ -202,8 +202,8 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
                                        const std::string& label)
     -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr {
   return create_service<std_srvs::srv::Trigger>(
-      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr,
-                                       std_srvs::srv::Trigger::Response::SharedPtr res) {
+      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr&,
+                                       const std_srvs::srv::Trigger::Response::SharedPtr& res) {
         tree_.haltTree();
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;
