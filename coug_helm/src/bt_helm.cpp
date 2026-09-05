@@ -148,7 +148,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   factory_.registerScriptingEnums<Behavior>();
 
-  std::string const pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
+  const std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
   tree_ = factory_.createTreeFromFile(pkg_share + "/trees/bt_helm_tree.xml", blackboard_);
 
   if (params_.publish_groot2) {
@@ -157,13 +157,13 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   }
 
   if (params_.publish_diagnostics) {
-    std::string const ns = this->get_namespace();
-    std::string const clean_ns = (ns == "/") ? "" : ns;
+    const std::string ns = this->get_namespace();
+    const std::string clean_ns = (ns == "/") ? "" : ns;
     diagnostic_updater_.setHardwareID(clean_ns + "/bt_helm_node");
 
-    std::string const prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
+    const std::string prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
 
-    std::string const behavior_task = prefix + "Behavior Status";
+    const std::string behavior_task = prefix + "Behavior Status";
     diagnostic_updater_.add(behavior_task, this, &BtHelmNode::checkBehaviorStatus);
   }
 
@@ -197,9 +197,8 @@ void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg
   blackboard_->set("current_z", msg->pose.pose.position.z);
 }
 
-auto BtHelmNode::createBehaviorService(const std::string& service, Behavior behavior,
-                                       const std::string& label)
-    -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr {
+rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BtHelmNode::createBehaviorService(
+    const std::string& service, Behavior behavior, const std::string& label) {
   return create_service<std_srvs::srv::Trigger>(
       service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr&,
                                        const std_srvs::srv::Trigger::Response::SharedPtr& res) {
@@ -218,13 +217,13 @@ void BtHelmNode::tickTree() {
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
-  bool const emergency =
+  const bool emergency =
       (active == Behavior::kEmergencyStop || active == Behavior::kEmergencySurface);
   stat.summary(emergency ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
                          : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
-  bool const navigating =
+  const bool navigating =
       (active == Behavior::kMission || active == Behavior::kSurface || active == Behavior::kHome);
   auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
   if (!navigating || waypoints.empty()) {
@@ -236,9 +235,9 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
     return;
   }
 
-  auto const current_x = blackboard_->get<double>("current_x");
-  auto const current_y = blackboard_->get<double>("current_y");
-  auto const current_z = blackboard_->get<double>("current_z");
+  const auto current_x = blackboard_->get<double>("current_x");
+  const auto current_y = blackboard_->get<double>("current_y");
+  const auto current_z = blackboard_->get<double>("current_z");
   const auto& target = waypoints[waypoint_idx];
   stat.addf("Waypoint", "%zu/%zu", waypoint_idx + 1, waypoints.size());
   stat.addf("Horizontal Distance (m)", "%.1f",

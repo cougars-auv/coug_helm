@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace coug_helm::utils {
 
-enum class Behavior : int {
+enum class Behavior : std::uint8_t {
   kStop = 0,
   kMission,
   kSurface,
