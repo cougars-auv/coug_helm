@@ -26,7 +26,7 @@ namespace coug_helm::bt_nodes {
 
 class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
  public:
-  IsWaypointsReceived(std::string const& name, BT::NodeConfig const& config)
+  IsWaypointsReceived(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::ConditionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {

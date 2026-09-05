@@ -26,7 +26,7 @@ namespace coug_helm::bt_nodes {
 
 class Wait : public RosBtNode<BT::StatefulActionNode> {
  public:
-  Wait(std::string const& name, BT::NodeConfig const& config)
+  Wait(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::StatefulActionNode>(name, config) {
     hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
         config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
@@ -44,7 +44,7 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
 
   auto onRunning() -> BT::NodeStatus override {
     publishStop();
-    double const duration = getInput<double>("wait_duration").value();
+    const double duration = getInput<double>("wait_duration").value();
     if ((node_->now().seconds() - start_time_) >= duration) {
       return BT::NodeStatus::SUCCESS;
     }
@@ -55,7 +55,7 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
 
  private:
   void publishStop() {
-    coug_interfaces::msg::ControlSetpoint const msg;
+    const coug_interfaces::msg::ControlSetpoint msg;
     hsd_pub_->publish(msg);
   }
 

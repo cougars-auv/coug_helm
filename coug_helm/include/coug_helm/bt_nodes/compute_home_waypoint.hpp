@@ -28,7 +28,7 @@ namespace coug_helm::bt_nodes {
 
 class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
-  ComputeHomeWaypoint(std::string const& name, BT::NodeConfig const& config)
+  ComputeHomeWaypoint(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {

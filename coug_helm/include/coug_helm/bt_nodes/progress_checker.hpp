@@ -26,7 +26,7 @@ namespace coug_helm::bt_nodes {
 
 class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
  public:
-  ProgressChecker(std::string const& name, BT::NodeConfig const& config)
+  ProgressChecker(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::DecoratorNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
@@ -38,12 +38,12 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   }
 
   auto tick() -> BT::NodeStatus override {
-    double const current_x = getInput<double>("current_x").value();
-    double const current_y = getInput<double>("current_y").value();
-    double const current_z = getInput<double>("current_z").value();
-    double const current_time = getInput<double>("current_time").value();
-    double const threshold = getInput<double>("progress_threshold").value();
-    double const timeout = getInput<double>("progress_timeout").value();
+    const double current_x = getInput<double>("current_x").value();
+    const double current_y = getInput<double>("current_y").value();
+    const double current_z = getInput<double>("current_z").value();
+    const double current_time = getInput<double>("current_time").value();
+    const double threshold = getInput<double>("progress_threshold").value();
+    const double timeout = getInput<double>("progress_timeout").value();
 
     // Re-seed the baseline on entry and whenever the agent advances by threshold.
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,

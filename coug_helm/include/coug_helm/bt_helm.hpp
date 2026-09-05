@@ -33,17 +33,17 @@ namespace coug_helm {
 
 class BtHelmNode : public rclcpp::Node {
  public:
-  explicit BtHelmNode(rclcpp::NodeOptions const& options);
+  explicit BtHelmNode(const rclcpp::NodeOptions& options);
 
  private:
   // --- Callbacks ---
-  void waypointCallback(coug_interfaces::msg::WayPointList::ConstSharedPtr const& msg);
+  void waypointCallback(const coug_interfaces::msg::WayPointList::ConstSharedPtr& msg);
 
-  void odomCallback(nav_msgs::msg::Odometry::ConstSharedPtr const& msg);
+  void odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg);
 
   // --- Helpers ---
-  auto createBehaviorService(std::string const& service, utils::Behavior behavior,
-                             std::string const& label)
+  auto createBehaviorService(const std::string& service, utils::Behavior behavior,
+                             const std::string& label)
       -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
 
   void tickTree();

@@ -26,7 +26,7 @@ namespace coug_helm::bt_nodes {
 
 class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadBehavior(std::string const& name, BT::NodeConfig const& config)
+  LoadBehavior(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
@@ -37,7 +37,7 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
   }
 
   auto tick() -> BT::NodeStatus override {
-    int const pending = getInput<int>("pending_behavior").value();
+    const int pending = getInput<int>("pending_behavior").value();
     if (pending != last_behavior_) {
       RCLCPP_INFO(node_->get_logger(), "LoadBehavior: %s -> %s",
                   utils::toString(static_cast<utils::Behavior>(last_behavior_)).c_str(),

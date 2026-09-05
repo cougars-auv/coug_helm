@@ -28,7 +28,7 @@ namespace coug_helm::bt_nodes {
 
 class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
  public:
-  DisarmThruster(std::string const& name, BT::NodeConfig const& config)
+  DisarmThruster(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::StatefulActionNode>(name, config),
         service_name_(config.blackboard->get<std::string>("arm_thruster_service")) {
     client_ = node_->create_client<std_srvs::srv::SetBool>(service_name_);
@@ -55,7 +55,7 @@ class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
     bool success = false;
     try {
       success = future_.get()->success;
-    } catch (std::exception const& e) {
+    } catch (const std::exception& e) {
       RCLCPP_ERROR(node_->get_logger(), "DisarmThruster: %s", e.what());
     }
     if (success) {

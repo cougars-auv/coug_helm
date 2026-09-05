@@ -27,7 +27,7 @@ namespace coug_helm::bt_nodes {
 
 class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
-  ComputeSurfaceWaypoint(std::string const& name, BT::NodeConfig const& config)
+  ComputeSurfaceWaypoint(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {

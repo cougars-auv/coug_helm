@@ -30,7 +30,7 @@ namespace coug_helm::bt_nodes {
 
 class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
  public:
-  FollowWaypoints(std::string const& name, BT::NodeConfig const& config)
+  FollowWaypoints(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::StatefulActionNode>(name, config) {
     hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
         config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
@@ -71,26 +71,26 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
       return BT::NodeStatus::SUCCESS;
     }
 
-    double const current_x = getInput<double>("current_x").value();
-    double const current_y = getInput<double>("current_y").value();
-    double const current_z = getInput<double>("current_z").value();
-    double const prev_norm_dist = getInput<double>("prev_norm_dist").value();
+    const double current_x = getInput<double>("current_x").value();
+    const double current_y = getInput<double>("current_y").value();
+    const double current_z = getInput<double>("current_z").value();
+    const double prev_norm_dist = getInput<double>("prev_norm_dist").value();
 
-    auto const& target = waypoints[waypoint_idx];
+    const auto& target = waypoints[waypoint_idx];
     publishHsd(target, current_x, current_y);
-    double const horizontal_dist =
+    const double horizontal_dist =
         std::hypot(target.position.x - current_x, target.position.y - current_y);
-    double const vertical_dist = (target.mode == coug_interfaces::msg::WayPoint::ALTITUDE)
+    const double vertical_dist = (target.mode == coug_interfaces::msg::WayPoint::ALTITUDE)
                                      ? 0.0
                                      : std::abs(target.position.z - current_z);
 
-    double const norm_capture_dist = std::hypot(horizontal_dist / target.capture_radius,
+    const double norm_capture_dist = std::hypot(horizontal_dist / target.capture_radius,
                                                 vertical_dist / target.capture_radius_z);
-    double const norm_slip_dist =
+    const double norm_slip_dist =
         std::hypot(horizontal_dist / target.slip_radius, vertical_dist / target.slip_radius_z);
 
-    bool const capture = norm_capture_dist < 1.0;
-    bool const slip =
+    const bool capture = norm_capture_dist < 1.0;
+    const bool slip =
         (prev_norm_dist > 0.0 && norm_capture_dist > prev_norm_dist && norm_slip_dist < 1.0);
 
     if (capture || slip) {
@@ -107,12 +107,12 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { publishStop(); }
 
  private:
-  void publishHsd(coug_interfaces::msg::WayPoint const& target, double current_x,
+  void publishHsd(const coug_interfaces::msg::WayPoint& target, double current_x,
                   double current_y) {
     static constexpr double kRadToDeg = 180.0 / M_PI;
 
-    double const delta_x = target.position.x - current_x;
-    double const delta_y = target.position.y - current_y;
+    const double delta_x = target.position.x - current_x;
+    const double delta_y = target.position.y - current_y;
 
     coug_interfaces::msg::ControlSetpoint hsd_msg;
     hsd_msg.heading = std::atan2(delta_y, delta_x) * kRadToDeg;
@@ -123,7 +123,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
   }
 
   void publishStop() {
-    coug_interfaces::msg::ControlSetpoint const hsd_msg;
+    const coug_interfaces::msg::ControlSetpoint hsd_msg;
     hsd_pub_->publish(hsd_msg);
   }
 

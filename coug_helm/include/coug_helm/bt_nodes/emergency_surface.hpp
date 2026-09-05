@@ -25,7 +25,7 @@ namespace coug_helm::bt_nodes {
 
 class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
  public:
-  EmergencySurface(std::string const& name, BT::NodeConfig const& config)
+  EmergencySurface(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList { return {}; }
