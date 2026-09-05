@@ -26,18 +26,18 @@ namespace coug_helm::bt_nodes {
 
 class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadBehavior(const std::string& name, const BT::NodeConfig& config)
+  LoadBehavior(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<int>("pending_behavior"),
         BT::OutputPort<int>("active_behavior"),
     };
   }
 
-  BT::NodeStatus tick() override {
-    int pending = getInput<int>("pending_behavior").value();
+  auto tick() -> BT::NodeStatus override {
+    int const pending = getInput<int>("pending_behavior").value();
     if (pending != last_behavior_) {
       RCLCPP_INFO(node_->get_logger(), "LoadBehavior: %s -> %s",
                   utils::toString(static_cast<utils::Behavior>(last_behavior_)).c_str(),

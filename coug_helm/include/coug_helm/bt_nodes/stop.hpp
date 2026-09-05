@@ -26,16 +26,16 @@ namespace coug_helm::bt_nodes {
 
 class Stop : public RosBtNode<BT::SyncActionNode> {
  public:
-  Stop(const std::string& name, const BT::NodeConfig& config)
+  Stop(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {
     hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
         config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
   }
 
-  static BT::PortsList providedPorts() { return {}; }
+  static auto providedPorts() -> BT::PortsList { return {}; }
 
-  BT::NodeStatus tick() override {
-    coug_interfaces::msg::ControlSetpoint msg;
+  auto tick() -> BT::NodeStatus override {
+    coug_interfaces::msg::ControlSetpoint const msg;
     hsd_pub_->publish(msg);
     return BT::NodeStatus::SUCCESS;
   }

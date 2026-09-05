@@ -62,7 +62,7 @@ using coug_interfaces::msg::WayPointList;
 using utils::Behavior;
 using utils::toString;
 
-BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
+BtHelmNode::BtHelmNode(rclcpp::NodeOptions const& options)
     : Node("bt_helm_node", options), diagnostic_updater_(this) {
   param_listener_ = std::make_shared<bt_helm_node::ParamListener>(get_node_parameters_interface());
   params_ = param_listener_->get_params();
@@ -111,11 +111,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   waypoint_sub_ = create_subscription<WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
-      [this](const WayPointList::ConstSharedPtr& msg) { waypointCallback(msg); });
+      [this](WayPointList::ConstSharedPtr const& msg) { waypointCallback(msg); });
 
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
-      [this](const nav_msgs::msg::Odometry::ConstSharedPtr& msg) { odomCallback(msg); });
+      [this](nav_msgs::msg::Odometry::ConstSharedPtr const& msg) { odomCallback(msg); });
 
   start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
   stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
@@ -148,7 +148,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   factory_.registerScriptingEnums<Behavior>();
 
-  const std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
+  std::string const pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
   tree_ = factory_.createTreeFromFile(pkg_share + "/trees/bt_helm_tree.xml", blackboard_);
 
   if (params_.publish_groot2) {
@@ -157,27 +157,27 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   }
 
   if (params_.publish_diagnostics) {
-    const std::string ns = this->get_namespace();
-    const std::string clean_ns = (ns == "/") ? "" : ns;
+    std::string const ns = this->get_namespace();
+    std::string const clean_ns = (ns == "/") ? "" : ns;
     diagnostic_updater_.setHardwareID(clean_ns + "/bt_helm_node");
 
-    const std::string prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
+    std::string const prefix = clean_ns.empty() ? "" : "[" + clean_ns + "] ";
 
-    const std::string behavior_task = prefix + "Behavior Status";
+    std::string const behavior_task = prefix + "Behavior Status";
     diagnostic_updater_.add(behavior_task, this, &BtHelmNode::checkBehaviorStatus);
   }
 
   RCLCPP_INFO(get_logger(), "Initialization complete.");
 }
 
-void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
+void BtHelmNode::waypointCallback(WayPointList::ConstSharedPtr const& msg) {
   if (msg->waypoints.empty()) {
     return;
   }
 
   std::vector<WayPoint> map_waypoints = msg->waypoints;
   for (size_t i = 0; i < map_waypoints.size(); ++i) {
-    const auto& waypoint = map_waypoints[i];
+    auto const& waypoint = map_waypoints[i];
     RCLCPP_INFO(get_logger(),
                 "Waypoint %zu: X %.2f, Y %.2f, Z %.2f, Speed %.1f RPM, "
                 "Capture %.1f/%.1f m, Slip %.1f/%.1f m",
@@ -190,18 +190,19 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
   RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s).", msg->waypoints.size());
 }
 
-void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg) {
+void BtHelmNode::odomCallback(nav_msgs::msg::Odometry::ConstSharedPtr const& msg) {
   blackboard_->set("last_odom_time", this->get_clock()->now().seconds());
   blackboard_->set("current_x", msg->pose.pose.position.x);
   blackboard_->set("current_y", msg->pose.pose.position.y);
   blackboard_->set("current_z", msg->pose.pose.position.z);
 }
 
-rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr BtHelmNode::createBehaviorService(
-    const std::string& service, Behavior behavior, const std::string& label) {
+auto BtHelmNode::createBehaviorService(std::string const& service, Behavior behavior,
+                                       std::string const& label)
+    -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr {
   return create_service<std_srvs::srv::Trigger>(
-      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr&,
-                                       const std_srvs::srv::Trigger::Response::SharedPtr& res) {
+      service, [this, behavior, label](std_srvs::srv::Trigger::Request::SharedPtr const&,
+                                       std_srvs::srv::Trigger::Response::SharedPtr const& res) {
         tree_.haltTree();
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;
@@ -217,13 +218,13 @@ void BtHelmNode::tickTree() {
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
-  const bool emergency =
+  bool const emergency =
       (active == Behavior::kEmergencyStop || active == Behavior::kEmergencySurface);
   stat.summary(emergency ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
                          : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
-  const bool navigating =
+  bool const navigating =
       (active == Behavior::kMission || active == Behavior::kSurface || active == Behavior::kHome);
   auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
   if (!navigating || waypoints.empty()) {
@@ -235,10 +236,10 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
     return;
   }
 
-  const auto current_x = blackboard_->get<double>("current_x");
-  const auto current_y = blackboard_->get<double>("current_y");
-  const auto current_z = blackboard_->get<double>("current_z");
-  const auto& target = waypoints[waypoint_idx];
+  auto const current_x = blackboard_->get<double>("current_x");
+  auto const current_y = blackboard_->get<double>("current_y");
+  auto const current_z = blackboard_->get<double>("current_z");
+  auto const& target = waypoints[waypoint_idx];
   stat.addf("Waypoint", "%zu/%zu", waypoint_idx + 1, waypoints.size());
   stat.addf("Horizontal Distance (m)", "%.1f",
             std::hypot(target.position.x - current_x, target.position.y - current_y));

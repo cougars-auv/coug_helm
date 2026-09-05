@@ -25,12 +25,12 @@ namespace coug_helm::bt_nodes {
 
 class BackUp : public RosBtNode<BT::SyncActionNode> {
  public:
-  BackUp(const std::string& name, const BT::NodeConfig& config)
+  BackUp(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static auto providedPorts() -> BT::PortsList { return {}; }
 
-  BT::NodeStatus tick() override {
+  auto tick() -> BT::NodeStatus override {
     RCLCPP_WARN(node_->get_logger(), "BackUp: executing backup maneuver (not implemented).");
     return BT::NodeStatus::SUCCESS;
   }

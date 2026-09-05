@@ -22,10 +22,10 @@ namespace coug_helm::bt_nodes {
 
 class IsOdomHealthy : public BT::ConditionNode {
  public:
-  IsOdomHealthy(const std::string& name, const BT::NodeConfig& config)
+  IsOdomHealthy(std::string const& name, BT::NodeConfig const& config)
       : BT::ConditionNode(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<double>("last_odom_time"),
         BT::InputPort<double>("current_time"),
@@ -33,10 +33,10 @@ class IsOdomHealthy : public BT::ConditionNode {
     };
   }
 
-  BT::NodeStatus tick() override {
-    double last_odom = getInput<double>("last_odom_time").value();
-    double current_time = getInput<double>("current_time").value();
-    double timeout = getInput<double>("odom_timeout").value();
+  auto tick() -> BT::NodeStatus override {
+    double const last_odom = getInput<double>("last_odom_time").value();
+    double const current_time = getInput<double>("current_time").value();
+    double const timeout = getInput<double>("odom_timeout").value();
 
     if (last_odom == 0.0) {
       return BT::NodeStatus::FAILURE;

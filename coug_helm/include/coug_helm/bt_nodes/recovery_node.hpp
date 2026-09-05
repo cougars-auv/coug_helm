@@ -25,16 +25,16 @@ namespace coug_helm::bt_nodes {
 
 class RecoveryNode : public RosBtNode<BT::ControlNode> {
  public:
-  RecoveryNode(const std::string& name, const BT::NodeConfig& config)
+  RecoveryNode(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::ControlNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {BT::InputPort<int>("number_of_retries", 1, "Number of retries")};
   }
 
-  BT::NodeStatus tick() override {
-    const int number_of_retries = getInput<int>("number_of_retries").value();
-    const size_t children_count = children_nodes_.size();
+  auto tick() -> BT::NodeStatus override {
+    int const number_of_retries = getInput<int>("number_of_retries").value();
+    size_t const children_count = children_nodes_.size();
 
     if (children_count != 2) {
       throw BT::LogicError("RecoveryNode requires exactly 2 children");
@@ -43,7 +43,7 @@ class RecoveryNode : public RosBtNode<BT::ControlNode> {
     setStatus(BT::NodeStatus::RUNNING);
 
     while (current_child_idx_ < children_count) {
-      const BT::NodeStatus child_status = children_nodes_[current_child_idx_]->executeTick();
+      BT::NodeStatus const child_status = children_nodes_[current_child_idx_]->executeTick();
 
       if (current_child_idx_ == 0) {  // main behavior
         switch (child_status) {

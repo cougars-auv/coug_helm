@@ -28,10 +28,10 @@ namespace coug_helm::bt_nodes {
 
 class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
-  ComputeHomeWaypoint(const std::string& name, const BT::NodeConfig& config)
+  ComputeHomeWaypoint(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints"),
         BT::InputPort<double>("default_speed"),
@@ -43,7 +43,7 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  BT::NodeStatus tick() override {
+  auto tick() -> BT::NodeStatus override {
     auto waypoints =
         getInput<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints").value();
     if (waypoints.empty()) {

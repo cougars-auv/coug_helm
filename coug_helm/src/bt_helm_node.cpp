@@ -18,7 +18,7 @@
 
 #include "coug_helm/bt_helm.hpp"
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[]) -> int {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<coug_helm::BtHelmNode>(rclcpp::NodeOptions());
   rclcpp::spin(node);

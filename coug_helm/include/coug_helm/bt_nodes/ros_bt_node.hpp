@@ -24,7 +24,7 @@ namespace coug_helm::bt_nodes {
 template <class BTBase>
 class RosBtNode : public BTBase {
  public:
-  RosBtNode(const std::string& name, const BT::NodeConfig& config)
+  RosBtNode(std::string const& name, BT::NodeConfig const& config)
       : BTBase(name, config), node_(config.blackboard->template get<rclcpp::Node*>("node")) {}
 
  protected:

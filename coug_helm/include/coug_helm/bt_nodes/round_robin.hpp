@@ -22,17 +22,17 @@ namespace coug_helm::bt_nodes {
 
 class RoundRobin : public BT::ControlNode {
  public:
-  RoundRobin(const std::string& name, const BT::NodeConfig& config)
+  RoundRobin(std::string const& name, BT::NodeConfig const& config)
       : BT::ControlNode(name, config) {}
 
-  static BT::PortsList providedPorts() { return {}; }
+  static auto providedPorts() -> BT::PortsList { return {}; }
 
-  BT::NodeStatus tick() override {
-    const size_t num_children = children_nodes_.size();
+  auto tick() -> BT::NodeStatus override {
+    size_t const num_children = children_nodes_.size();
     setStatus(BT::NodeStatus::RUNNING);
 
     while (num_failures_ < num_children) {
-      const BT::NodeStatus child_status = children_nodes_[current_child_idx_]->executeTick();
+      BT::NodeStatus const child_status = children_nodes_[current_child_idx_]->executeTick();
 
       switch (child_status) {
         case BT::NodeStatus::SUCCESS:

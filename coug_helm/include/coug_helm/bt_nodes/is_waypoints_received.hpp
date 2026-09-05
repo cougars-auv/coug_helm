@@ -26,14 +26,14 @@ namespace coug_helm::bt_nodes {
 
 class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
  public:
-  IsWaypointsReceived(const std::string& name, const BT::NodeConfig& config)
+  IsWaypointsReceived(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::ConditionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints")};
   }
 
-  BT::NodeStatus tick() override {
+  auto tick() -> BT::NodeStatus override {
     if (!getInput<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints")
              .value()
              .empty()) {

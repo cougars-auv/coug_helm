@@ -28,7 +28,7 @@ enum class Behavior : std::uint8_t {
   kEmergencySurface,
 };
 
-inline std::string toString(Behavior behavior) {
+inline auto toString(Behavior behavior) -> std::string {
   switch (behavior) {
     case Behavior::kStop:
       return "STOP";

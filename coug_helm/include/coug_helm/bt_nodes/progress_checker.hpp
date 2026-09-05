@@ -26,10 +26,10 @@ namespace coug_helm::bt_nodes {
 
 class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
  public:
-  ProgressChecker(const std::string& name, const BT::NodeConfig& config)
+  ProgressChecker(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::DecoratorNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<double>("current_x"),          BT::InputPort<double>("current_y"),
         BT::InputPort<double>("current_z"),          BT::InputPort<double>("current_time"),
@@ -37,13 +37,13 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     };
   }
 
-  BT::NodeStatus tick() override {
-    double current_x = getInput<double>("current_x").value();
-    double current_y = getInput<double>("current_y").value();
-    double current_z = getInput<double>("current_z").value();
-    double current_time = getInput<double>("current_time").value();
-    double threshold = getInput<double>("progress_threshold").value();
-    double timeout = getInput<double>("progress_timeout").value();
+  auto tick() -> BT::NodeStatus override {
+    double const current_x = getInput<double>("current_x").value();
+    double const current_y = getInput<double>("current_y").value();
+    double const current_z = getInput<double>("current_z").value();
+    double const current_time = getInput<double>("current_time").value();
+    double const threshold = getInput<double>("progress_threshold").value();
+    double const timeout = getInput<double>("progress_timeout").value();
 
     // Re-seed the baseline on entry and whenever the agent advances by threshold.
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,

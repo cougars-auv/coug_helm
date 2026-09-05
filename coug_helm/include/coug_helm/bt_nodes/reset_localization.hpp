@@ -28,15 +28,15 @@ namespace coug_helm::bt_nodes {
 
 class ResetLocalization : public RosBtNode<BT::StatefulActionNode> {
  public:
-  ResetLocalization(const std::string& name, const BT::NodeConfig& config)
+  ResetLocalization(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::StatefulActionNode>(name, config),
         service_name_(config.blackboard->get<std::string>("reset_localization_service")) {
     client_ = node_->create_client<std_srvs::srv::Trigger>(service_name_);
   }
 
-  static BT::PortsList providedPorts() { return {}; }
+  static auto providedPorts() -> BT::PortsList { return {}; }
 
-  BT::NodeStatus onStart() override {
+  auto onStart() -> BT::NodeStatus override {
     if (!client_->service_is_ready()) {
       RCLCPP_ERROR(node_->get_logger(), "ResetLocalization: service '%s' unavailable.",
                    service_name_.c_str());
@@ -47,14 +47,14 @@ class ResetLocalization : public RosBtNode<BT::StatefulActionNode> {
     return BT::NodeStatus::RUNNING;
   }
 
-  BT::NodeStatus onRunning() override {
+  auto onRunning() -> BT::NodeStatus override {
     if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
       return BT::NodeStatus::RUNNING;
     }
     bool success = false;
     try {
       success = future_.get()->success;
-    } catch (const std::exception& e) {
+    } catch (std::exception const& e) {
       RCLCPP_ERROR(node_->get_logger(), "ResetLocalization: %s", e.what());
     }
     if (success) {

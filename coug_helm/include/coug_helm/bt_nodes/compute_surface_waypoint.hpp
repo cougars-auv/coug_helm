@@ -27,10 +27,10 @@ namespace coug_helm::bt_nodes {
 
 class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
-  ComputeSurfaceWaypoint(const std::string& name, const BT::NodeConfig& config)
+  ComputeSurfaceWaypoint(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
@@ -43,7 +43,7 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  BT::NodeStatus tick() override {
+  auto tick() -> BT::NodeStatus override {
     coug_interfaces::msg::WayPoint waypoint;
     waypoint.position.x = getInput<double>("current_x").value();
     waypoint.position.y = getInput<double>("current_y").value();

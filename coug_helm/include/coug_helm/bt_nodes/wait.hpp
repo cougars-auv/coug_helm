@@ -26,15 +26,15 @@ namespace coug_helm::bt_nodes {
 
 class Wait : public RosBtNode<BT::StatefulActionNode> {
  public:
-  Wait(const std::string& name, const BT::NodeConfig& config)
+  Wait(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::StatefulActionNode>(name, config) {
     hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
         config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
   }
 
-  static BT::PortsList providedPorts() { return {BT::InputPort<double>("wait_duration")}; }
+  static auto providedPorts() -> BT::PortsList { return {BT::InputPort<double>("wait_duration")}; }
 
-  BT::NodeStatus onStart() override {
+  auto onStart() -> BT::NodeStatus override {
     start_time_ = node_->now().seconds();
     RCLCPP_INFO(node_->get_logger(), "Wait: waiting %.1f s.",
                 getInput<double>("wait_duration").value());
@@ -42,9 +42,9 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
     return BT::NodeStatus::RUNNING;
   }
 
-  BT::NodeStatus onRunning() override {
+  auto onRunning() -> BT::NodeStatus override {
     publishStop();
-    double duration = getInput<double>("wait_duration").value();
+    double const duration = getInput<double>("wait_duration").value();
     if ((node_->now().seconds() - start_time_) >= duration) {
       return BT::NodeStatus::SUCCESS;
     }
@@ -55,7 +55,7 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
 
  private:
   void publishStop() {
-    coug_interfaces::msg::ControlSetpoint msg;
+    coug_interfaces::msg::ControlSetpoint const msg;
     hsd_pub_->publish(msg);
   }
 

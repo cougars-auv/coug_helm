@@ -27,10 +27,10 @@ namespace coug_helm::bt_nodes {
 
 class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadWaypoints(const std::string& name, const BT::NodeConfig& config)
+  LoadWaypoints(std::string const& name, BT::NodeConfig const& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static BT::PortsList providedPorts() {
+  static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("pending_waypoints"),
         BT::OutputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
@@ -39,7 +39,7 @@ class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
     };
   }
 
-  BT::NodeStatus tick() override {
+  auto tick() -> BT::NodeStatus override {
     auto waypoints =
         getInput<std::vector<coug_interfaces::msg::WayPoint>>("pending_waypoints").value();
     RCLCPP_INFO(node_->get_logger(), "LoadWaypoints: loading %zu waypoint(s).", waypoints.size());
