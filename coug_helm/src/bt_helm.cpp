@@ -240,10 +240,12 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
   const auto current_y = blackboard_->get<double>("current_y");
   const auto current_z = blackboard_->get<double>("current_z");
   const auto& target = waypoints[waypoint_idx];
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
   stat.addf("Waypoint", "%zu/%zu", waypoint_idx + 1, waypoints.size());
   stat.addf("Horizontal Distance (m)", "%.1f",
             std::hypot(target.position.x - current_x, target.position.y - current_y));
   stat.addf("Vertical Distance (m)", "%.1f", std::abs(target.position.z - current_z));
+  // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 }
 
 }  // namespace coug_helm
