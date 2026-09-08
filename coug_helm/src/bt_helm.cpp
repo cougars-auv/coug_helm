@@ -172,6 +172,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
 void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
   if (msg->waypoints.empty()) {
+    blackboard_->set("mission_waypoints", std::vector<WayPoint>{});
+    RCLCPP_INFO(get_logger(), "Mission cleared.");
     return;
   }
 
