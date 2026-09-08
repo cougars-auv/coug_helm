@@ -38,9 +38,7 @@ ament_auto_add_library(bt_helm_component SHARED NO_TARGET_LINK_LIBRARIES
 
 target_compile_features(bt_helm_component PUBLIC cxx_std_17)
 
-target_link_libraries(bt_helm_component
-  bt_helm_parameters
-)
+target_link_libraries(bt_helm_component bt_helm_parameters)
 
 rclcpp_components_register_nodes(bt_helm_component
   "coug_helm::BtHelmNode"
@@ -49,9 +47,7 @@ rclcpp_components_register_nodes(bt_helm_component
 ament_auto_add_executable(bt_helm NO_TARGET_LINK_LIBRARIES
   src/bt_helm_node.cpp
 )
-target_link_libraries(bt_helm
-  bt_helm_component
-)
+target_link_libraries(bt_helm bt_helm_component)
 
 ament_auto_package(
   INSTALL_TO_SHARE
