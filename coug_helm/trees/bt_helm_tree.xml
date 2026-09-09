@@ -223,6 +223,7 @@
         <ReactiveSequence>
           <ScriptCondition code="active_behavior == kEmergencyStop"/>
           <Sequence>
+            <Stop/>
             <ForceSuccess>
               <ReactiveSequence>
                 <Stop/>
