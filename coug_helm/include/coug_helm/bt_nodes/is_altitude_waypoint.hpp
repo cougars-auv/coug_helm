@@ -16,35 +16,36 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <coug_interfaces/msg/way_point.hpp>
+#include <cstddef>
 #include <string>
+#include <vector>
 
 namespace coug_helm::bt_nodes {
 
-class IsOdomHealthy : public BT::ConditionNode {
+class IsAltitudeWaypoint : public BT::ConditionNode {
  public:
-  IsOdomHealthy(const std::string& name, const BT::NodeConfig& config)
+  IsAltitudeWaypoint(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<double>("last_odom_time"),
-        BT::InputPort<bool>("has_odom"),
-        BT::InputPort<double>("current_time"),
-        BT::InputPort<double>("odom_timeout"),
+        BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
+        BT::InputPort<size_t>("current_waypoint"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    const double last_odom = getInput<double>("last_odom_time").value();
-    const bool has_odom = getInput<bool>("has_odom").value();
-    const double current_time = getInput<double>("current_time").value();
-    const double timeout = getInput<double>("odom_timeout").value();
+    const auto waypoints =
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+    const size_t waypoint_idx = getInput<size_t>("current_waypoint").value();
 
-    if (!has_odom) {
+    if (waypoint_idx >= waypoints.size()) {
       return BT::NodeStatus::FAILURE;
     }
-    return ((current_time - last_odom) < timeout) ? BT::NodeStatus::SUCCESS
-                                                  : BT::NodeStatus::FAILURE;
+    return (waypoints[waypoint_idx].mode == coug_interfaces::msg::WayPoint::ALTITUDE)
+               ? BT::NodeStatus::SUCCESS
+               : BT::NodeStatus::FAILURE;
   }
 };
 

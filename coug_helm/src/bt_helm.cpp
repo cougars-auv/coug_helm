@@ -39,6 +39,8 @@
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
 #include "coug_helm/bt_nodes/follow_waypoints.hpp"
+#include "coug_helm/bt_nodes/is_altitude_healthy.hpp"
+#include "coug_helm/bt_nodes/is_altitude_waypoint.hpp"
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
 #include "coug_helm/bt_nodes/load_behavior.hpp"
@@ -57,6 +59,7 @@
 
 namespace coug_helm {
 
+using coug_interfaces::msg::DvlBeamList;
 using coug_interfaces::msg::WayPoint;
 using coug_interfaces::msg::WayPointList;
 using utils::Behavior;
@@ -87,7 +90,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_x", 0.0);
   blackboard_->set("current_y", 0.0);
   blackboard_->set("current_z", 0.0);
+  blackboard_->set("current_altitude", 0.0);
+  blackboard_->set("has_odom", false);
+  blackboard_->set("has_altitude", false);
   blackboard_->set("last_odom_time", 0.0);
+  blackboard_->set("last_altitude_time", 0.0);
   blackboard_->set("current_time", 0.0);
 
   blackboard_->set("surface_capture_radius", params_.surface_capture_radius);
@@ -102,7 +109,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("default_speed", params_.default_speed_rpm);
 
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
+  blackboard_->set("altitude_timeout_sec", params_.altitude_timeout_sec);
   blackboard_->set("odom_recovery_timeout_sec", params_.odom_recovery_timeout_sec);
+  blackboard_->set("altitude_recovery_timeout_sec", params_.altitude_recovery_timeout_sec);
 
   blackboard_->set("progress_timeout_sec", params_.progress_timeout_sec);
   blackboard_->set("progress_threshold", params_.progress_threshold);
@@ -117,6 +126,10 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       params_.odom_topic, rclcpp::SystemDefaultsQoS(),
       [this](const nav_msgs::msg::Odometry::ConstSharedPtr& msg) { odomCallback(msg); });
 
+  beams_sub_ = create_subscription<DvlBeamList>(
+      params_.beams_topic, rclcpp::SystemDefaultsQoS(),
+      [this](const DvlBeamList::ConstSharedPtr& msg) { beamsCallback(msg); });
+
   start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
   stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
   surface_srv_ = createBehaviorService(params_.surface_service, Behavior::kSurface, "Surface");
@@ -129,6 +142,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
                                   [this] { tickTree(); });
 
+  factory_.registerNodeType<bt_nodes::IsAltitudeHealthy>("IsAltitudeHealthy");
+  factory_.registerNodeType<bt_nodes::IsAltitudeWaypoint>("IsAltitudeWaypoint");
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
@@ -193,10 +208,20 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
 }
 
 void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg) {
+  blackboard_->set("has_odom", true);
   blackboard_->set("last_odom_time", this->get_clock()->now().seconds());
   blackboard_->set("current_x", msg->pose.pose.position.x);
   blackboard_->set("current_y", msg->pose.pose.position.y);
   blackboard_->set("current_z", msg->pose.pose.position.z);
+}
+
+void BtHelmNode::beamsCallback(const DvlBeamList::ConstSharedPtr& msg) {
+  if (!msg->altitude_valid) {
+    return;
+  }
+  blackboard_->set("has_altitude", true);
+  blackboard_->set("last_altitude_time", this->get_clock()->now().seconds());
+  blackboard_->set("current_altitude", msg->altitude);
 }
 
 auto BtHelmNode::createBehaviorService(const std::string& service, Behavior behavior,

@@ -42,6 +42,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<double>("current_z"),
+        BT::InputPort<double>("current_altitude"),
         BT::BidirectionalPort<size_t>("current_waypoint"),
         BT::BidirectionalPort<double>("prev_norm_dist"),
     };
@@ -74,6 +75,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     const double current_x = getInput<double>("current_x").value();
     const double current_y = getInput<double>("current_y").value();
     const double current_z = getInput<double>("current_z").value();
+    const double current_altitude = getInput<double>("current_altitude").value();
     const double prev_norm_dist = getInput<double>("prev_norm_dist").value();
 
     const auto& target = waypoints[waypoint_idx];
@@ -81,7 +83,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
     const double horizontal_dist =
         std::hypot(target.position.x - current_x, target.position.y - current_y);
     const double vertical_dist = (target.mode == coug_interfaces::msg::WayPoint::ALTITUDE)
-                                     ? 0.0
+                                     ? std::abs(target.position.z - current_altitude)
                                      : std::abs(target.position.z - current_z);
 
     const double norm_capture_dist = std::hypot(horizontal_dist / target.capture_radius,

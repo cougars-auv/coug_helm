@@ -20,31 +20,31 @@
 
 namespace coug_helm::bt_nodes {
 
-class IsOdomHealthy : public BT::ConditionNode {
+class IsAltitudeHealthy : public BT::ConditionNode {
  public:
-  IsOdomHealthy(const std::string& name, const BT::NodeConfig& config)
+  IsAltitudeHealthy(const std::string& name, const BT::NodeConfig& config)
       : BT::ConditionNode(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<double>("last_odom_time"),
-        BT::InputPort<bool>("has_odom"),
+        BT::InputPort<double>("last_altitude_time"),
+        BT::InputPort<bool>("has_altitude"),
         BT::InputPort<double>("current_time"),
-        BT::InputPort<double>("odom_timeout"),
+        BT::InputPort<double>("altitude_timeout"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    const double last_odom = getInput<double>("last_odom_time").value();
-    const bool has_odom = getInput<bool>("has_odom").value();
+    const double last_altitude = getInput<double>("last_altitude_time").value();
+    const bool has_altitude = getInput<bool>("has_altitude").value();
     const double current_time = getInput<double>("current_time").value();
-    const double timeout = getInput<double>("odom_timeout").value();
+    const double timeout = getInput<double>("altitude_timeout").value();
 
-    if (!has_odom) {
+    if (!has_altitude) {
       return BT::NodeStatus::FAILURE;
     }
-    return ((current_time - last_odom) < timeout) ? BT::NodeStatus::SUCCESS
-                                                  : BT::NodeStatus::FAILURE;
+    return ((current_time - last_altitude) < timeout) ? BT::NodeStatus::SUCCESS
+                                                      : BT::NodeStatus::FAILURE;
   }
 };
 

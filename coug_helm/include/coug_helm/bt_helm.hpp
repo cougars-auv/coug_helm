@@ -17,6 +17,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 
+#include <coug_interfaces/msg/dvl_beam_list.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <memory>
@@ -41,6 +42,8 @@ class BtHelmNode : public rclcpp::Node {
 
   void odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg);
 
+  void beamsCallback(const coug_interfaces::msg::DvlBeamList::ConstSharedPtr& msg);
+
   // --- Helpers ---
   auto createBehaviorService(const std::string& service, utils::Behavior behavior,
                              const std::string& label)
@@ -60,6 +63,7 @@ class BtHelmNode : public rclcpp::Node {
   // --- ROS Interfaces ---
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<coug_interfaces::msg::DvlBeamList>::SharedPtr beams_sub_;
 
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_srv_;

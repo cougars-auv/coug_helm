@@ -16,7 +16,6 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
@@ -27,10 +26,7 @@ namespace coug_helm::bt_nodes {
 class Wait : public RosBtNode<BT::StatefulActionNode> {
  public:
   Wait(const std::string& name, const BT::NodeConfig& config)
-      : RosBtNode<BT::StatefulActionNode>(name, config) {
-    hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
-        config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
-  }
+      : RosBtNode<BT::StatefulActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList { return {BT::InputPort<double>("wait_duration")}; }
 
@@ -38,12 +34,10 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
     start_time_ = node_->now().seconds();
     RCLCPP_INFO(node_->get_logger(), "Wait: waiting %.1f s.",
                 getInput<double>("wait_duration").value());
-    publishStop();
     return BT::NodeStatus::RUNNING;
   }
 
   auto onRunning() -> BT::NodeStatus override {
-    publishStop();
     const double duration = getInput<double>("wait_duration").value();
     if ((node_->now().seconds() - start_time_) >= duration) {
       return BT::NodeStatus::SUCCESS;
@@ -54,12 +48,6 @@ class Wait : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override {}
 
  private:
-  void publishStop() {
-    const coug_interfaces::msg::ControlSetpoint msg;
-    hsd_pub_->publish(msg);
-  }
-
-  rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
   double start_time_{};
 };
 

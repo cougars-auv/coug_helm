@@ -57,11 +57,21 @@ bt_helm_node:
     default_value: 2.0
     validation:
       gt<>: [0.0]
+  altitude_timeout_sec:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
   odom_recovery_timeout_sec:
     type: double
     default_value: 30.0
     validation:
       gt_eq<>: [0.0]
+  altitude_recovery_timeout_sec:
+    type: double
+    default_value: 30.0
+    validation:
+      gt<>: [0.0]
   progress_timeout_sec:
     type: double
     default_value: 15.0
@@ -98,6 +108,11 @@ bt_helm_node:
   odom_topic:
     type: string
     default_value: "odometry/global"
+    validation:
+      not_empty<>: []
+  beams_topic:
+    type: string
+    default_value: "dvl/beams"
     validation:
       not_empty<>: []
   hsd_topic:

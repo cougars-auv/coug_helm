@@ -17,8 +17,19 @@
 
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <TreeNodesModel>
+    <Condition ID="IsAltitudeHealthy">
+      <input_port name="last_altitude_time"/>
+      <input_port name="has_altitude"/>
+      <input_port name="current_time"/>
+      <input_port name="altitude_timeout"/>
+    </Condition>
+    <Condition ID="IsAltitudeWaypoint">
+      <input_port name="active_waypoints"/>
+      <input_port name="current_waypoint"/>
+    </Condition>
     <Condition ID="IsOdomHealthy">
       <input_port name="last_odom_time"/>
+      <input_port name="has_odom"/>
       <input_port name="current_time"/>
       <input_port name="odom_timeout"/>
     </Condition>
@@ -52,6 +63,7 @@
       <input_port name="current_x"/>
       <input_port name="current_y"/>
       <input_port name="current_z"/>
+      <input_port name="current_altitude"/>
       <inout_port name="current_waypoint"/>
       <inout_port name="prev_norm_dist"/>
     </Action>
@@ -89,23 +101,50 @@
       <Fallback>
         <IsOdomHealthy
             last_odom_time="{last_odom_time}"
+            has_odom="{has_odom}"
             current_time="{current_time}"
             odom_timeout="{odom_timeout_sec}"/>
         <Sequence>
           <EmergencySurface/>
-          <ResetLocalization/>
+          <ReactiveSequence>
+            <Stop/>
+            <ResetLocalization/>
+          </ReactiveSequence>
           <ReactiveFallback>
             <IsOdomHealthy
                 last_odom_time="{last_odom_time}"
+                has_odom="{has_odom}"
                 current_time="{current_time}"
                 odom_timeout="{odom_timeout_sec}"/>
-            <Sequence>
-              <Wait wait_duration="{odom_recovery_timeout_sec}"/>
-              <AlwaysFailure/>
-            </Sequence>
+            <ReactiveSequence>
+              <Stop/>
+              <Sequence>
+                <Wait wait_duration="{odom_recovery_timeout_sec}"/>
+                <AlwaysFailure/>
+              </Sequence>
+            </ReactiveSequence>
           </ReactiveFallback>
         </Sequence>
       </Fallback>
+      <ReactiveFallback>
+        <Inverter>
+          <IsAltitudeWaypoint
+              active_waypoints="{active_waypoints}"
+              current_waypoint="{current_waypoint}"/>
+        </Inverter>
+        <IsAltitudeHealthy
+            last_altitude_time="{last_altitude_time}"
+            has_altitude="{has_altitude}"
+            current_time="{current_time}"
+            altitude_timeout="{altitude_timeout_sec}"/>
+        <ReactiveSequence>
+          <Stop/>
+          <Sequence>
+            <Wait wait_duration="{altitude_recovery_timeout_sec}"/>
+            <AlwaysFailure/>
+          </Sequence>
+        </ReactiveSequence>
+      </ReactiveFallback>
       <RecoveryNode number_of_retries="{number_of_retries}">
         <ProgressChecker
             current_x="{current_x}"
@@ -119,11 +158,15 @@
               current_x="{current_x}"
               current_y="{current_y}"
               current_z="{current_z}"
+              current_altitude="{current_altitude}"
               current_waypoint="{current_waypoint}"
               prev_norm_dist="{prev_norm_dist}"/>
         </ProgressChecker>
         <RoundRobin>
-          <Wait wait_duration="{wait_duration_sec}"/>
+          <ReactiveSequence>
+            <Stop/>
+            <Wait wait_duration="{wait_duration_sec}"/>
+          </ReactiveSequence>
           <BackUp/>
         </RoundRobin>
       </RecoveryNode>
@@ -180,9 +223,11 @@
         <ReactiveSequence>
           <ScriptCondition code="active_behavior == kEmergencyStop"/>
           <Sequence>
-            <Stop/>
             <ForceSuccess>
-              <DisarmThruster/>
+              <ReactiveSequence>
+                <Stop/>
+                <DisarmThruster/>
+              </ReactiveSequence>
             </ForceSuccess>
             <Script code="pending_behavior := kStop"/>
           </Sequence>
