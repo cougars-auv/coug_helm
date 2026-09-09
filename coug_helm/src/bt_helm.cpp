@@ -52,6 +52,7 @@
 #include "coug_helm/bt_nodes/stop.hpp"
 #include "coug_helm/bt_nodes/wait.hpp"
 #include "coug_helm/utils/behavior_enums.hpp"
+#include "coug_interfaces/msg/dvl_beam_list.hpp"
 #include "coug_interfaces/msg/way_point.hpp"
 #include "coug_interfaces/msg/way_point_list.hpp"
 #include "nav_msgs/msg/odometry.hpp"
