@@ -117,7 +117,7 @@ bt_helm_node:
       not_empty<>: []
   hsd_topic:
     type: string
-    default_value: "cmd_hsd"
+    default_value: "cmd_hsd_helm"
     validation:
       not_empty<>: []
   start_service:
