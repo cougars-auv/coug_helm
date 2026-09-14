@@ -77,6 +77,16 @@ bt_helm_node:
     default_value: 6
     validation:
       gt_eq<>: [0]
+  backup_speed_rpm:
+    type: double
+    default_value: -900.0
+    validation:
+      bounds<>: [-1525.0, 0.0]
+  backup_duration_sec:
+    type: double
+    default_value: 5.0
+    validation:
+      gt<>: [0.0]
   wait_duration_sec:
     type: double
     default_value: 5.0

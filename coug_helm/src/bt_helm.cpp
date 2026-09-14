@@ -30,6 +30,8 @@
 #include <rclcpp/service.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
+#include <tf2/utils.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
@@ -89,6 +91,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_x", 0.0);
   blackboard_->set("current_y", 0.0);
   blackboard_->set("current_z", 0.0);
+  blackboard_->set("current_heading", 0.0);
   blackboard_->set("current_altitude", 0.0);
   blackboard_->set("has_odom", false);
   blackboard_->set("last_odom_time", 0.0);
@@ -112,6 +115,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("progress_threshold", params_.progress_threshold);
   blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
   blackboard_->set("wait_duration_sec", params_.wait_duration_sec);
+  blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
+  blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
   waypoint_sub_ = create_subscription<WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
@@ -206,6 +211,9 @@ void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg
   blackboard_->set("current_x", msg->pose.pose.position.x);
   blackboard_->set("current_y", msg->pose.pose.position.y);
   blackboard_->set("current_z", msg->pose.pose.position.z);
+
+  static constexpr double kRadToDeg = 180.0 / M_PI;
+  blackboard_->set("current_heading", tf2::getYaw(msg->pose.pose.orientation) * kRadToDeg);
 }
 
 void BtHelmNode::beamsCallback(const DvlBeamList::ConstSharedPtr& msg) {

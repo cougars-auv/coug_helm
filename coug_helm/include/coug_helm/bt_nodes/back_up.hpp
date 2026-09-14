@@ -16,6 +16,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
@@ -23,17 +24,58 @@
 
 namespace coug_helm::bt_nodes {
 
-class BackUp : public RosBtNode<BT::SyncActionNode> {
+class BackUp : public RosBtNode<BT::StatefulActionNode> {
  public:
   BackUp(const std::string& name, const BT::NodeConfig& config)
-      : RosBtNode<BT::SyncActionNode>(name, config) {}
-
-  static auto providedPorts() -> BT::PortsList { return {}; }
-
-  auto tick() -> BT::NodeStatus override {
-    RCLCPP_WARN(node_->get_logger(), "BackUp: executing backup maneuver (not implemented).");
-    return BT::NodeStatus::SUCCESS;
+      : RosBtNode<BT::StatefulActionNode>(name, config) {
+    hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
+        config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
   }
+
+  static auto providedPorts() -> BT::PortsList {
+    return {
+        BT::InputPort<double>("backup_speed_rpm"),
+        BT::InputPort<double>("backup_duration"),
+        BT::InputPort<double>("current_heading"),
+        BT::InputPort<double>("current_z"),
+    };
+  }
+
+  auto onStart() -> BT::NodeStatus override {
+    start_time_ = node_->now().seconds();
+
+    hsd_msg_.heading = getInput<double>("current_heading").value();
+    hsd_msg_.speed_rpm = getInput<double>("backup_speed_rpm").value();
+    hsd_msg_.depth = getInput<double>("current_z").value();
+    hsd_msg_.mode = coug_interfaces::msg::ControlSetpoint::DEPTH;
+
+    RCLCPP_WARN(node_->get_logger(), "BackUp: reversing at %.0f RPM for %.1f s.",
+                hsd_msg_.speed_rpm, getInput<double>("backup_duration").value());
+    return onRunning();
+  }
+
+  auto onRunning() -> BT::NodeStatus override {
+    const double duration = getInput<double>("backup_duration").value();
+    if ((node_->now().seconds() - start_time_) >= duration) {
+      publishStop();
+      return BT::NodeStatus::SUCCESS;
+    }
+
+    hsd_pub_->publish(hsd_msg_);
+    return BT::NodeStatus::RUNNING;
+  }
+
+  void onHalted() override { publishStop(); }
+
+ private:
+  void publishStop() {
+    const coug_interfaces::msg::ControlSetpoint hsd_msg;
+    hsd_pub_->publish(hsd_msg);
+  }
+
+  rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
+  coug_interfaces::msg::ControlSetpoint hsd_msg_;
+  double start_time_{};
 };
 
 }  // namespace coug_helm::bt_nodes

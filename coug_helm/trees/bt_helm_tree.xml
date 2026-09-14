@@ -26,7 +26,12 @@
     <Condition ID="IsWaypointsReceived">
       <input_port name="mission_waypoints"/>
     </Condition>
-    <Action ID="BackUp"/>
+    <Action ID="BackUp">
+      <input_port name="backup_speed_rpm"/>
+      <input_port name="backup_duration"/>
+      <input_port name="current_heading"/>
+      <input_port name="current_z"/>
+    </Action>
     <Action ID="ComputeHomeWaypoint">
       <input_port name="mission_waypoints"/>
       <input_port name="default_speed"/>
@@ -138,7 +143,11 @@
             <Stop/>
             <Wait wait_duration="{wait_duration_sec}"/>
           </ReactiveSequence>
-          <BackUp/>
+          <BackUp
+              backup_speed_rpm="{backup_speed_rpm}"
+              backup_duration="{backup_duration_sec}"
+              current_heading="{current_heading}"
+              current_z="{current_z}"/>
         </RoundRobin>
       </RecoveryNode>
     </ReactiveSequence>
