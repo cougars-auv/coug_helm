@@ -17,16 +17,6 @@
 
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <TreeNodesModel>
-    <Condition ID="IsAltitudeHealthy">
-      <input_port name="last_altitude_time"/>
-      <input_port name="has_altitude"/>
-      <input_port name="current_time"/>
-      <input_port name="altitude_timeout"/>
-    </Condition>
-    <Condition ID="IsAltitudeWaypoint">
-      <input_port name="active_waypoints"/>
-      <input_port name="current_waypoint"/>
-    </Condition>
     <Condition ID="IsOdomHealthy">
       <input_port name="last_odom_time"/>
       <input_port name="has_odom"/>
@@ -126,25 +116,6 @@
           </ReactiveFallback>
         </Sequence>
       </Fallback>
-      <ReactiveFallback>
-        <Inverter>
-          <IsAltitudeWaypoint
-              active_waypoints="{active_waypoints}"
-              current_waypoint="{current_waypoint}"/>
-        </Inverter>
-        <IsAltitudeHealthy
-            last_altitude_time="{last_altitude_time}"
-            has_altitude="{has_altitude}"
-            current_time="{current_time}"
-            altitude_timeout="{altitude_timeout_sec}"/>
-        <ReactiveSequence>
-          <Stop/>
-          <Sequence>
-            <Wait wait_duration="{altitude_recovery_timeout_sec}"/>
-            <AlwaysFailure/>
-          </Sequence>
-        </ReactiveSequence>
-      </ReactiveFallback>
       <RecoveryNode number_of_retries="{number_of_retries}">
         <ProgressChecker
             current_x="{current_x}"

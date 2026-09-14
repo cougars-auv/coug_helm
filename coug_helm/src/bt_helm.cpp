@@ -39,8 +39,6 @@
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
 #include "coug_helm/bt_nodes/follow_waypoints.hpp"
-#include "coug_helm/bt_nodes/is_altitude_healthy.hpp"
-#include "coug_helm/bt_nodes/is_altitude_waypoint.hpp"
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
 #include "coug_helm/bt_nodes/load_behavior.hpp"
@@ -93,9 +91,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_z", 0.0);
   blackboard_->set("current_altitude", 0.0);
   blackboard_->set("has_odom", false);
-  blackboard_->set("has_altitude", false);
   blackboard_->set("last_odom_time", 0.0);
-  blackboard_->set("last_altitude_time", 0.0);
   blackboard_->set("current_time", 0.0);
 
   blackboard_->set("surface_capture_radius", params_.surface_capture_radius);
@@ -110,9 +106,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("default_speed", params_.default_speed_rpm);
 
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
-  blackboard_->set("altitude_timeout_sec", params_.altitude_timeout_sec);
   blackboard_->set("odom_recovery_timeout_sec", params_.odom_recovery_timeout_sec);
-  blackboard_->set("altitude_recovery_timeout_sec", params_.altitude_recovery_timeout_sec);
 
   blackboard_->set("progress_timeout_sec", params_.progress_timeout_sec);
   blackboard_->set("progress_threshold", params_.progress_threshold);
@@ -143,8 +137,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
                                   [this] { tickTree(); });
 
-  factory_.registerNodeType<bt_nodes::IsAltitudeHealthy>("IsAltitudeHealthy");
-  factory_.registerNodeType<bt_nodes::IsAltitudeWaypoint>("IsAltitudeWaypoint");
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
@@ -220,8 +212,6 @@ void BtHelmNode::beamsCallback(const DvlBeamList::ConstSharedPtr& msg) {
   if (!msg->altitude_valid) {
     return;
   }
-  blackboard_->set("has_altitude", true);
-  blackboard_->set("last_altitude_time", this->get_clock()->now().seconds());
   blackboard_->set("current_altitude", msg->altitude);
 }
 
