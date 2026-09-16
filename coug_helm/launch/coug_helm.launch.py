@@ -39,6 +39,7 @@ def generate_launch_description() -> LaunchDescription:
             [agent_ns, "_params.yaml"],
         ]
     )
+    scenario_param_file = LaunchConfiguration("scenario_param_file")
 
     return LaunchDescription(
         [
@@ -50,6 +51,10 @@ def generate_launch_description() -> LaunchDescription:
                 "agent_ns",
                 default_value="auv0",
             ),
+            DeclareLaunchArgument(
+                "scenario_param_file",
+                default_value=agent_param_file,
+            ),
             Node(
                 package="coug_helm",
                 executable="bt_helm",
@@ -57,6 +62,7 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[
                     fleet_param_file,
                     agent_param_file,
+                    scenario_param_file,
                     {"use_sim_time": use_sim_time},
                 ],
             ),
