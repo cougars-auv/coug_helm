@@ -31,7 +31,7 @@
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
 #include <tf2/utils.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>  // NOLINT(misc-include-cleaner)
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
