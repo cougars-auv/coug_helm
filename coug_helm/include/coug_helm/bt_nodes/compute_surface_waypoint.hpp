@@ -48,6 +48,8 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     waypoint.position.x = getInput<double>("current_x").value();
     waypoint.position.y = getInput<double>("current_y").value();
     waypoint.position.z = 0.0;
+    waypoint.mode = coug_interfaces::msg::WayPoint::DEPTH;
+
     waypoint.speed_rpm = getInput<double>("default_speed").value();
 
     waypoint.capture_radius = getInput<double>("surface_capture_radius").value();
