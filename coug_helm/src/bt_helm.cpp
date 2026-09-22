@@ -15,15 +15,24 @@
 #include "coug_helm/bt_helm.hpp"
 
 #include <behaviortree_cpp/blackboard.h>
+#include <behaviortree_cpp/decorators/loop_node.h>
+#include <behaviortree_cpp/json_export.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 #include <behaviortree_cpp/utils/shared_library.h>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <aruco_opencv_msgs/msg/aruco_detection.hpp>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <diagnostic_updater/diagnostic_status_wrapper.hpp>
+#include <exception>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <map>
 #include <memory>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
@@ -31,27 +40,36 @@
 #include <rclcpp/service.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
+#include <tf2/convert.hpp>
+#include <tf2/exceptions.hpp>
+#include <tf2/time.hpp>
 #include <tf2/utils.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>  // NOLINT(misc-include-cleaner)
+#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/transform_listener.hpp>
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
+#include "coug_helm/bt_nodes/advance_waypoint.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
-#include "coug_helm/bt_nodes/follow_waypoints.hpp"
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
+#include "coug_helm/bt_nodes/is_tag_detected.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
 #include "coug_helm/bt_nodes/load_behavior.hpp"
-#include "coug_helm/bt_nodes/load_next_goal.hpp"
+#include "coug_helm/bt_nodes/load_goal.hpp"
+#include "coug_helm/bt_nodes/load_search_poses.hpp"
+#include "coug_helm/bt_nodes/load_tag_id.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
+#include "coug_helm/bt_nodes/navigate_to_waypoint.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
 #include "coug_helm/bt_nodes/reset_localization.hpp"
 #include "coug_helm/bt_nodes/stop.hpp"
 #include "coug_helm/utils/behavior_enums.hpp"
-#include "coug_helm/utils/json_converters.hpp"
+#include "coug_helm/utils/json_converters.hpp"  // NOLINT(misc-include-cleaner)
 #include "coug_interfaces/msg/dvl_beam_list.hpp"
 #include "coug_interfaces/msg/way_point.hpp"
 #include "coug_interfaces/msg/way_point_list.hpp"
@@ -60,6 +78,7 @@
 
 namespace coug_helm {
 
+using aruco_opencv_msgs::msg::ArucoDetection;
 using coug_interfaces::msg::DvlBeamList;
 using coug_interfaces::msg::WayPoint;
 using coug_interfaces::msg::WayPointList;
@@ -79,7 +98,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
   blackboard_->set("reset_localization_service", params_.reset_localization_service);
 
-  const auto server_timeout = std::chrono::milliseconds(params_.server_timeout_ms);
+  const auto server_timeout =
+      std::chrono::milliseconds(static_cast<int64_t>(params_.server_timeout_sec * 1000.0));
   blackboard_->set("bt_loop_duration",
                    std::chrono::milliseconds(static_cast<int>(1000.0 / params_.tick_rate_hz)));
   blackboard_->set("server_timeout", server_timeout);
@@ -89,16 +109,15 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
 
-  blackboard_->set("current_waypoint", size_t{0});
-  blackboard_->set("prev_norm_dist", -1.0);
-
+  blackboard_->set("waypoint_index", size_t{0});
   blackboard_->set("active_waypoints", std::vector<WayPoint>{});
   blackboard_->set("mission_waypoints", std::vector<WayPoint>{});
+  blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
 
   blackboard_->set("current_x", 0.0);
   blackboard_->set("current_y", 0.0);
   blackboard_->set("current_z", 0.0);
-  blackboard_->set("current_heading", 0.0);
+  blackboard_->set("current_heading_degrees", 0.0);
   blackboard_->set("current_altitude", 0.0);
   blackboard_->set("has_odom", false);
   blackboard_->set("last_odom_time", 0.0);
@@ -113,7 +132,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("home_slip_radius", params_.home_slip_radius);
   blackboard_->set("home_slip_radius_z", params_.home_slip_radius_z);
 
-  blackboard_->set("default_speed", params_.default_speed_rpm);
+  blackboard_->set("default_speed_rpm", params_.default_speed_rpm);
 
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
   blackboard_->set("odom_recovery_timeout_msec",
@@ -125,6 +144,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("wait_duration_msec", static_cast<unsigned>(params_.wait_duration_sec * 1000.0));
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
+  blackboard_->set("tag_standoff_distance", params_.tag_standoff_distance);
+
+  // --- ROS Interfaces ---
+  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   waypoint_sub_ = create_subscription<WayPointList>(
       params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
@@ -138,6 +162,10 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       params_.beams_topic, rclcpp::SystemDefaultsQoS(),
       [this](const DvlBeamList::ConstSharedPtr& msg) { beamsCallback(msg); });
 
+  aruco_sub_ = create_subscription<ArucoDetection>(
+      params_.aruco_topic, rclcpp::SystemDefaultsQoS(),
+      [this](const ArucoDetection::ConstSharedPtr& msg) { arucoCallback(msg); });
+
   start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
   stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
   surface_srv_ = createBehaviorService(params_.surface_service, Behavior::kSurface, "Surface");
@@ -147,23 +175,26 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   emergency_surface_srv_ = createBehaviorService(params_.emergency_surface_service,
                                                  Behavior::kEmergencySurface, "Emergency surface");
 
-  tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
-                                  [this] { tree_.tickOnce(); });
-
+  // --- Behavior Tree ---
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
+  factory_.registerNodeType<bt_nodes::IsTagDetected>("IsTagDetected");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
+  factory_.registerNodeType<bt_nodes::AdvanceWaypoint>("AdvanceWaypoint");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
   factory_.registerNodeType<bt_nodes::DisarmThruster>("DisarmThruster");
   factory_.registerNodeType<bt_nodes::EmergencySurface>("EmergencySurface");
-  factory_.registerNodeType<bt_nodes::FollowWaypoints>("FollowWaypoints");
   factory_.registerNodeType<bt_nodes::LoadBehavior>("LoadBehavior");
-  factory_.registerNodeType<bt_nodes::LoadNextGoal>("LoadNextGoal");
+  factory_.registerNodeType<bt_nodes::LoadGoal>("LoadGoal");
+  factory_.registerNodeType<bt_nodes::LoadSearchPoses>("LoadSearchPoses");
+  factory_.registerNodeType<bt_nodes::LoadTagId>("LoadTagId");
   factory_.registerNodeType<bt_nodes::LoadWaypoints>("LoadWaypoints");
+  factory_.registerNodeType<bt_nodes::NavigateToWaypoint>("NavigateToWaypoint");
   factory_.registerNodeType<bt_nodes::ResetLocalization>("ResetLocalization");
   factory_.registerNodeType<bt_nodes::Stop>("Stop");
   factory_.registerNodeType<bt_nodes::ProgressChecker>("ProgressChecker");
+  factory_.registerNodeType<BT::LoopNode<geometry_msgs::msg::PoseStamped>>("LoopPose");
 
   for (const auto& plugin : params_.plugin_lib_names) {
     try {
@@ -174,6 +205,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   }
 
   factory_.registerScriptingEnums<Behavior>();
+  factory_.registerScriptingEnum("kGps", WayPoint::GPS);
+  factory_.registerScriptingEnum("kAruco", WayPoint::ARUCO);
   BT::RegisterJsonDefinition<WayPoint>();
   BT::RegisterJsonDefinition<std::vector<WayPoint>>();
 
@@ -189,6 +222,10 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     RCLCPP_INFO(get_logger(), "Groot2 Publisher: Port %ld", params_.groot2_port);
   }
 
+  tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
+                                  [this] { tree_.tickOnce(); });
+
+  // --- Diagnostics ---
   if (params_.publish_diagnostics) {
     const std::string ns = this->get_namespace();
     const std::string clean_ns = (ns == "/") ? "" : ns;
@@ -211,18 +248,17 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
   }
 
   blackboard_->set("map_frame", msg->header.frame_id);
-  std::vector<WayPoint> map_waypoints = msg->waypoints;
-  for (size_t i = 0; i < map_waypoints.size(); ++i) {
-    const auto& waypoint = map_waypoints[i];
+  for (size_t i = 0; i < msg->waypoints.size(); ++i) {
+    const auto& waypoint = msg->waypoints[i];
     RCLCPP_INFO(get_logger(),
                 "Waypoint %zu: X %.2f, Y %.2f, Z %.2f, Speed %.1f RPM, "
                 "Capture %.1f/%.1f m, Slip %.1f/%.1f m",
-                i, waypoint.position.x, waypoint.position.y, waypoint.position.z,
+                i + 1, waypoint.position.x, waypoint.position.y, waypoint.position.z,
                 waypoint.speed_rpm, waypoint.capture_radius, waypoint.capture_radius_z,
                 waypoint.slip_radius, waypoint.slip_radius_z);
   }
 
-  blackboard_->set("mission_waypoints", map_waypoints);
+  blackboard_->set("mission_waypoints", msg->waypoints);
   RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s).", msg->waypoints.size());
 }
 
@@ -234,7 +270,7 @@ void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg
   blackboard_->set("current_z", msg->pose.pose.position.z);
 
   static constexpr double kRadToDeg = 180.0 / M_PI;
-  blackboard_->set("current_heading", tf2::getYaw(msg->pose.pose.orientation) * kRadToDeg);
+  blackboard_->set("current_heading_degrees", tf2::getYaw(msg->pose.pose.orientation) * kRadToDeg);
 }
 
 void BtHelmNode::beamsCallback(const DvlBeamList::ConstSharedPtr& msg) {
@@ -251,6 +287,10 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
       service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr&,
                                        const std_srvs::srv::Trigger::Response::SharedPtr& res) {
         tree_.haltTree();
+        if (behavior == Behavior::kMission) {
+          blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
+          tag_estimates_.clear();
+        }
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;
         res->message = label + " requested.";
@@ -273,20 +313,23 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
     return;
   }
 
-  auto waypoint_idx = blackboard_->get<size_t>("current_waypoint");
+  auto waypoint_idx = blackboard_->get<size_t>("waypoint_index");
   if (waypoint_idx >= waypoints.size()) {
     return;
   }
 
   const auto current_x = blackboard_->get<double>("current_x");
   const auto current_y = blackboard_->get<double>("current_y");
-  const auto current_z = blackboard_->get<double>("current_z");
   const auto& target = waypoints[waypoint_idx];
+  const bool altitude_mode = (target.mode == WayPoint::ALTITUDE);
+  const auto current_vertical =
+      blackboard_->get<double>(altitude_mode ? "current_altitude" : "current_z");
   // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
   stat.addf("Waypoint", "%zu/%zu", waypoint_idx + 1, waypoints.size());
   stat.addf("Horizontal Distance (m)", "%.1f",
             std::hypot(target.position.x - current_x, target.position.y - current_y));
-  stat.addf("Vertical Distance (m)", "%.1f", std::abs(target.position.z - current_z));
+  stat.addf(altitude_mode ? "Altitude Error (m)" : "Depth Error (m)", "%.1f",
+            std::abs(target.position.z - current_vertical));
   // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 }
 

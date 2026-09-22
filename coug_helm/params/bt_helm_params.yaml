@@ -16,11 +16,11 @@ bt_helm_node:
       - "nav2_recovery_node_bt_node"
       - "nav2_round_robin_node_bt_node"
       - "nav2_navigate_to_pose_action_bt_node"
-  server_timeout_ms:
-    type: int
-    default_value: 1000
+  server_timeout_sec:
+    type: double
+    default_value: 1.0
     validation:
-      gt<>: [0]
+      gt<>: [0.0]
   surface_capture_radius:
     type: double
     default_value: 1000.0
@@ -127,6 +127,11 @@ bt_helm_node:
   beams_topic:
     type: string
     default_value: "dvl/beams"
+    validation:
+      not_empty<>: []
+  aruco_topic:
+    type: string
+    default_value: "aruco_detections"
     validation:
       not_empty<>: []
   hsd_topic:

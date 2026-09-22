@@ -17,6 +17,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 
 #include <chrono>
+#include <cstdint>
 #include <exception>
 #include <future>
 #include <rclcpp/rclcpp.hpp>
@@ -33,21 +34,43 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
                 const std::string& service_key)
       : RosBtNode<BT::StatefulActionNode>(name, config),
         service_name_(config.blackboard->get<std::string>(service_key)),
-        client_(node_->create_client<ServiceT>(service_name_)) {}
+        client_(node_->create_client<ServiceT>(service_name_)),
+        timeout_(config.blackboard->get<std::chrono::milliseconds>("server_timeout")) {}
 
   auto onStart() -> BT::NodeStatus override {
-    if (!client_->service_is_ready()) {
-      RCLCPP_ERROR(node_->get_logger(), "%s: service '%s' unavailable.", registrationName().c_str(),
-                   service_name_.c_str());
-      return BT::NodeStatus::FAILURE;
-    }
-    future_ = client_->async_send_request(makeRequest()).future;
-    return BT::NodeStatus::RUNNING;
+    request_sent_ = false;
+    start_time_ = std::chrono::steady_clock::now();
+    return onRunning();
   }
 
   auto onRunning() -> BT::NodeStatus override {
-    if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+    if (!request_sent_) {
+      if (!client_->service_is_ready()) {
+        if (std::chrono::steady_clock::now() - start_time_ < timeout_) {
+          return BT::NodeStatus::RUNNING;
+        }
+        RCLCPP_ERROR(node_->get_logger(), "%s: service '%s' unavailable after %ld ms.",
+                     registrationName().c_str(), service_name_.c_str(),
+                     static_cast<long>(timeout_.count()));
+        return BT::NodeStatus::FAILURE;
+      }
+      auto pending = client_->async_send_request(makeRequest());
+      future_ = pending.future.share();
+      request_id_ = pending.request_id;
+      request_sent_ = true;
+      start_time_ = std::chrono::steady_clock::now();
       return BT::NodeStatus::RUNNING;
+    }
+
+    if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+      if (std::chrono::steady_clock::now() - start_time_ < timeout_) {
+        return BT::NodeStatus::RUNNING;
+      }
+      client_->remove_pending_request(request_id_);
+      RCLCPP_ERROR(node_->get_logger(), "%s: no response from '%s' within %ld ms.",
+                   registrationName().c_str(), service_name_.c_str(),
+                   static_cast<long>(timeout_.count()));
+      return BT::NodeStatus::FAILURE;
     }
     bool success = false;
     try {
@@ -64,7 +87,11 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
     return BT::NodeStatus::FAILURE;
   }
 
-  void onHalted() override {}
+  void onHalted() override {
+    if (request_sent_) {
+      client_->remove_pending_request(request_id_);
+    }
+  }
 
  protected:
   [[nodiscard]] virtual auto makeRequest() const -> typename ServiceT::Request::SharedPtr = 0;
@@ -72,7 +99,11 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
  private:
   std::string service_name_;
   typename rclcpp::Client<ServiceT>::SharedPtr client_;
+  std::chrono::milliseconds timeout_;
   typename rclcpp::Client<ServiceT>::SharedFuture future_;
+  int64_t request_id_{};
+  bool request_sent_{false};
+  std::chrono::steady_clock::time_point start_time_;
 };
 
 }  // namespace coug_helm::bt_nodes

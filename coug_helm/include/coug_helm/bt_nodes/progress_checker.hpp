@@ -47,6 +47,10 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     const auto timeout = getPortOrBlackboard<double>("progress_timeout_sec");
     const double now = node_->now().seconds();
 
+    if (status() == BT::NodeStatus::IDLE) {
+      seeded_ = false;
+    }
+
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
                                current_z - baseline_z_) >= threshold) {
       baseline_x_ = current_x;
@@ -64,11 +68,6 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
 
     setStatus(BT::NodeStatus::RUNNING);
     return child_node_->executeTick();
-  }
-
-  void halt() override {
-    seeded_ = false;
-    BT::DecoratorNode::halt();
   }
 
  private:

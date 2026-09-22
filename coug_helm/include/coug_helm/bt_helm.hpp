@@ -17,15 +17,19 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 
+#include <aruco_opencv_msgs/msg/aruco_detection.hpp>
 #include <coug_interfaces/msg/dvl_beam_list.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <map>
 #include <memory>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
-#include <vector>
+#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/transform_listener.hpp>
 
 #include "coug_helm/bt_helm_parameters.hpp"
 #include "coug_helm/utils/behavior_enums.hpp"
@@ -44,6 +48,8 @@ class BtHelmNode : public rclcpp::Node {
 
   void beamsCallback(const coug_interfaces::msg::DvlBeamList::ConstSharedPtr& msg);
 
+  void arucoCallback(const aruco_opencv_msgs::msg::ArucoDetection::ConstSharedPtr& msg);
+
   // --- Helpers ---
   auto createBehaviorService(const std::string& service, utils::Behavior behavior,
                              const std::string& label)
@@ -52,16 +58,12 @@ class BtHelmNode : public rclcpp::Node {
   // --- Diagnostics ---
   void checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
-  // --- Behavior Tree ---
-  BT::BehaviorTreeFactory factory_;
-  BT::Tree tree_;
-  std::unique_ptr<BT::Groot2Publisher> groot2_pub_;
-  BT::Blackboard::Ptr blackboard_;
-
   // --- ROS Interfaces ---
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<coug_interfaces::msg::DvlBeamList>::SharedPtr beams_sub_;
+  rclcpp::Subscription<aruco_opencv_msgs::msg::ArucoDetection>::SharedPtr aruco_sub_;
+  rclcpp::TimerBase::SharedPtr tick_timer_;
 
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_srv_;
@@ -70,12 +72,26 @@ class BtHelmNode : public rclcpp::Node {
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_stop_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_surface_srv_;
 
-  rclcpp::TimerBase::SharedPtr tick_timer_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   diagnostic_updater::Updater diagnostic_updater_;
 
   // --- Parameters ---
   std::shared_ptr<bt_helm_node::ParamListener> param_listener_;
   bt_helm_node::Params params_;
+
+  // --- Behavior Tree ---
+  BT::BehaviorTreeFactory factory_;
+  BT::Blackboard::Ptr blackboard_;
+  BT::Tree tree_;
+  std::unique_ptr<BT::Groot2Publisher> groot2_pub_;
+
+  // --- State ---
+  struct TagEstimate {
+    geometry_msgs::msg::Point mean;
+    int count{0};
+  };
+  std::map<int, TagEstimate> tag_estimates_;
 };
 
 }  // namespace coug_helm

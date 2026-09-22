@@ -33,7 +33,7 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints"),
-        BT::InputPort<double>("default_speed"),
+        BT::InputPort<double>("default_speed_rpm"),
         BT::InputPort<double>("home_capture_radius"),
         BT::InputPort<double>("home_capture_radius_z"),
         BT::InputPort<double>("home_slip_radius"),
@@ -55,7 +55,7 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     home.type = coug_interfaces::msg::WayPoint::GPS;
     home.subwaypoints.clear();
 
-    home.speed_rpm = getPortOrBlackboard<double>("default_speed");
+    home.speed_rpm = getPortOrBlackboard<double>("default_speed_rpm");
 
     home.capture_radius = getPortOrBlackboard<double>("home_capture_radius");
     home.capture_radius_z = getPortOrBlackboard<double>("home_capture_radius_z");
