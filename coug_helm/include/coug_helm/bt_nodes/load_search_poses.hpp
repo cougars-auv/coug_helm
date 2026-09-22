@@ -62,7 +62,8 @@ class LoadSearchPoses : public RosBtNode<BT::SyncActionNode> {
   }
 
  private:
-  auto makePose(const geometry_msgs::msg::Point& from, const geometry_msgs::msg::Point& to) const
+  [[nodiscard]] auto makePose(const geometry_msgs::msg::Point& from,
+                              const geometry_msgs::msg::Point& to) const
       -> geometry_msgs::msg::PoseStamped {
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = getPortOrBlackboard<std::string>("map_frame");

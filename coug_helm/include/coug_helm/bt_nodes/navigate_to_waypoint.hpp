@@ -51,10 +51,10 @@ class NavigateToWaypoint : public RosBtNode<BT::StatefulActionNode> {
 
   auto onRunning() -> BT::NodeStatus override {
     const auto target = getInput<coug_interfaces::msg::WayPoint>("goal_waypoint").value();
-    const double current_x = getPortOrBlackboard<double>("current_x");
-    const double current_y = getPortOrBlackboard<double>("current_y");
-    const double current_z = getPortOrBlackboard<double>("current_z");
-    const double current_altitude = getPortOrBlackboard<double>("current_altitude");
+    const auto current_x = getPortOrBlackboard<double>("current_x");
+    const auto current_y = getPortOrBlackboard<double>("current_y");
+    const auto current_z = getPortOrBlackboard<double>("current_z");
+    const auto current_altitude = getPortOrBlackboard<double>("current_altitude");
 
     publishHsd(target, current_x, current_y);
     const double horizontal_dist =

@@ -67,7 +67,7 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override {}
 
  protected:
-  virtual auto makeRequest() const -> typename ServiceT::Request::SharedPtr = 0;
+  [[nodiscard]] virtual auto makeRequest() const -> typename ServiceT::Request::SharedPtr = 0;
 
  private:
   std::string service_name_;

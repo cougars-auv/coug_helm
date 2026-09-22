@@ -37,9 +37,9 @@ class IsOdomHealthy : public RosBtNode<BT::ConditionNode> {
   }
 
   auto tick() -> BT::NodeStatus override {
-    const double last_odom = getPortOrBlackboard<double>("last_odom_time");
-    const bool has_odom = getPortOrBlackboard<bool>("has_odom");
-    const double timeout = getPortOrBlackboard<double>("odom_timeout_sec");
+    const auto last_odom = getPortOrBlackboard<double>("last_odom_time");
+    const auto has_odom = getPortOrBlackboard<bool>("has_odom");
+    const auto timeout = getPortOrBlackboard<double>("odom_timeout_sec");
 
     if (!has_odom) {
       return BT::NodeStatus::FAILURE;

@@ -32,7 +32,7 @@ class DisarmThruster : public ServiceBtNode<std_srvs::srv::SetBool> {
   static auto providedPorts() -> BT::PortsList { return {}; }
 
  protected:
-  auto makeRequest() const -> std_srvs::srv::SetBool::Request::SharedPtr override {
+  [[nodiscard]] auto makeRequest() const -> std_srvs::srv::SetBool::Request::SharedPtr override {
     auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
     request->data = false;
     return request;

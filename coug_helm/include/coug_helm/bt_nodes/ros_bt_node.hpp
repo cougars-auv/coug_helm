@@ -30,7 +30,7 @@ class RosBtNode : public BTBase {
 
  protected:
   template <typename T>
-  auto getPortOrBlackboard(const std::string& key) const -> T {
+  [[nodiscard]] auto getPortOrBlackboard(const std::string& key) const -> T {
     if (auto port = this->template getInput<T>(key)) {
       return port.value();
     }

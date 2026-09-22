@@ -32,7 +32,7 @@ class ResetLocalization : public ServiceBtNode<std_srvs::srv::Trigger> {
   static auto providedPorts() -> BT::PortsList { return {}; }
 
  protected:
-  auto makeRequest() const -> std_srvs::srv::Trigger::Request::SharedPtr override {
+  [[nodiscard]] auto makeRequest() const -> std_srvs::srv::Trigger::Request::SharedPtr override {
     return std::make_shared<std_srvs::srv::Trigger::Request>();
   }
 };

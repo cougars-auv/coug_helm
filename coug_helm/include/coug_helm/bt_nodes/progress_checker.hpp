@@ -40,11 +40,11 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   }
 
   auto tick() -> BT::NodeStatus override {
-    const double current_x = getPortOrBlackboard<double>("current_x");
-    const double current_y = getPortOrBlackboard<double>("current_y");
-    const double current_z = getPortOrBlackboard<double>("current_z");
-    const double threshold = getPortOrBlackboard<double>("progress_threshold");
-    const double timeout = getPortOrBlackboard<double>("progress_timeout_sec");
+    const auto current_x = getPortOrBlackboard<double>("current_x");
+    const auto current_y = getPortOrBlackboard<double>("current_y");
+    const auto current_z = getPortOrBlackboard<double>("current_z");
+    const auto threshold = getPortOrBlackboard<double>("progress_threshold");
+    const auto timeout = getPortOrBlackboard<double>("progress_timeout_sec");
     const double now = node_->now().seconds();
 
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
