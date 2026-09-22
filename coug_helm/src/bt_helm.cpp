@@ -162,8 +162,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerScriptingEnums<Behavior>();
 
   const std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
-  const std::string tree_file =
-      params_.tree_file.empty() ? pkg_share + "/trees/bt_helm_tree.xml" : params_.tree_file;
+  const std::string tree_file = params_.tree_file.empty()
+                                    ? pkg_share + "/trees/follow_waypoints_w_recovery.xml"
+                                    : params_.tree_file;
   RCLCPP_INFO(get_logger(), "Behavior tree: %s", tree_file.c_str());
   tree_ = factory_.createTreeFromFile(tree_file, blackboard_);
 
