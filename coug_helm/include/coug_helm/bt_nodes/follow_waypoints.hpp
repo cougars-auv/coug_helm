@@ -43,17 +43,17 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
         BT::InputPort<double>("current_y"),
         BT::InputPort<double>("current_z"),
         BT::InputPort<double>("current_altitude"),
-        BT::BidirectionalPort<size_t>("current_waypoint"),
+        BT::BidirectionalPort<size_t>("waypoint_index"),
         BT::BidirectionalPort<double>("prev_norm_dist"),
     };
   }
 
   auto onStart() -> BT::NodeStatus override {
     auto waypoints =
-        getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints");
-    auto waypoint_idx = getInput<size_t>("current_waypoint").value();
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+    auto waypoint_idx = getInput<size_t>("waypoint_index").value();
     if (!waypoints.empty() && waypoint_idx < waypoints.size()) {
-      RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: navigating %zu waypoint(s).",
+      RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: navigating to %zu waypoint(s).",
                   waypoints.size());
     }
     return onRunning();
@@ -61,13 +61,14 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
   auto onRunning() -> BT::NodeStatus override {
     auto waypoints =
-        getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints");
-    auto waypoint_idx = getInput<size_t>("current_waypoint").value();
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+    auto waypoint_idx = getInput<size_t>("waypoint_index").value();
 
     if (waypoints.empty() || waypoint_idx >= waypoints.size()) {
       publishStop();
       if (!waypoints.empty()) {
-        RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: completed waypoint navigation.");
+        RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: all %zu waypoint(s) reached.",
+                    waypoints.size());
       }
       return BT::NodeStatus::SUCCESS;
     }
@@ -96,9 +97,9 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
         (prev_norm_dist > 0.0 && norm_capture_dist > prev_norm_dist && norm_slip_dist < 1.0);
 
     if (capture || slip) {
-      RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: reached waypoint %zu/%zu (%s).",
+      RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: reached waypoint %zu of %zu (%s).",
                   waypoint_idx + 1, waypoints.size(), capture ? "capture" : "slip");
-      setOutput("current_waypoint", waypoint_idx + 1);
+      setOutput("waypoint_index", waypoint_idx + 1);
       setOutput("prev_norm_dist", -1.0);  // new target, reset slip baseline
     } else {
       setOutput("prev_norm_dist", norm_capture_dist);

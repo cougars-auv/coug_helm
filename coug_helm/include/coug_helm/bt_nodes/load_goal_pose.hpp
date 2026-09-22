@@ -30,9 +30,9 @@
 
 namespace coug_helm::bt_nodes {
 
-class LoadNextGoal : public RosBtNode<BT::SyncActionNode> {
+class LoadGoalPose : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadNextGoal(const std::string& name, const BT::NodeConfig& config)
+  LoadGoalPose(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
@@ -41,18 +41,20 @@ class LoadNextGoal : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<std::string>("map_frame"),
-        BT::BidirectionalPort<size_t>("current_waypoint"),
-        BT::OutputPort<geometry_msgs::msg::PoseStamped>("goal"),
+        BT::InputPort<size_t>("waypoint_index"),
+        BT::OutputPort<geometry_msgs::msg::PoseStamped>("goal_pose"),
+        BT::OutputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
+        BT::OutputPort<int>("goal_type"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
     const auto waypoints =
-        getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints");
-    const size_t index = getPortOrBlackboard<size_t>("current_waypoint");
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+    const size_t index = getInput<size_t>("waypoint_index").value();
 
     if (index >= waypoints.size()) {
-      RCLCPP_INFO(node_->get_logger(), "LoadNextGoal: all %zu waypoint(s) reached.",
+      RCLCPP_INFO(node_->get_logger(), "LoadGoalPose: all %zu waypoint(s) reached.",
                   waypoints.size());
       return BT::NodeStatus::FAILURE;
     }
@@ -70,10 +72,12 @@ class LoadNextGoal : public RosBtNode<BT::SyncActionNode> {
     orientation.setRPY(0.0, 0.0, heading);
     goal.pose.orientation = tf2::toMsg(orientation);
 
-    RCLCPP_INFO(node_->get_logger(), "LoadNextGoal: waypoint %zu of %zu at (%.1f, %.1f).",
-                index + 1, waypoints.size(), goal.pose.position.x, goal.pose.position.y);
-    setOutput("goal", goal);
-    setOutput("current_waypoint", index + 1);
+    RCLCPP_INFO(node_->get_logger(),
+                "LoadGoalPose: navigating to waypoint %zu of %zu at (%.1f, %.1f).", index + 1,
+                waypoints.size(), goal.pose.position.x, goal.pose.position.y);
+    setOutput("goal_pose", goal);
+    setOutput("goal_waypoint", waypoints[index]);
+    setOutput("goal_type", static_cast<int>(waypoints[index].type));
     return BT::NodeStatus::SUCCESS;
   }
 };

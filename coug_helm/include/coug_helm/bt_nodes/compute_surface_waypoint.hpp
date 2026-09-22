@@ -49,6 +49,8 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     waypoint.position.y = getPortOrBlackboard<double>("current_y");
     waypoint.position.z = 0.0;
     waypoint.mode = coug_interfaces::msg::WayPoint::DEPTH;
+    waypoint.type = coug_interfaces::msg::WayPoint::GPS;
+    waypoint.subwaypoints.clear();
 
     waypoint.speed_rpm = getPortOrBlackboard<double>("default_speed");
 

@@ -29,7 +29,8 @@
     <Action ID="DisarmThruster"/>
     <Action ID="EmergencySurface"/>
     <Action ID="FollowWaypoints">
-      <inout_port name="current_waypoint"/>
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_index"/>
       <inout_port name="prev_norm_dist"/>
     </Action>
     <Action ID="LoadBehavior">
@@ -38,7 +39,7 @@
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
       <output_port name="active_waypoints"/>
-      <output_port name="current_waypoint"/>
+      <output_port name="waypoint_index"/>
       <output_port name="prev_norm_dist"/>
     </Action>
     <Action ID="ResetLocalization"/>
@@ -74,7 +75,7 @@
       </Fallback>
       <RecoveryNode number_of_retries="{number_of_retries}">
         <ProgressChecker>
-          <FollowWaypoints current_waypoint="{current_waypoint}"
+          <FollowWaypoints active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
               prev_norm_dist="{prev_norm_dist}"/>
         </ProgressChecker>
         <RoundRobin>
@@ -92,7 +93,7 @@
     <Sequence>
       <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
-          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
+          waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
@@ -102,7 +103,7 @@
       <IsWaypointsReceived/>
       <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
-          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
+          waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
@@ -111,7 +112,7 @@
     <Sequence>
       <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
       <LoadWaypoints pending_waypoints="{surface_waypoint}" active_waypoints="{active_waypoints}"
-          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
+          waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>

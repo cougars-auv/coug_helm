@@ -53,6 +53,8 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     coug_interfaces::msg::WayPoint home = waypoints[0];
     home.position.z = 0.0;
     home.mode = coug_interfaces::msg::WayPoint::DEPTH;
+    home.type = coug_interfaces::msg::WayPoint::GPS;
+    home.subwaypoints.clear();
 
     home.speed_rpm = getPortOrBlackboard<double>("default_speed");
 

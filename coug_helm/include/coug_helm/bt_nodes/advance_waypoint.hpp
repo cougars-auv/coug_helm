@@ -19,33 +19,32 @@
 #include <coug_interfaces/msg/way_point.hpp>
 #include <cstddef>
 #include <rclcpp/rclcpp.hpp>
+#include <string>
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
 
 namespace coug_helm::bt_nodes {
 
-class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
+class AdvanceWaypoint : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadWaypoints(const std::string& name, const BT::NodeConfig& config)
+  AdvanceWaypoint(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("pending_waypoints"),
-        BT::OutputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
-        BT::OutputPort<size_t>("waypoint_index"),
-        BT::OutputPort<double>("prev_norm_dist"),
+        BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
+        BT::BidirectionalPort<size_t>("waypoint_index"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    auto waypoints =
-        getInput<std::vector<coug_interfaces::msg::WayPoint>>("pending_waypoints").value();
-    RCLCPP_INFO(node_->get_logger(), "LoadWaypoints: loading %zu waypoint(s).", waypoints.size());
-    setOutput("active_waypoints", waypoints);
-    setOutput("waypoint_index", size_t{0});
-    setOutput("prev_norm_dist", -1.0);
+    const auto waypoints =
+        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+    const size_t index = getInput<size_t>("waypoint_index").value();
+    RCLCPP_INFO(node_->get_logger(), "AdvanceWaypoint: reached waypoint %zu of %zu.", index + 1,
+                waypoints.size());
+    setOutput("waypoint_index", index + 1);
     return BT::NodeStatus::SUCCESS;
   }
 };

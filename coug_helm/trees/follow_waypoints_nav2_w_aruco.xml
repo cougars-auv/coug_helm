@@ -18,10 +18,26 @@
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <TreeNodesModel>
     <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsTagDetected">
+      <input_port name="tag_id"/>
+      <output_port name="approach_pose"/>
+    </Condition>
     <Condition ID="IsWaypointsReceived"/>
-    <Action ID="LoadNextGoal">
-      <inout_port name="current_waypoint"/>
-      <output_port name="goal"/>
+    <Action ID="AdvanceWaypoint">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_index"/>
+    </Action>
+    <Action ID="LoadGoalPose">
+      <input_port name="active_waypoints"/>
+      <input_port name="waypoint_index"/>
+      <output_port name="goal_pose"/>
+      <output_port name="goal_waypoint"/>
+      <output_port name="goal_type"/>
+    </Action>
+    <Action ID="LoadSearchPoses">
+      <input_port name="goal_waypoint"/>
+      <output_port name="tag_id"/>
+      <output_port name="search_poses"/>
     </Action>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
@@ -32,21 +48,52 @@
     <Action ID="NavigateToPose">
       <input_port name="goal"/>
     </Action>
+    <Decorator ID="LoopPose">
+      <input_port name="queue"/>
+      <output_port name="value"/>
+    </Decorator>
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
       <output_port name="active_waypoints"/>
-      <output_port name="current_waypoint"/>
-      <output_port name="prev_norm_dist"/>
+      <output_port name="waypoint_index"/>
     </Action>
   </TreeNodesModel>
 
-  <BehaviorTree ID="FollowWaypointsNav2">
+  <BehaviorTree ID="FollowWaypointsNav2WithAruco">
     <ReactiveSequence>
       <IsOdomHealthy/>
       <KeepRunningUntilFailure>
         <Sequence>
-          <LoadNextGoal goal="{goal}" current_waypoint="{current_waypoint}"/>
-          <NavigateToPose goal="{goal}"/>
+          <LoadGoalPose active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
+              goal_pose="{goal_pose}" goal_waypoint="{goal_waypoint}" goal_type="{goal_type}"/>
+          <Fallback>
+            <Sequence>
+              <ScriptCondition code="goal_type == kGps"/>
+              <NavigateToPose goal="{goal_pose}"/>
+            </Sequence>
+            <Sequence>
+              <ScriptCondition code="goal_type == kAruco"/>
+              <LoadSearchPoses goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"
+                  search_poses="{search_poses}"/>
+              <ReactiveFallback>
+                <IsTagDetected tag_id="{tag_id}" approach_pose="{approach_pose}"/>
+                <Sequence>
+                  <ForceSuccess>
+                    <NavigateToPose goal="{goal_pose}"/>
+                  </ForceSuccess>
+                  <LoopPose queue="{search_poses}" value="{search_pose}">
+                    <ForceSuccess>
+                      <NavigateToPose goal="{search_pose}"/>
+                    </ForceSuccess>
+                  </LoopPose>
+                  <AlwaysFailure/>
+                </Sequence>
+              </ReactiveFallback>
+              <NavigateToPose goal="{approach_pose}"/>
+            </Sequence>
+            <AlwaysFailure/>
+          </Fallback>
+          <AdvanceWaypoint active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
         </Sequence>
       </KeepRunningUntilFailure>
     </ReactiveSequence>
@@ -56,8 +103,8 @@
     <Sequence>
       <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
-          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
-      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
+          waypoint_index="{waypoint_index}"/>
+      <SubTree ID="FollowWaypointsNav2WithAruco" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
@@ -66,8 +113,8 @@
       <IsWaypointsReceived/>
       <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
-          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
-      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
+          waypoint_index="{waypoint_index}"/>
+      <SubTree ID="FollowWaypointsNav2WithAruco" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
