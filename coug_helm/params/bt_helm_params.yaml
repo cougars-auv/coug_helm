@@ -1,4 +1,7 @@
 bt_helm_node:
+  tree_file:
+    type: string
+    default_value: ""
   tick_rate_hz:
     type: double
     default_value: 20.0

@@ -162,7 +162,10 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerScriptingEnums<Behavior>();
 
   const std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
-  tree_ = factory_.createTreeFromFile(pkg_share + "/trees/bt_helm_tree.xml", blackboard_);
+  const std::string tree_file =
+      params_.tree_file.empty() ? pkg_share + "/trees/bt_helm_tree.xml" : params_.tree_file;
+  RCLCPP_INFO(get_logger(), "Behavior tree: %s", tree_file.c_str());
+  tree_ = factory_.createTreeFromFile(tree_file, blackboard_);
 
   if (params_.publish_groot2) {
     groot2_pub_ = std::make_unique<BT::Groot2Publisher>(tree_, params_.groot2_port);

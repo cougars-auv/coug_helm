@@ -12,20 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+import os
+from typing import Any
+
+import yaml
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchContext, LaunchDescription
+from launch.action import Action
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import (
     EnvironmentVariable,
     LaunchConfiguration,
     PathJoinSubstitution,
-    PythonExpression,
 )
 from launch_ros.actions import Node
 
 
-def generate_launch_description() -> LaunchDescription:
+def load_launch_params(path: str, top_key: str) -> dict[str, Any]:
+    try:
+        with open(path) as config_file:
+            config = yaml.safe_load(config_file)
+        params = config[top_key]["coug_helm_launch"]["ros__parameters"]
+        return dict(params)
+    except (KeyError, TypeError, OSError):
+        return {}
+
+
+def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Action]:
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_ns = LaunchConfiguration("agent_ns")
+
+    agent_ns_str = agent_ns.perform(context)
+
+    config_dir = os.environ["CONFIG_DIR"]
+    coug_helm_dir = get_package_share_directory("coug_helm")
 
     fleet_param_file = PathJoinSubstitution(
         [EnvironmentVariable("CONFIG_DIR"), "fleet", "coug_helm_params.yaml"]
@@ -33,10 +53,38 @@ def generate_launch_description() -> LaunchDescription:
     agent_param_file = PathJoinSubstitution(
         [EnvironmentVariable("CONFIG_DIR"), [agent_ns, "_params.yaml"]]
     )
-    scenario_param_file = PythonExpression(
-        ["'", LaunchConfiguration("scenario_param_file"), "' or '", agent_param_file, "'"]
+    scenario_param_file = (
+        LaunchConfiguration("scenario_param_file").perform(context) or agent_param_file
     )
 
+    fleet_launch_params = load_launch_params(
+        os.path.join(config_dir, "fleet", "coug_helm_params.yaml"), "/**"
+    )
+    agent_launch_params = load_launch_params(
+        os.path.join(config_dir, f"{agent_ns_str}_params.yaml"), f"/{agent_ns_str}"
+    )
+    tree_filename = agent_launch_params.get("tree_file", fleet_launch_params.get("tree_file"))
+    tree_file = os.path.join(coug_helm_dir, "trees", tree_filename)
+
+    return [
+        Node(
+            package="coug_helm",
+            executable="bt_helm",
+            name="bt_helm_node",
+            parameters=[
+                fleet_param_file,
+                agent_param_file,
+                scenario_param_file,
+                {
+                    "use_sim_time": use_sim_time,
+                    "tree_file": tree_file,
+                },
+            ],
+        ),
+    ]
+
+
+def generate_launch_description() -> LaunchDescription:
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -51,16 +99,6 @@ def generate_launch_description() -> LaunchDescription:
                 "scenario_param_file",
                 default_value="",
             ),
-            Node(
-                package="coug_helm",
-                executable="bt_helm",
-                name="bt_helm_node",
-                parameters=[
-                    fleet_param_file,
-                    agent_param_file,
-                    scenario_param_file,
-                    {"use_sim_time": use_sim_time},
-                ],
-            ),
+            OpaqueFunction(function=launch_setup),
         ]
     )
