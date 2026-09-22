@@ -21,18 +21,12 @@ from launch import LaunchContext, LaunchDescription
 from launch.action import Action
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
-from launch.substitution import Substitution
 from launch.substitutions import (
     EnvironmentVariable,
     LaunchConfiguration,
     PathJoinSubstitution,
-    PythonExpression,
 )
 from launch_ros.actions import Node
-
-
-def agent_frame(agent_ns: str | Substitution, frame: str) -> PythonExpression:
-    return PythonExpression(["'", agent_ns, f"/{frame}' if '", agent_ns, f"' != '' else '{frame}'"])
 
 
 def load_launch_params(path: str, top_key: str) -> dict[str, Any]:
@@ -76,7 +70,6 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
     with open(tree_file) as tree:
         tree_xml = tree.read()
     use_aruco = str("<IsTagDetected" in tree_xml)
-    use_docking = str("<DockRobot" in tree_xml)
 
     return [
         Node(
@@ -103,35 +96,6 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
                 agent_param_file,
                 scenario_param_file,
                 {"use_sim_time": use_sim_time},
-            ],
-        ),
-        Node(
-            package="opennav_docking",
-            executable="opennav_docking",
-            name="docking_server",
-            condition=IfCondition(use_docking),
-            parameters=[
-                fleet_param_file,
-                agent_param_file,
-                scenario_param_file,
-                {
-                    "use_sim_time": use_sim_time,
-                    "fixed_frame": agent_frame(agent_ns, "odom"),
-                    "base_frame": agent_frame(agent_ns, "base_link"),
-                },
-            ],
-        ),
-        Node(
-            package="nav2_lifecycle_manager",
-            executable="lifecycle_manager",
-            name="lifecycle_manager_docking",
-            condition=IfCondition(use_docking),
-            parameters=[
-                {
-                    "use_sim_time": use_sim_time,
-                    "autostart": True,
-                    "node_names": ["docking_server"],
-                },
             ],
         ),
     ]
