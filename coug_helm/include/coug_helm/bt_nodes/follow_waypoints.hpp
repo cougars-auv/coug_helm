@@ -50,7 +50,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
   auto onStart() -> BT::NodeStatus override {
     auto waypoints =
-        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+        getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints");
     auto waypoint_idx = getInput<size_t>("current_waypoint").value();
     if (!waypoints.empty() && waypoint_idx < waypoints.size()) {
       RCLCPP_INFO(node_->get_logger(), "FollowWaypoints: navigating %zu waypoint(s).",
@@ -61,7 +61,7 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
 
   auto onRunning() -> BT::NodeStatus override {
     auto waypoints =
-        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
+        getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints");
     auto waypoint_idx = getInput<size_t>("current_waypoint").value();
 
     if (waypoints.empty() || waypoint_idx >= waypoints.size()) {
@@ -72,10 +72,10 @@ class FollowWaypoints : public RosBtNode<BT::StatefulActionNode> {
       return BT::NodeStatus::SUCCESS;
     }
 
-    const double current_x = getInput<double>("current_x").value();
-    const double current_y = getInput<double>("current_y").value();
-    const double current_z = getInput<double>("current_z").value();
-    const double current_altitude = getInput<double>("current_altitude").value();
+    const double current_x = getPortOrBlackboard<double>("current_x");
+    const double current_y = getPortOrBlackboard<double>("current_y");
+    const double current_z = getPortOrBlackboard<double>("current_z");
+    const double current_altitude = getPortOrBlackboard<double>("current_altitude");
     const double prev_norm_dist = getInput<double>("prev_norm_dist").value();
 
     const auto& target = waypoints[waypoint_idx];

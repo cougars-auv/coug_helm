@@ -35,7 +35,7 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<double>("backup_speed_rpm"),
-        BT::InputPort<double>("backup_duration"),
+        BT::InputPort<double>("backup_duration_sec"),
         BT::InputPort<double>("current_heading"),
         BT::InputPort<double>("current_z"),
     };
@@ -44,18 +44,18 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
   auto onStart() -> BT::NodeStatus override {
     start_time_ = node_->now().seconds();
 
-    hsd_msg_.heading = getInput<double>("current_heading").value();
-    hsd_msg_.speed_rpm = getInput<double>("backup_speed_rpm").value();
-    hsd_msg_.depth = getInput<double>("current_z").value();
+    hsd_msg_.heading = getPortOrBlackboard<double>("current_heading");
+    hsd_msg_.speed_rpm = getPortOrBlackboard<double>("backup_speed_rpm");
+    hsd_msg_.depth = getPortOrBlackboard<double>("current_z");
     hsd_msg_.mode = coug_interfaces::msg::ControlSetpoint::DEPTH;
 
     RCLCPP_WARN(node_->get_logger(), "BackUp: reversing at %.0f RPM for %.1f s.",
-                hsd_msg_.speed_rpm, getInput<double>("backup_duration").value());
+                hsd_msg_.speed_rpm, getPortOrBlackboard<double>("backup_duration_sec"));
     return onRunning();
   }
 
   auto onRunning() -> BT::NodeStatus override {
-    const double duration = getInput<double>("backup_duration").value();
+    const double duration = getPortOrBlackboard<double>("backup_duration_sec");
     if ((node_->now().seconds() - start_time_) >= duration) {
       publishStop();
       return BT::NodeStatus::SUCCESS;

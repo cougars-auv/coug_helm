@@ -34,8 +34,7 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
   }
 
   auto tick() -> BT::NodeStatus override {
-    if (!getInput<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints")
-             .value()
+    if (!getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints")
              .empty()) {
       return BT::NodeStatus::SUCCESS;
     }

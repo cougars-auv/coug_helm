@@ -10,6 +10,17 @@ bt_helm_node:
   publish_diagnostics:
     type: bool
     default_value: false
+  plugin_lib_names:
+    type: string_array
+    default_value:
+      - "nav2_recovery_node_bt_node"
+      - "nav2_round_robin_node_bt_node"
+      - "nav2_navigate_through_poses_action_bt_node"
+  server_timeout_ms:
+    type: int
+    default_value: 1000
+    validation:
+      gt<>: [0]
   surface_capture_radius:
     type: double
     default_value: 1000.0

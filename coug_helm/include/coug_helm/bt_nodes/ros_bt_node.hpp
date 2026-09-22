@@ -25,9 +25,18 @@ template <class BTBase>
 class RosBtNode : public BTBase {
  public:
   RosBtNode(const std::string& name, const BT::NodeConfig& config)
-      : BTBase(name, config), node_(config.blackboard->template get<rclcpp::Node*>("node")) {}
+      : BTBase(name, config),
+        node_(config.blackboard->template get<rclcpp::Node::SharedPtr>("node").get()) {}
 
  protected:
+  template <typename T>
+  auto getPortOrBlackboard(const std::string& key) const -> T {
+    if (auto port = this->template getInput<T>(key)) {
+      return port.value();
+    }
+    return this->config().blackboard->template get<T>(key);
+  }
+
   rclcpp::Node* node_;
 };
 

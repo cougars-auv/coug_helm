@@ -16,6 +16,7 @@
 
 #include <behaviortree_cpp/blackboard.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
+#include <behaviortree_cpp/utils/shared_library.h>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <chrono>
@@ -36,6 +37,7 @@
 
 #include "coug_helm/bt_helm_parameters.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
+#include "coug_helm/bt_nodes/compute_goal_poses.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
@@ -46,12 +48,10 @@
 #include "coug_helm/bt_nodes/load_behavior.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
-#include "coug_helm/bt_nodes/recovery_node.hpp"
 #include "coug_helm/bt_nodes/reset_localization.hpp"
-#include "coug_helm/bt_nodes/round_robin.hpp"
 #include "coug_helm/bt_nodes/stop.hpp"
-#include "coug_helm/bt_nodes/wait.hpp"
 #include "coug_helm/utils/behavior_enums.hpp"
+#include "coug_helm/utils/json_converters.hpp"
 #include "coug_interfaces/msg/dvl_beam_list.hpp"
 #include "coug_interfaces/msg/way_point.hpp"
 #include "coug_interfaces/msg/way_point_list.hpp"
@@ -74,10 +74,17 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   // --- Blackboard ---
   blackboard_ = BT::Blackboard::create();
 
-  blackboard_->set("node", static_cast<rclcpp::Node*>(this));
+  blackboard_->set("node", std::shared_ptr<rclcpp::Node>(this, [](rclcpp::Node*) {}));
   blackboard_->set("hsd_topic", params_.hsd_topic);
   blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
   blackboard_->set("reset_localization_service", params_.reset_localization_service);
+
+  const auto server_timeout = std::chrono::milliseconds(params_.server_timeout_ms);
+  blackboard_->set("bt_loop_duration",
+                   std::chrono::milliseconds(static_cast<int>(1000.0 / params_.tick_rate_hz)));
+  blackboard_->set("server_timeout", server_timeout);
+  blackboard_->set("cancel_timeout", server_timeout);
+  blackboard_->set("wait_for_service_timeout", server_timeout);
 
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
@@ -95,7 +102,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("current_altitude", 0.0);
   blackboard_->set("has_odom", false);
   blackboard_->set("last_odom_time", 0.0);
-  blackboard_->set("current_time", 0.0);
+  blackboard_->set("map_frame", std::string{"map"});
 
   blackboard_->set("surface_capture_radius", params_.surface_capture_radius);
   blackboard_->set("surface_capture_radius_z", params_.surface_capture_radius_z);
@@ -109,12 +116,13 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("default_speed", params_.default_speed_rpm);
 
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
-  blackboard_->set("odom_recovery_timeout_sec", params_.odom_recovery_timeout_sec);
+  blackboard_->set("odom_recovery_timeout_msec",
+                   static_cast<unsigned>(params_.odom_recovery_timeout_sec * 1000.0));
 
   blackboard_->set("progress_timeout_sec", params_.progress_timeout_sec);
   blackboard_->set("progress_threshold", params_.progress_threshold);
   blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
-  blackboard_->set("wait_duration_sec", params_.wait_duration_sec);
+  blackboard_->set("wait_duration_msec", static_cast<unsigned>(params_.wait_duration_sec * 1000.0));
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
@@ -145,6 +153,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
+  factory_.registerNodeType<bt_nodes::ComputeGoalPoses>("ComputeGoalPoses");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
   factory_.registerNodeType<bt_nodes::DisarmThruster>("DisarmThruster");
@@ -154,12 +163,19 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::LoadWaypoints>("LoadWaypoints");
   factory_.registerNodeType<bt_nodes::ResetLocalization>("ResetLocalization");
   factory_.registerNodeType<bt_nodes::Stop>("Stop");
-  factory_.registerNodeType<bt_nodes::Wait>("Wait");
-  factory_.registerNodeType<bt_nodes::RecoveryNode>("RecoveryNode");
-  factory_.registerNodeType<bt_nodes::RoundRobin>("RoundRobin");
   factory_.registerNodeType<bt_nodes::ProgressChecker>("ProgressChecker");
 
+  for (const auto& plugin : params_.plugin_lib_names) {
+    try {
+      factory_.registerFromPlugin(BT::SharedLibrary::getOSName(plugin));
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(get_logger(), "Plugin '%s' not registered: %s", plugin.c_str(), e.what());
+    }
+  }
+
   factory_.registerScriptingEnums<Behavior>();
+  BT::RegisterJsonDefinition<WayPoint>();
+  BT::RegisterJsonDefinition<std::vector<WayPoint>>();
 
   const std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
   const std::string tree_file = params_.tree_file.empty()
@@ -194,6 +210,7 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
     return;
   }
 
+  blackboard_->set("map_frame", msg->header.frame_id);
   std::vector<WayPoint> map_waypoints = msg->waypoints;
   for (size_t i = 0; i < map_waypoints.size(); ++i) {
     const auto& waypoint = map_waypoints[i];
@@ -240,10 +257,7 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
       });
 }
 
-void BtHelmNode::tickTree() {
-  blackboard_->set("current_time", this->get_clock()->now().seconds());
-  tree_.tickOnce();
-}
+void BtHelmNode::tickTree() { tree_.tickOnce(); }
 
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));

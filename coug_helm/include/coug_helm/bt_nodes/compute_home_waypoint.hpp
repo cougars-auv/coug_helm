@@ -45,7 +45,7 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
 
   auto tick() -> BT::NodeStatus override {
     auto waypoints =
-        getInput<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints").value();
+        getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints");
     if (waypoints.empty()) {
       RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no waypoints available to home from.");
       return BT::NodeStatus::FAILURE;
@@ -54,12 +54,12 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     home.position.z = 0.0;
     home.mode = coug_interfaces::msg::WayPoint::DEPTH;
 
-    home.speed_rpm = getInput<double>("default_speed").value();
+    home.speed_rpm = getPortOrBlackboard<double>("default_speed");
 
-    home.capture_radius = getInput<double>("home_capture_radius").value();
-    home.capture_radius_z = getInput<double>("home_capture_radius_z").value();
-    home.slip_radius = getInput<double>("home_slip_radius").value();
-    home.slip_radius_z = getInput<double>("home_slip_radius_z").value();
+    home.capture_radius = getPortOrBlackboard<double>("home_capture_radius");
+    home.capture_radius_z = getPortOrBlackboard<double>("home_capture_radius_z");
+    home.slip_radius = getPortOrBlackboard<double>("home_slip_radius");
+    home.slip_radius_z = getPortOrBlackboard<double>("home_slip_radius_z");
 
     RCLCPP_INFO(node_->get_logger(), "ComputeHomeWaypoint: home set to (%.1f, %.1f), depth 0.",
                 home.position.x, home.position.y);

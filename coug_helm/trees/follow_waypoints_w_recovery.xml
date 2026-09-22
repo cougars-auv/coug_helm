@@ -17,88 +17,44 @@
 
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <TreeNodesModel>
-    <Condition ID="IsOdomHealthy">
-      <input_port name="last_odom_time"/>
-      <input_port name="has_odom"/>
-      <input_port name="current_time"/>
-      <input_port name="odom_timeout"/>
-    </Condition>
-    <Condition ID="IsWaypointsReceived">
-      <input_port name="mission_waypoints"/>
-    </Condition>
-    <Action ID="BackUp">
-      <input_port name="backup_speed_rpm"/>
-      <input_port name="backup_duration"/>
-      <input_port name="current_heading"/>
-      <input_port name="current_z"/>
-    </Action>
+    <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsWaypointsReceived"/>
+    <Action ID="BackUp"/>
     <Action ID="ComputeHomeWaypoint">
-      <input_port name="mission_waypoints"/>
-      <input_port name="default_speed"/>
-      <input_port name="home_capture_radius"/>
-      <input_port name="home_capture_radius_z"/>
-      <input_port name="home_slip_radius"/>
-      <input_port name="home_slip_radius_z"/>
       <output_port name="home_waypoint"/>
     </Action>
     <Action ID="ComputeSurfaceWaypoint">
-      <input_port name="current_x"/>
-      <input_port name="current_y"/>
-      <input_port name="default_speed"/>
-      <input_port name="surface_capture_radius"/>
-      <input_port name="surface_capture_radius_z"/>
-      <input_port name="surface_slip_radius"/>
-      <input_port name="surface_slip_radius_z"/>
       <output_port name="surface_waypoint"/>
     </Action>
     <Action ID="DisarmThruster"/>
     <Action ID="EmergencySurface"/>
     <Action ID="FollowWaypoints">
-      <input_port name="active_waypoints"/>
-      <input_port name="current_x"/>
-      <input_port name="current_y"/>
-      <input_port name="current_z"/>
-      <input_port name="current_altitude"/>
       <inout_port name="current_waypoint"/>
       <inout_port name="prev_norm_dist"/>
     </Action>
     <Action ID="LoadBehavior">
-      <input_port name="pending_behavior"/>
       <output_port name="active_behavior"/>
     </Action>
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
       <output_port name="active_waypoints"/>
       <output_port name="current_waypoint"/>
       <output_port name="prev_norm_dist"/>
     </Action>
     <Action ID="ResetLocalization"/>
     <Action ID="Stop"/>
-    <Action ID="Wait">
-      <input_port name="wait_duration"/>
-    </Action>
     <Control ID="RecoveryNode">
       <input_port name="number_of_retries"/>
     </Control>
     <Control ID="RoundRobin"/>
-    <Decorator ID="ProgressChecker">
-      <input_port name="current_x"/>
-      <input_port name="current_y"/>
-      <input_port name="current_z"/>
-      <input_port name="current_time"/>
-      <input_port name="progress_threshold"/>
-      <input_port name="progress_timeout"/>
-    </Decorator>
+    <Decorator ID="ProgressChecker"/>
   </TreeNodesModel>
 
   <BehaviorTree ID="FollowWaypointsWithRecovery">
     <ReactiveSequence>
       <Fallback>
-        <IsOdomHealthy
-            last_odom_time="{last_odom_time}"
-            has_odom="{has_odom}"
-            current_time="{current_time}"
-            odom_timeout="{odom_timeout_sec}"/>
+        <IsOdomHealthy/>
         <Sequence>
           <EmergencySurface/>
           <ReactiveSequence>
@@ -106,15 +62,11 @@
             <ResetLocalization/>
           </ReactiveSequence>
           <ReactiveFallback>
-            <IsOdomHealthy
-                last_odom_time="{last_odom_time}"
-                has_odom="{has_odom}"
-                current_time="{current_time}"
-                odom_timeout="{odom_timeout_sec}"/>
+            <IsOdomHealthy/>
             <ReactiveSequence>
               <Stop/>
               <Sequence>
-                <Wait wait_duration="{odom_recovery_timeout_sec}"/>
+                <Sleep msec="{odom_recovery_timeout_msec}"/>
                 <AlwaysFailure/>
               </Sequence>
             </ReactiveSequence>
@@ -122,32 +74,16 @@
         </Sequence>
       </Fallback>
       <RecoveryNode number_of_retries="{number_of_retries}">
-        <ProgressChecker
-            current_x="{current_x}"
-            current_y="{current_y}"
-            current_z="{current_z}"
-            current_time="{current_time}"
-            progress_threshold="{progress_threshold}"
-            progress_timeout="{progress_timeout_sec}">
-          <FollowWaypoints
-              active_waypoints="{active_waypoints}"
-              current_x="{current_x}"
-              current_y="{current_y}"
-              current_z="{current_z}"
-              current_altitude="{current_altitude}"
-              current_waypoint="{current_waypoint}"
+        <ProgressChecker>
+          <FollowWaypoints current_waypoint="{current_waypoint}"
               prev_norm_dist="{prev_norm_dist}"/>
         </ProgressChecker>
         <RoundRobin>
           <ReactiveSequence>
             <Stop/>
-            <Wait wait_duration="{wait_duration_sec}"/>
+            <Sleep msec="{wait_duration_msec}"/>
           </ReactiveSequence>
-          <BackUp
-              backup_speed_rpm="{backup_speed_rpm}"
-              backup_duration="{backup_duration_sec}"
-              current_heading="{current_heading}"
-              current_z="{current_z}"/>
+          <BackUp/>
         </RoundRobin>
       </RecoveryNode>
     </ReactiveSequence>
@@ -155,7 +91,7 @@
 
   <BehaviorTree ID="MissionBehavior">
     <Sequence>
-      <IsWaypointsReceived mission_waypoints="{mission_waypoints}"/>
+      <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
           current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
@@ -164,15 +100,8 @@
 
   <BehaviorTree ID="HomeBehavior">
     <Sequence>
-      <IsWaypointsReceived mission_waypoints="{mission_waypoints}"/>
-      <ComputeHomeWaypoint
-          mission_waypoints="{mission_waypoints}"
-          default_speed="{default_speed}"
-          home_capture_radius="{home_capture_radius}"
-          home_capture_radius_z="{home_capture_radius_z}"
-          home_slip_radius="{home_slip_radius}"
-          home_slip_radius_z="{home_slip_radius_z}"
-          home_waypoint="{home_waypoint}"/>
+      <IsWaypointsReceived/>
+      <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
           current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
@@ -181,15 +110,7 @@
 
   <BehaviorTree ID="SurfaceBehavior">
     <Sequence>
-      <ComputeSurfaceWaypoint
-          current_x="{current_x}"
-          current_y="{current_y}"
-          default_speed="{default_speed}"
-          surface_capture_radius="{surface_capture_radius}"
-          surface_capture_radius_z="{surface_capture_radius_z}"
-          surface_slip_radius="{surface_slip_radius}"
-          surface_slip_radius_z="{surface_slip_radius_z}"
-          surface_waypoint="{surface_waypoint}"/>
+      <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
       <LoadWaypoints pending_waypoints="{surface_waypoint}" active_waypoints="{active_waypoints}"
           current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
@@ -198,7 +119,7 @@
 
   <BehaviorTree ID="MainTree">
     <ReactiveSequence>
-      <LoadBehavior pending_behavior="{pending_behavior}" active_behavior="{active_behavior}"/>
+      <LoadBehavior active_behavior="{active_behavior}"/>
       <ReactiveFallback>
         <ReactiveSequence>
           <ScriptCondition code="active_behavior == kEmergencyStop"/>

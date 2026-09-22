@@ -31,19 +31,20 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<double>("current_x"),          BT::InputPort<double>("current_y"),
-        BT::InputPort<double>("current_z"),          BT::InputPort<double>("current_time"),
-        BT::InputPort<double>("progress_threshold"), BT::InputPort<double>("progress_timeout"),
+        BT::InputPort<double>("current_x"),
+        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("current_z"),
+        BT::InputPort<double>("progress_threshold"),
+        BT::InputPort<double>("progress_timeout_sec"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    const double current_x = getInput<double>("current_x").value();
-    const double current_y = getInput<double>("current_y").value();
-    const double current_z = getInput<double>("current_z").value();
-    const double current_time = getInput<double>("current_time").value();
-    const double threshold = getInput<double>("progress_threshold").value();
-    const double timeout = getInput<double>("progress_timeout").value();
+    const double current_x = getPortOrBlackboard<double>("current_x");
+    const double current_y = getPortOrBlackboard<double>("current_y");
+    const double current_z = getPortOrBlackboard<double>("current_z");
+    const double threshold = getPortOrBlackboard<double>("progress_threshold");
+    const double timeout = getPortOrBlackboard<double>("progress_timeout_sec");
 
     // Re-seed the baseline on entry and whenever the agent advances by threshold.
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
@@ -51,12 +52,12 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
       baseline_x_ = current_x;
       baseline_y_ = current_y;
       baseline_z_ = current_z;
-      last_progress_time_ = current_time;
+      last_progress_time_ = node_->now().seconds();
       seeded_ = true;
-    } else if (timeout > 0.0 && (current_time - last_progress_time_) > timeout) {
+    } else if (timeout > 0.0 && (node_->now().seconds() - last_progress_time_) > timeout) {
       RCLCPP_WARN(node_->get_logger(),
                   "ProgressChecker: no progress for %.1f s; triggering recovery.",
-                  current_time - last_progress_time_);
+                  node_->now().seconds() - last_progress_time_);
       resetChild();
       return BT::NodeStatus::FAILURE;
     }

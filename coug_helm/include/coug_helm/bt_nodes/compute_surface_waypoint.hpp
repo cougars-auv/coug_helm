@@ -45,17 +45,17 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
 
   auto tick() -> BT::NodeStatus override {
     coug_interfaces::msg::WayPoint waypoint;
-    waypoint.position.x = getInput<double>("current_x").value();
-    waypoint.position.y = getInput<double>("current_y").value();
+    waypoint.position.x = getPortOrBlackboard<double>("current_x");
+    waypoint.position.y = getPortOrBlackboard<double>("current_y");
     waypoint.position.z = 0.0;
     waypoint.mode = coug_interfaces::msg::WayPoint::DEPTH;
 
-    waypoint.speed_rpm = getInput<double>("default_speed").value();
+    waypoint.speed_rpm = getPortOrBlackboard<double>("default_speed");
 
-    waypoint.capture_radius = getInput<double>("surface_capture_radius").value();
-    waypoint.capture_radius_z = getInput<double>("surface_capture_radius_z").value();
-    waypoint.slip_radius = getInput<double>("surface_slip_radius").value();
-    waypoint.slip_radius_z = getInput<double>("surface_slip_radius_z").value();
+    waypoint.capture_radius = getPortOrBlackboard<double>("surface_capture_radius");
+    waypoint.capture_radius_z = getPortOrBlackboard<double>("surface_capture_radius_z");
+    waypoint.slip_radius = getPortOrBlackboard<double>("surface_slip_radius");
+    waypoint.slip_radius_z = getPortOrBlackboard<double>("surface_slip_radius_z");
 
     RCLCPP_INFO(node_->get_logger(),
                 "ComputeSurfaceWaypoint: surface set to (%.1f, %.1f), depth 0.",
