@@ -39,7 +39,7 @@ class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
   auto tick() -> BT::NodeStatus override {
     const int pending = getPortOrBlackboard<int>("pending_behavior");
     if (pending != last_behavior_) {
-      RCLCPP_INFO(node_->get_logger(), "LoadBehavior: %s -> %s",
+      RCLCPP_INFO(node_->get_logger(), "LoadBehavior: %s -> %s.",
                   utils::toString(static_cast<utils::Behavior>(last_behavior_)).c_str(),
                   utils::toString(static_cast<utils::Behavior>(pending)).c_str());
       last_behavior_ = pending;

@@ -35,7 +35,6 @@ class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("pending_waypoints"),
         BT::OutputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
         BT::OutputPort<size_t>("waypoint_index"),
-        BT::OutputPort<double>("prev_norm_dist"),
     };
   }
 
@@ -45,7 +44,6 @@ class LoadWaypoints : public RosBtNode<BT::SyncActionNode> {
     RCLCPP_INFO(node_->get_logger(), "LoadWaypoints: loading %zu waypoint(s).", waypoints.size());
     setOutput("active_waypoints", waypoints);
     setOutput("waypoint_index", size_t{0});
-    setOutput("prev_norm_dist", -1.0);
     return BT::NodeStatus::SUCCESS;
   }
 };

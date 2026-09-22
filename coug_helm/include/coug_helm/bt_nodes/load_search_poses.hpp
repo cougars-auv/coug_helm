@@ -41,7 +41,6 @@ class LoadSearchPoses : public RosBtNode<BT::SyncActionNode> {
     return {
         BT::InputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
         BT::InputPort<std::string>("map_frame"),
-        BT::OutputPort<int>("tag_id"),
         BT::OutputPort<BT::SharedQueue<geometry_msgs::msg::PoseStamped>>("search_poses"),
     };
   }
@@ -55,10 +54,9 @@ class LoadSearchPoses : public RosBtNode<BT::SyncActionNode> {
       search_poses->push_back(makePose(search_from, subwaypoint));
       search_from = subwaypoint;
     }
-    RCLCPP_INFO(node_->get_logger(), "LoadSearchPoses: searching for tag %d (%zu search point(s)).",
-                waypoint.tag_id, search_poses->size());
+    RCLCPP_INFO(node_->get_logger(), "LoadSearchPoses: loading %zu search pose(s).",
+                search_poses->size());
 
-    setOutput("tag_id", static_cast<int>(waypoint.tag_id));
     setOutput("search_poses", search_poses);
     return BT::NodeStatus::SUCCESS;
   }

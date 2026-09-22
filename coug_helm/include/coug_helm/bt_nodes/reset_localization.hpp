@@ -16,61 +16,25 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <chrono>
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
 
-#include "coug_helm/bt_nodes/ros_bt_node.hpp"
+#include "coug_helm/bt_nodes/service_bt_node.hpp"
 
 namespace coug_helm::bt_nodes {
 
-class ResetLocalization : public RosBtNode<BT::StatefulActionNode> {
+class ResetLocalization : public ServiceBtNode<std_srvs::srv::Trigger> {
  public:
   ResetLocalization(const std::string& name, const BT::NodeConfig& config)
-      : RosBtNode<BT::StatefulActionNode>(name, config),
-        service_name_(config.blackboard->get<std::string>("reset_localization_service")) {
-    client_ = node_->create_client<std_srvs::srv::Trigger>(service_name_);
-  }
+      : ServiceBtNode(name, config, "reset_localization_service") {}
 
   static auto providedPorts() -> BT::PortsList { return {}; }
 
-  auto onStart() -> BT::NodeStatus override {
-    if (!client_->service_is_ready()) {
-      RCLCPP_ERROR(node_->get_logger(), "ResetLocalization: service '%s' unavailable.",
-                   service_name_.c_str());
-      return BT::NodeStatus::FAILURE;
-    }
-    future_ =
-        client_->async_send_request(std::make_shared<std_srvs::srv::Trigger::Request>()).future;
-    return BT::NodeStatus::RUNNING;
+ protected:
+  auto makeRequest() const -> std_srvs::srv::Trigger::Request::SharedPtr override {
+    return std::make_shared<std_srvs::srv::Trigger::Request>();
   }
-
-  auto onRunning() -> BT::NodeStatus override {
-    if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-      return BT::NodeStatus::RUNNING;
-    }
-    bool success = false;
-    try {
-      success = future_.get()->success;
-    } catch (const std::exception& e) {
-      RCLCPP_ERROR(node_->get_logger(), "ResetLocalization: %s", e.what());
-    }
-    if (success) {
-      RCLCPP_INFO(node_->get_logger(), "ResetLocalization: succeeded.");
-      return BT::NodeStatus::SUCCESS;
-    }
-    RCLCPP_WARN(node_->get_logger(), "ResetLocalization: failed.");
-    return BT::NodeStatus::FAILURE;
-  }
-
-  void onHalted() override {}
-
- private:
-  std::string service_name_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future_;
 };
 
 }  // namespace coug_helm::bt_nodes

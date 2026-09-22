@@ -16,7 +16,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <coug_interfaces/msg/control_setpoint.hpp>
+#include <coug_interfaces/msg/way_point.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
@@ -24,23 +24,24 @@
 
 namespace coug_helm::bt_nodes {
 
-class Stop : public RosBtNode<BT::SyncActionNode> {
+class LoadTagId : public RosBtNode<BT::SyncActionNode> {
  public:
-  Stop(const std::string& name, const BT::NodeConfig& config)
-      : RosBtNode<BT::SyncActionNode>(name, config) {
-    hsd_pub_ = node_->create_publisher<coug_interfaces::msg::ControlSetpoint>(
-        config.blackboard->get<std::string>("hsd_topic"), rclcpp::SystemDefaultsQoS());
-  }
+  LoadTagId(const std::string& name, const BT::NodeConfig& config)
+      : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static auto providedPorts() -> BT::PortsList { return {}; }
+  static auto providedPorts() -> BT::PortsList {
+    return {
+        BT::InputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
+        BT::OutputPort<int>("tag_id"),
+    };
+  }
 
   auto tick() -> BT::NodeStatus override {
-    hsd_pub_->publish(coug_interfaces::msg::ControlSetpoint{});
+    const auto waypoint = getInput<coug_interfaces::msg::WayPoint>("goal_waypoint").value();
+    RCLCPP_INFO(node_->get_logger(), "LoadTagId: searching for tag %d.", waypoint.tag_id);
+    setOutput("tag_id", static_cast<int>(waypoint.tag_id));
     return BT::NodeStatus::SUCCESS;
   }
-
- private:
-  rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
 };
 
 }  // namespace coug_helm::bt_nodes

@@ -45,19 +45,19 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     const double current_z = getPortOrBlackboard<double>("current_z");
     const double threshold = getPortOrBlackboard<double>("progress_threshold");
     const double timeout = getPortOrBlackboard<double>("progress_timeout_sec");
+    const double now = node_->now().seconds();
 
-    // Re-seed the baseline on entry and whenever the agent advances by threshold.
     if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
                                current_z - baseline_z_) >= threshold) {
       baseline_x_ = current_x;
       baseline_y_ = current_y;
       baseline_z_ = current_z;
-      last_progress_time_ = node_->now().seconds();
+      last_progress_time_ = now;
       seeded_ = true;
-    } else if (timeout > 0.0 && (node_->now().seconds() - last_progress_time_) > timeout) {
+    } else if (timeout > 0.0 && now - last_progress_time_ > timeout) {
       RCLCPP_WARN(node_->get_logger(),
                   "ProgressChecker: no progress for %.1f s; triggering recovery.",
-                  node_->now().seconds() - last_progress_time_);
+                  now - last_progress_time_);
       resetChild();
       return BT::NodeStatus::FAILURE;
     }
@@ -67,7 +67,7 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   }
 
   void halt() override {
-    seeded_ = false;  // re-seed baseline on (re-)entry, e.g. after a recovery
+    seeded_ = false;
     BT::DecoratorNode::halt();
   }
 

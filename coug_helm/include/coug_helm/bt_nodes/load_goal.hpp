@@ -30,9 +30,9 @@
 
 namespace coug_helm::bt_nodes {
 
-class LoadGoalPose : public RosBtNode<BT::SyncActionNode> {
+class LoadGoal : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadGoalPose(const std::string& name, const BT::NodeConfig& config)
+  LoadGoal(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
@@ -54,15 +54,15 @@ class LoadGoalPose : public RosBtNode<BT::SyncActionNode> {
     const size_t index = getInput<size_t>("waypoint_index").value();
 
     if (index >= waypoints.size()) {
-      RCLCPP_INFO(node_->get_logger(), "LoadGoalPose: all %zu waypoint(s) reached.",
-                  waypoints.size());
+      RCLCPP_INFO(node_->get_logger(), "LoadGoal: all %zu waypoint(s) reached.", waypoints.size());
       return BT::NodeStatus::FAILURE;
     }
 
+    const auto& waypoint = waypoints[index];
     geometry_msgs::msg::PoseStamped goal;
     goal.header.frame_id = getPortOrBlackboard<std::string>("map_frame");
     goal.header.stamp = node_->now();
-    goal.pose.position = waypoints[index].position;
+    goal.pose.position = waypoint.position;
     goal.pose.position.z = 0.0;
 
     const double heading =
@@ -72,12 +72,11 @@ class LoadGoalPose : public RosBtNode<BT::SyncActionNode> {
     orientation.setRPY(0.0, 0.0, heading);
     goal.pose.orientation = tf2::toMsg(orientation);
 
-    RCLCPP_INFO(node_->get_logger(),
-                "LoadGoalPose: navigating to waypoint %zu of %zu at (%.1f, %.1f).", index + 1,
-                waypoints.size(), goal.pose.position.x, goal.pose.position.y);
+    RCLCPP_INFO(node_->get_logger(), "LoadGoal: navigating to waypoint %zu of %zu at (%.1f, %.1f).",
+                index + 1, waypoints.size(), goal.pose.position.x, goal.pose.position.y);
     setOutput("goal_pose", goal);
-    setOutput("goal_waypoint", waypoints[index]);
-    setOutput("goal_type", static_cast<int>(waypoints[index].type));
+    setOutput("goal_waypoint", waypoint);
+    setOutput("goal_type", static_cast<int>(waypoint.type));
     return BT::NodeStatus::SUCCESS;
   }
 };

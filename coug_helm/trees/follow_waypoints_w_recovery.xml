@@ -19,6 +19,10 @@
   <TreeNodesModel>
     <Condition ID="IsOdomHealthy"/>
     <Condition ID="IsWaypointsReceived"/>
+    <Action ID="AdvanceWaypoint">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_index"/>
+    </Action>
     <Action ID="BackUp"/>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
@@ -28,19 +32,23 @@
     </Action>
     <Action ID="DisarmThruster"/>
     <Action ID="EmergencySurface"/>
-    <Action ID="FollowWaypoints">
-      <input_port name="active_waypoints"/>
-      <inout_port name="waypoint_index"/>
-      <inout_port name="prev_norm_dist"/>
-    </Action>
     <Action ID="LoadBehavior">
       <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="LoadGoal">
+      <input_port name="active_waypoints"/>
+      <input_port name="waypoint_index"/>
+      <output_port name="goal_pose"/>
+      <output_port name="goal_waypoint"/>
+      <output_port name="goal_type"/>
     </Action>
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
       <output_port name="active_waypoints"/>
       <output_port name="waypoint_index"/>
-      <output_port name="prev_norm_dist"/>
+    </Action>
+    <Action ID="NavigateToWaypoint">
+      <input_port name="goal_waypoint"/>
     </Action>
     <Action ID="ResetLocalization"/>
     <Action ID="Stop"/>
@@ -73,19 +81,25 @@
           </ReactiveFallback>
         </Sequence>
       </Fallback>
-      <RecoveryNode number_of_retries="{number_of_retries}">
-        <ProgressChecker>
-          <FollowWaypoints active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
-              prev_norm_dist="{prev_norm_dist}"/>
-        </ProgressChecker>
-        <RoundRobin>
-          <ReactiveSequence>
-            <Stop/>
-            <Sleep msec="{wait_duration_msec}"/>
-          </ReactiveSequence>
-          <BackUp/>
-        </RoundRobin>
-      </RecoveryNode>
+      <KeepRunningUntilFailure>
+        <Sequence>
+          <LoadGoal active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
+              goal_pose="{goal_pose}" goal_waypoint="{goal_waypoint}" goal_type="{goal_type}"/>
+          <RecoveryNode number_of_retries="{number_of_retries}">
+            <ProgressChecker>
+              <NavigateToWaypoint goal_waypoint="{goal_waypoint}"/>
+            </ProgressChecker>
+            <RoundRobin>
+              <ReactiveSequence>
+                <Stop/>
+                <Sleep msec="{wait_duration_msec}"/>
+              </ReactiveSequence>
+              <BackUp/>
+            </RoundRobin>
+          </RecoveryNode>
+          <AdvanceWaypoint active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+        </Sequence>
+      </KeepRunningUntilFailure>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -93,7 +107,7 @@
     <Sequence>
       <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
-          waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
+          waypoint_index="{waypoint_index}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
@@ -103,7 +117,7 @@
       <IsWaypointsReceived/>
       <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
-          waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
+          waypoint_index="{waypoint_index}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
@@ -112,7 +126,7 @@
     <Sequence>
       <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
       <LoadWaypoints pending_waypoints="{surface_waypoint}" active_waypoints="{active_waypoints}"
-          waypoint_index="{waypoint_index}" prev_norm_dist="{prev_norm_dist}"/>
+          waypoint_index="{waypoint_index}"/>
       <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>

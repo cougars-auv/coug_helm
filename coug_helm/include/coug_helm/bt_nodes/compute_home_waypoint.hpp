@@ -16,10 +16,9 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <coug_interfaces/msg/control_setpoint.hpp>
 #include <coug_interfaces/msg/way_point.hpp>
-#include <geometry_msgs/msg/point.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <string>
 #include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"

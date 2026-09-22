@@ -43,6 +43,7 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
 
   auto onStart() -> BT::NodeStatus override {
     start_time_ = node_->now().seconds();
+    duration_ = getPortOrBlackboard<double>("backup_duration_sec");
 
     hsd_msg_.heading = getPortOrBlackboard<double>("current_heading");
     hsd_msg_.speed_rpm = getPortOrBlackboard<double>("backup_speed_rpm");
@@ -50,14 +51,13 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
     hsd_msg_.mode = coug_interfaces::msg::ControlSetpoint::DEPTH;
 
     RCLCPP_WARN(node_->get_logger(), "BackUp: reversing at %.0f RPM for %.1f s.",
-                hsd_msg_.speed_rpm, getPortOrBlackboard<double>("backup_duration_sec"));
+                hsd_msg_.speed_rpm, duration_);
     return onRunning();
   }
 
   auto onRunning() -> BT::NodeStatus override {
-    const double duration = getPortOrBlackboard<double>("backup_duration_sec");
-    if ((node_->now().seconds() - start_time_) >= duration) {
-      publishStop();
+    if (node_->now().seconds() - start_time_ >= duration_) {
+      hsd_pub_->publish(coug_interfaces::msg::ControlSetpoint{});
       return BT::NodeStatus::SUCCESS;
     }
 
@@ -65,17 +65,13 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
     return BT::NodeStatus::RUNNING;
   }
 
-  void onHalted() override { publishStop(); }
+  void onHalted() override { hsd_pub_->publish(coug_interfaces::msg::ControlSetpoint{}); }
 
  private:
-  void publishStop() {
-    const coug_interfaces::msg::ControlSetpoint hsd_msg;
-    hsd_pub_->publish(hsd_msg);
-  }
-
   rclcpp::Publisher<coug_interfaces::msg::ControlSetpoint>::SharedPtr hsd_pub_;
   coug_interfaces::msg::ControlSetpoint hsd_msg_;
   double start_time_{};
+  double duration_{};
 };
 
 }  // namespace coug_helm::bt_nodes

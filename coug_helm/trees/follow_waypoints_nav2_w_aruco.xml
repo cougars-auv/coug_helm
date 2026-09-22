@@ -27,7 +27,7 @@
       <input_port name="active_waypoints"/>
       <inout_port name="waypoint_index"/>
     </Action>
-    <Action ID="LoadGoalPose">
+    <Action ID="LoadGoal">
       <input_port name="active_waypoints"/>
       <input_port name="waypoint_index"/>
       <output_port name="goal_pose"/>
@@ -36,8 +36,11 @@
     </Action>
     <Action ID="LoadSearchPoses">
       <input_port name="goal_waypoint"/>
-      <output_port name="tag_id"/>
       <output_port name="search_poses"/>
+    </Action>
+    <Action ID="LoadTagId">
+      <input_port name="goal_waypoint"/>
+      <output_port name="tag_id"/>
     </Action>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
@@ -59,12 +62,12 @@
     </Action>
   </TreeNodesModel>
 
-  <BehaviorTree ID="FollowWaypointsNav2WithAruco">
+  <BehaviorTree ID="FollowWaypointsNav2">
     <ReactiveSequence>
       <IsOdomHealthy/>
       <KeepRunningUntilFailure>
         <Sequence>
-          <LoadGoalPose active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
+          <LoadGoal active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
               goal_pose="{goal_pose}" goal_waypoint="{goal_waypoint}" goal_type="{goal_type}"/>
           <Fallback>
             <Sequence>
@@ -73,8 +76,8 @@
             </Sequence>
             <Sequence>
               <ScriptCondition code="goal_type == kAruco"/>
-              <LoadSearchPoses goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"
-                  search_poses="{search_poses}"/>
+              <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
+              <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
               <ReactiveFallback>
                 <IsTagDetected tag_id="{tag_id}" approach_pose="{approach_pose}"/>
                 <Sequence>
@@ -104,7 +107,7 @@
       <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsNav2WithAruco" _autoremap="true"/>
+      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
@@ -114,7 +117,7 @@
       <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsNav2WithAruco" _autoremap="true"/>
+      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 

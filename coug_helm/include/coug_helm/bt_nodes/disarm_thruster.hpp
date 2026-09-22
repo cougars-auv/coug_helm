@@ -16,62 +16,27 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <chrono>
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 #include <string>
 
-#include "coug_helm/bt_nodes/ros_bt_node.hpp"
+#include "coug_helm/bt_nodes/service_bt_node.hpp"
 
 namespace coug_helm::bt_nodes {
 
-class DisarmThruster : public RosBtNode<BT::StatefulActionNode> {
+class DisarmThruster : public ServiceBtNode<std_srvs::srv::SetBool> {
  public:
   DisarmThruster(const std::string& name, const BT::NodeConfig& config)
-      : RosBtNode<BT::StatefulActionNode>(name, config),
-        service_name_(config.blackboard->get<std::string>("arm_thruster_service")) {
-    client_ = node_->create_client<std_srvs::srv::SetBool>(service_name_);
-  }
+      : ServiceBtNode(name, config, "arm_thruster_service") {}
 
   static auto providedPorts() -> BT::PortsList { return {}; }
 
-  auto onStart() -> BT::NodeStatus override {
-    if (!client_->service_is_ready()) {
-      RCLCPP_ERROR(node_->get_logger(), "DisarmThruster: service '%s' unavailable.",
-                   service_name_.c_str());
-      return BT::NodeStatus::FAILURE;
-    }
+ protected:
+  auto makeRequest() const -> std_srvs::srv::SetBool::Request::SharedPtr override {
     auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
     request->data = false;
-    future_ = client_->async_send_request(request).future;
-    return BT::NodeStatus::RUNNING;
+    return request;
   }
-
-  auto onRunning() -> BT::NodeStatus override {
-    if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-      return BT::NodeStatus::RUNNING;
-    }
-    bool success = false;
-    try {
-      success = future_.get()->success;
-    } catch (const std::exception& e) {
-      RCLCPP_ERROR(node_->get_logger(), "DisarmThruster: %s", e.what());
-    }
-    if (success) {
-      RCLCPP_INFO(node_->get_logger(), "DisarmThruster: succeeded.");
-      return BT::NodeStatus::SUCCESS;
-    }
-    RCLCPP_WARN(node_->get_logger(), "DisarmThruster: failed.");
-    return BT::NodeStatus::FAILURE;
-  }
-
-  void onHalted() override {}
-
- private:
-  std::string service_name_;
-  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr client_;
-  rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future_;
 };
 
 }  // namespace coug_helm::bt_nodes
