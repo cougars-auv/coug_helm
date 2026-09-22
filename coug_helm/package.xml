@@ -29,6 +29,7 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>nav2_behavior_tree</exec_depend>
+  <exec_depend>aruco_opencv</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>opennav_docking</exec_depend>
   <exec_depend>opennav_docking_bt</exec_depend>

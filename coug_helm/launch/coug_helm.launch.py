@@ -21,7 +21,7 @@ from launch import LaunchContext, LaunchDescription
 from launch.action import Action
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
-from launch.some_substitutions_type import SomeSubstitutionsType
+from launch.substitution import Substitution
 from launch.substitutions import (
     EnvironmentVariable,
     LaunchConfiguration,
@@ -31,7 +31,7 @@ from launch.substitutions import (
 from launch_ros.actions import Node
 
 
-def agent_frame(agent_ns: SomeSubstitutionsType, frame: str) -> PythonExpression:
+def agent_frame(agent_ns: str | Substitution, frame: str) -> PythonExpression:
     return PythonExpression(["'", agent_ns, f"/{frame}' if '", agent_ns, f"' != '' else '{frame}'"])
 
 
@@ -74,7 +74,9 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
     tree_file = os.path.join(coug_helm_dir, "trees", tree_filename)
 
     with open(tree_file) as tree:
-        use_docking = str("<DockRobot" in tree.read())
+        tree_xml = tree.read()
+    use_aruco = str("<IsTagDetected" in tree_xml)
+    use_docking = str("<DockRobot" in tree_xml)
 
     return [
         Node(
@@ -89,6 +91,18 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
                     "use_sim_time": use_sim_time,
                     "tree_file": tree_file,
                 },
+            ],
+        ),
+        Node(
+            package="aruco_opencv",
+            executable="aruco_tracker_autostart",
+            name="aruco_tracker",
+            condition=IfCondition(use_aruco),
+            parameters=[
+                fleet_param_file,
+                agent_param_file,
+                scenario_param_file,
+                {"use_sim_time": use_sim_time},
             ],
         ),
         Node(
