@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2026 BYU FROST Lab
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <TreeNodesModel>
+    <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsWaypointsReceived"/>
+    <Action ID="LoadNextGoal">
+      <inout_port name="current_waypoint"/>
+      <output_port name="goal"/>
+    </Action>
+    <Action ID="ComputeHomeWaypoint">
+      <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="LoadBehavior">
+      <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="NavigateToPose">
+      <input_port name="goal"/>
+    </Action>
+    <Action ID="LoadWaypoints">
+      <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="current_waypoint"/>
+      <output_port name="prev_norm_dist"/>
+    </Action>
+  </TreeNodesModel>
+
+  <BehaviorTree ID="FollowWaypointsNav2">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <KeepRunningUntilFailure>
+        <Sequence>
+          <LoadNextGoal goal="{goal}" current_waypoint="{current_waypoint}"/>
+          <NavigateToPose goal="{goal}"/>
+        </Sequence>
+      </KeepRunningUntilFailure>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="MissionBehavior">
+    <Sequence>
+      <IsWaypointsReceived/>
+      <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
+          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
+      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="HomeBehavior">
+    <Sequence>
+      <IsWaypointsReceived/>
+      <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
+      <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
+          current_waypoint="{current_waypoint}" prev_norm_dist="{prev_norm_dist}"/>
+      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="MainTree">
+    <ReactiveSequence>
+      <LoadBehavior active_behavior="{active_behavior}"/>
+      <ReactiveFallback>
+        <ReactiveSequence>
+          <ScriptCondition code="active_behavior == kMission"/>
+          <Sequence>
+            <ForceSuccess>
+              <SubTree ID="MissionBehavior" _autoremap="true"/>
+            </ForceSuccess>
+            <Script code="pending_behavior := kStop"/>
+          </Sequence>
+        </ReactiveSequence>
+        <ReactiveSequence>
+          <ScriptCondition code="active_behavior == kHome"/>
+          <Sequence>
+            <ForceSuccess>
+              <SubTree ID="HomeBehavior" _autoremap="true"/>
+            </ForceSuccess>
+            <Script code="pending_behavior := kStop"/>
+          </Sequence>
+        </ReactiveSequence>
+        <AlwaysSuccess/>
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+</root>

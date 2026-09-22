@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <coug_interfaces/msg/way_point.hpp>
+#include <cstddef>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
@@ -29,55 +30,50 @@
 
 namespace coug_helm::bt_nodes {
 
-class ComputeGoalPoses : public RosBtNode<BT::SyncActionNode> {
+class LoadNextGoal : public RosBtNode<BT::SyncActionNode> {
  public:
-  ComputeGoalPoses(const std::string& name, const BT::NodeConfig& config)
+  LoadNextGoal(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
+        BT::InputPort<double>("current_x"),
+        BT::InputPort<double>("current_y"),
         BT::InputPort<std::string>("map_frame"),
-        BT::OutputPort<std::vector<geometry_msgs::msg::PoseStamped>>("goals"),
+        BT::BidirectionalPort<size_t>("current_waypoint"),
+        BT::OutputPort<geometry_msgs::msg::PoseStamped>("goal"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
     const auto waypoints =
         getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints");
-    if (waypoints.empty()) {
-      RCLCPP_WARN(node_->get_logger(), "ComputeGoalPoses: no waypoints to convert.");
+    const size_t index = getPortOrBlackboard<size_t>("current_waypoint");
+
+    if (index >= waypoints.size()) {
+      RCLCPP_INFO(node_->get_logger(), "LoadNextGoal: all %zu waypoint(s) reached.",
+                  waypoints.size());
       return BT::NodeStatus::FAILURE;
     }
 
-    std::vector<geometry_msgs::msg::PoseStamped> goals;
-    goals.reserve(waypoints.size());
+    geometry_msgs::msg::PoseStamped goal;
+    goal.header.frame_id = getPortOrBlackboard<std::string>("map_frame");
+    goal.header.stamp = node_->now();
+    goal.pose.position = waypoints[index].position;
+    goal.pose.position.z = 0.0;
 
-    const std::string map_frame = getPortOrBlackboard<std::string>("map_frame");
-    const auto stamp = node_->now();
+    const double heading =
+        std::atan2(goal.pose.position.y - getPortOrBlackboard<double>("current_y"),
+                   goal.pose.position.x - getPortOrBlackboard<double>("current_x"));
+    tf2::Quaternion orientation;
+    orientation.setRPY(0.0, 0.0, heading);
+    goal.pose.orientation = tf2::toMsg(orientation);
 
-    double heading = 0.0;
-    for (size_t i = 0; i < waypoints.size(); ++i) {
-      if (i + 1 < waypoints.size()) {
-        heading = std::atan2(waypoints[i + 1].position.y - waypoints[i].position.y,
-                             waypoints[i + 1].position.x - waypoints[i].position.x);
-      }
-
-      tf2::Quaternion orientation;
-      orientation.setRPY(0.0, 0.0, heading);
-
-      geometry_msgs::msg::PoseStamped goal;
-      goal.header.frame_id = map_frame;
-      goal.header.stamp = stamp;
-      goal.pose.position = waypoints[i].position;
-      goal.pose.position.z = 0.0;
-      goal.pose.orientation = tf2::toMsg(orientation);
-      goals.push_back(goal);
-    }
-
-    RCLCPP_INFO(node_->get_logger(), "ComputeGoalPoses: %zu goal(s) in frame '%s'.", goals.size(),
-                map_frame.c_str());
-    setOutput("goals", goals);
+    RCLCPP_INFO(node_->get_logger(), "LoadNextGoal: waypoint %zu of %zu at (%.1f, %.1f).",
+                index + 1, waypoints.size(), goal.pose.position.x, goal.pose.position.y);
+    setOutput("goal", goal);
+    setOutput("current_waypoint", index + 1);
     return BT::NodeStatus::SUCCESS;
   }
 };

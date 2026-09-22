@@ -15,7 +15,7 @@ bt_helm_node:
     default_value:
       - "nav2_recovery_node_bt_node"
       - "nav2_round_robin_node_bt_node"
-      - "nav2_navigate_through_poses_action_bt_node"
+      - "nav2_navigate_to_pose_action_bt_node"
   server_timeout_ms:
     type: int
     default_value: 1000

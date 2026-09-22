@@ -38,7 +38,6 @@
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
       <output_port name="active_waypoints"/>
-      <output_port name="active_waypoints"/>
       <output_port name="current_waypoint"/>
       <output_port name="prev_norm_dist"/>
     </Action>

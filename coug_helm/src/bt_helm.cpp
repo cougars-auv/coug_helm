@@ -32,12 +32,11 @@
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
 #include <tf2/utils.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>  // NOLINT(misc-include-cleaner)
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
-#include "coug_helm/bt_nodes/compute_goal_poses.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
@@ -46,6 +45,7 @@
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
 #include "coug_helm/bt_nodes/load_behavior.hpp"
+#include "coug_helm/bt_nodes/load_next_goal.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
 #include "coug_helm/bt_nodes/reset_localization.hpp"
@@ -153,13 +153,13 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
-  factory_.registerNodeType<bt_nodes::ComputeGoalPoses>("ComputeGoalPoses");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
   factory_.registerNodeType<bt_nodes::DisarmThruster>("DisarmThruster");
   factory_.registerNodeType<bt_nodes::EmergencySurface>("EmergencySurface");
   factory_.registerNodeType<bt_nodes::FollowWaypoints>("FollowWaypoints");
   factory_.registerNodeType<bt_nodes::LoadBehavior>("LoadBehavior");
+  factory_.registerNodeType<bt_nodes::LoadNextGoal>("LoadNextGoal");
   factory_.registerNodeType<bt_nodes::LoadWaypoints>("LoadWaypoints");
   factory_.registerNodeType<bt_nodes::ResetLocalization>("ResetLocalization");
   factory_.registerNodeType<bt_nodes::Stop>("Stop");
