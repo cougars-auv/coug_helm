@@ -49,8 +49,6 @@ class BtHelmNode : public rclcpp::Node {
                              const std::string& label)
       -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
 
-  void tickTree();
-
   // --- Diagnostics ---
   void checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
 

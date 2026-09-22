@@ -148,7 +148,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
                                                  Behavior::kEmergencySurface, "Emergency surface");
 
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
-                                  [this] { tickTree(); });
+                                  [this] { tree_.tickOnce(); });
 
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
@@ -256,8 +256,6 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
         res->message = label + " requested.";
       });
 }
-
-void BtHelmNode::tickTree() { tree_.tickOnce(); }
 
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
