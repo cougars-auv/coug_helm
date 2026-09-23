@@ -121,11 +121,6 @@ bt_helm_node:
     default_value: 8.0
     validation:
       gt<>: [0.0]
-  tag_standoff_distance:
-    type: double
-    default_value: 1.35
-    validation:
-      gt_eq<>: [0.0]
   goal_shift_threshold:
     type: double
     default_value: 0.5

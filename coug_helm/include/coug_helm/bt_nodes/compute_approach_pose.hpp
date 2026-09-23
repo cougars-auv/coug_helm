@@ -41,7 +41,6 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<std::string>("map_frame"),
-        BT::InputPort<double>("tag_standoff_distance"),
         BT::OutputPort<geometry_msgs::msg::PoseStamped>("approach_pose"),
     };
   }
@@ -62,15 +61,12 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
     const auto current_y = getPortOrBlackboard<double>("current_y");
     const double dx = tag.x - current_x;
     const double dy = tag.y - current_y;
-    const double distance = std::hypot(dx, dy);
-    const auto standoff = getPortOrBlackboard<double>("tag_standoff_distance");
-    const double scale = distance > standoff ? (distance - standoff) / distance : 0.0;
 
     geometry_msgs::msg::PoseStamped approach;
     approach.header.frame_id = getPortOrBlackboard<std::string>("map_frame");
     approach.header.stamp = node_->now();
-    approach.pose.position.x = current_x + dx * scale;
-    approach.pose.position.y = current_y + dy * scale;
+    approach.pose.position.x = tag.x;
+    approach.pose.position.y = tag.y;
     tf2::Quaternion orientation;
     orientation.setRPY(0.0, 0.0, std::atan2(dy, dx));
     approach.pose.orientation = tf2::toMsg(orientation);

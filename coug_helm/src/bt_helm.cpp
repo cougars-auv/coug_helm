@@ -175,7 +175,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
-  blackboard_->set("tag_standoff_distance", params_.tag_standoff_distance);
   blackboard_->set("goal_shift_threshold", params_.goal_shift_threshold);
   blackboard_->set("tag_arrival_duration_msec",
                    static_cast<unsigned>(params_.tag_arrival_duration_sec * 1000.0));
