@@ -115,6 +115,22 @@
     </ReactiveSequence>
   </BehaviorTree>
 
+  <BehaviorTree ID="FollowAstronaut">
+    <AlwaysFailure/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="ComeToAstronaut">
+    <AlwaysFailure/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FetchTool">
+    <AlwaysFailure/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="GiveTool">
+    <AlwaysFailure/>
+  </BehaviorTree>
+
   <BehaviorTree ID="MainTree">
     <ReactiveSequence>
       <LoadBehavior active_behavior="{active_behavior}"/>
@@ -139,6 +155,29 @@
                   active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Fallback _while="active_behavior == kFollow">
+          <SubTree ID="FollowAstronaut" _autoremap="true"/>
+          <Script code="pending_behavior := kStop"/>
+        </Fallback>
+        <AlwaysSuccess _while="active_behavior == kStay"/>
+        <Sequence _while="active_behavior == kCome">
+          <ForceSuccess>
+            <SubTree ID="ComeToAstronaut" _autoremap="true"/>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kFetch">
+          <ForceSuccess>
+            <SubTree ID="FetchTool" _autoremap="true"/>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kGive">
+          <ForceSuccess>
+            <SubTree ID="GiveTool" _autoremap="true"/>
           </ForceSuccess>
           <Script code="pending_behavior := kStop"/>
         </Sequence>

@@ -219,6 +219,31 @@ bt_helm_node:
     default_value: "emergency_surface"
     validation:
       not_empty<>: []
+  follow_service:
+    type: string
+    default_value: "follow"
+    validation:
+      not_empty<>: []
+  stay_service:
+    type: string
+    default_value: "stay"
+    validation:
+      not_empty<>: []
+  fetch_service:
+    type: string
+    default_value: "fetch"
+    validation:
+      not_empty<>: []
+  come_service:
+    type: string
+    default_value: "come"
+    validation:
+      not_empty<>: []
+  give_service:
+    type: string
+    default_value: "give"
+    validation:
+      not_empty<>: []
   arm_thruster_service:
     type: string
     default_value: "thruster/arm"
