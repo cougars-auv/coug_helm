@@ -16,24 +16,26 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <memory>
-#include <std_srvs/srv/trigger.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
-#include "coug_helm/bt_nodes/service_bt_node.hpp"
+#include "coug_helm/bt_nodes/ros_bt_node.hpp"
 
 namespace coug_helm::bt_nodes {
 
-class FlashLeds : public ServiceBtNode<std_srvs::srv::Trigger> {
+class FlashLeds : public RosBtNode<BT::SyncActionNode> {
  public:
   FlashLeds(const std::string& name, const BT::NodeConfig& config)
-      : ServiceBtNode(name, config, "flash_leds_service") {}
+      : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static auto providedPorts() -> BT::PortsList { return {}; }
+  static auto providedPorts() -> BT::PortsList {
+    return {BT::OutputPort<double>("flash_start_time")};
+  }
 
- protected:
-  [[nodiscard]] auto makeRequest() const -> std_srvs::srv::Trigger::Request::SharedPtr override {
-    return std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto tick() -> BT::NodeStatus override {
+    setOutput("flash_start_time", node_->now().seconds());
+    RCLCPP_INFO(node_->get_logger(), "FlashLeds: flashing arrival indicator.");
+    return BT::NodeStatus::SUCCESS;
   }
 };
 

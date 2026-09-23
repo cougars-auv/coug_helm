@@ -52,8 +52,8 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
         getPortOrBlackboard<std::map<int, geometry_msgs::msg::Point>>("detected_tags");
     const auto tag_it = tags.find(tag_id);
     if (tag_it == tags.end()) {
-      RCLCPP_WARN(node_->get_logger(), "ComputeApproachPose: no estimate for tag %d to approach.",
-                  tag_id);
+      RCLCPP_WARN(node_->get_logger(),
+                  "ComputeApproachPose: tag %d not found; nothing to approach.", tag_id);
       return BT::NodeStatus::FAILURE;
     }
 

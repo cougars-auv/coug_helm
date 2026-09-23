@@ -22,10 +22,12 @@
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <map>
 #include <memory>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
 #include <tf2/LinearMath/Vector3.hpp>
@@ -52,6 +54,8 @@ class BtHelmNode : public rclcpp::Node {
   void arucoCallback(const aruco_opencv_msgs::msg::ArucoDetection::ConstSharedPtr& msg);
 
   // --- Helpers ---
+  void publishStatusLed();
+
   auto createBehaviorService(const std::string& service, utils::Behavior behavior,
                              const std::string& label)
       -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
@@ -64,6 +68,8 @@ class BtHelmNode : public rclcpp::Node {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<coug_interfaces::msg::DvlBeamList>::SharedPtr beams_sub_;
   rclcpp::Subscription<aruco_opencv_msgs::msg::ArucoDetection>::SharedPtr aruco_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr teleop_sub_;
+  rclcpp::Publisher<std_msgs::msg::ColorRGBA>::SharedPtr led_color_pub_;
   rclcpp::TimerBase::SharedPtr tick_timer_;
 
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_;
@@ -94,6 +100,7 @@ class BtHelmNode : public rclcpp::Node {
     int count{0};
   };
   std::map<int, TagEstimate> tag_estimates_;
+  double last_teleop_time_{-1.0};
 };
 
 }  // namespace coug_helm

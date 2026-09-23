@@ -131,11 +131,26 @@ bt_helm_node:
     default_value: 0.5
     validation:
       gt<>: [0.0]
-  tag_arrival_wait_sec:
+  tag_arrival_duration_sec:
     type: double
     default_value: 5.0
     validation:
       gt_eq<>: [0.0]
+  teleop_timeout_sec:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
+  led_flash_duration_sec:
+    type: double
+    default_value: 5.0
+    validation:
+      gt<>: [0.0]
+  led_flash_rate_hz:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
   publish_groot2:
     type: bool
     default_value: false
@@ -167,6 +182,16 @@ bt_helm_node:
   hsd_topic:
     type: string
     default_value: "cmd_hsd_helm"
+    validation:
+      not_empty<>: []
+  teleop_topic:
+    type: string
+    default_value: "cmd_vel_joy"
+    validation:
+      not_empty<>: []
+  led_color_topic:
+    type: string
+    default_value: "led/color"
     validation:
       not_empty<>: []
   start_service:
@@ -207,10 +232,5 @@ bt_helm_node:
   reset_localization_service:
     type: string
     default_value: "factor_graph_node/reset"
-    validation:
-      not_empty<>: []
-  flash_leds_service:
-    type: string
-    default_value: "status_led/flash"
     validation:
       not_empty<>: []

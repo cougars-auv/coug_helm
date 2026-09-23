@@ -103,88 +103,61 @@
     </ReactiveSequence>
   </BehaviorTree>
 
-  <BehaviorTree ID="MissionBehavior">
-    <Sequence>
-      <IsWaypointsReceived/>
-      <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
-          waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypoints" _autoremap="true"/>
-    </Sequence>
-  </BehaviorTree>
-
-  <BehaviorTree ID="HomeBehavior">
-    <Sequence>
-      <IsWaypointsReceived/>
-      <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
-      <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
-          waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypoints" _autoremap="true"/>
-    </Sequence>
-  </BehaviorTree>
-
-  <BehaviorTree ID="SurfaceBehavior">
-    <Sequence>
-      <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
-      <LoadWaypoints pending_waypoints="{surface_waypoint}" active_waypoints="{active_waypoints}"
-          waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypoints" _autoremap="true"/>
-    </Sequence>
-  </BehaviorTree>
-
   <BehaviorTree ID="MainTree">
     <ReactiveSequence>
       <LoadBehavior active_behavior="{active_behavior}"/>
       <ReactiveFallback>
-        <ReactiveSequence>
-          <ScriptCondition code="active_behavior == kEmergencyStop"/>
-          <Sequence>
-            <Stop/>
-            <ForceSuccess>
-              <ReactiveSequence>
-                <Stop/>
-                <DisarmThruster/>
-              </ReactiveSequence>
-            </ForceSuccess>
-            <Script code="pending_behavior := kStop"/>
-          </Sequence>
-        </ReactiveSequence>
-        <ReactiveSequence>
-          <ScriptCondition code="active_behavior == kEmergencySurface"/>
-          <Sequence>
-            <Stop/>
-            <ForceSuccess>
-              <EmergencySurface/>
-            </ForceSuccess>
-            <Script code="pending_behavior := kStop"/>
-          </Sequence>
-        </ReactiveSequence>
-        <ReactiveSequence>
-          <ScriptCondition code="active_behavior == kMission"/>
-          <Sequence>
-            <ForceSuccess>
-              <SubTree ID="MissionBehavior" _autoremap="true"/>
-            </ForceSuccess>
-            <Script code="pending_behavior := kStop"/>
-          </Sequence>
-        </ReactiveSequence>
-        <ReactiveSequence>
-          <ScriptCondition code="active_behavior == kHome"/>
-          <Sequence>
-            <ForceSuccess>
-              <SubTree ID="HomeBehavior" _autoremap="true"/>
-            </ForceSuccess>
-            <Script code="pending_behavior := kStop"/>
-          </Sequence>
-        </ReactiveSequence>
-        <ReactiveSequence>
-          <ScriptCondition code="active_behavior == kSurface"/>
-          <Sequence>
-            <ForceSuccess>
-              <SubTree ID="SurfaceBehavior" _autoremap="true"/>
-            </ForceSuccess>
-            <Script code="pending_behavior := kStop"/>
-          </Sequence>
-        </ReactiveSequence>
+        <Sequence _while="active_behavior == kEmergencyStop">
+          <Stop/>
+          <ForceSuccess>
+            <ReactiveSequence>
+              <Stop/>
+              <DisarmThruster/>
+            </ReactiveSequence>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kEmergencySurface">
+          <Stop/>
+          <ForceSuccess>
+            <EmergencySurface/>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kMission">
+          <ForceSuccess>
+            <Sequence>
+              <IsWaypointsReceived/>
+              <LoadWaypoints pending_waypoints="{mission_waypoints}"
+                  active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kHome">
+          <ForceSuccess>
+            <Sequence>
+              <IsWaypointsReceived/>
+              <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
+              <LoadWaypoints pending_waypoints="{home_waypoint}"
+                  active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kSurface">
+          <ForceSuccess>
+            <Sequence>
+              <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
+              <LoadWaypoints pending_waypoints="{surface_waypoint}"
+                  active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ForceSuccess>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
         <Stop/>
       </ReactiveFallback>
     </ReactiveSequence>

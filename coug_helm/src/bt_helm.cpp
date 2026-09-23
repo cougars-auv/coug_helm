@@ -33,6 +33,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <map>
 #include <memory>
 #include <rclcpp/logging.hpp>
@@ -40,6 +41,7 @@
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/service.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 #include <string>
 #include <tf2/LinearMath/Transform.hpp>
 #include <tf2/LinearMath/Vector3.hpp>
@@ -87,8 +89,28 @@ using aruco_opencv_msgs::msg::ArucoDetection;
 using coug_interfaces::msg::DvlBeamList;
 using coug_interfaces::msg::WayPoint;
 using coug_interfaces::msg::WayPointList;
+using geometry_msgs::msg::TwistStamped;
+using std_msgs::msg::ColorRGBA;
 using utils::Behavior;
 using utils::toString;
+
+namespace {
+
+auto makeColor(float r, float g, float b) -> ColorRGBA {
+  ColorRGBA color;
+  color.r = r;
+  color.g = g;
+  color.b = b;
+  color.a = 1.0F;
+  return color;
+}
+
+const ColorRGBA kLedOff = makeColor(160.0F / 255.0F, 160.0F / 255.0F, 164.0F / 255.0F);
+const ColorRGBA kLedRed = makeColor(1.0F, 0.0F, 0.0F);
+const ColorRGBA kLedBlue = makeColor(85.0F / 255.0F, 170.0F / 255.0F, 1.0F);
+const ColorRGBA kLedGreen = makeColor(0.0F, 1.0F, 0.0F);
+
+}  // namespace
 
 BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     : Node("bt_helm_node", options), diagnostic_updater_(this) {
@@ -102,7 +124,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("hsd_topic", params_.hsd_topic);
   blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
   blackboard_->set("reset_localization_service", params_.reset_localization_service);
-  blackboard_->set("flash_leds_service", params_.flash_leds_service);
 
   const auto server_timeout =
       std::chrono::milliseconds(static_cast<int64_t>(params_.server_timeout_sec * 1000.0));
@@ -116,6 +137,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
+  blackboard_->set("flash_start_time", -1.0);
 
   blackboard_->set("waypoint_index", size_t{0});
   blackboard_->set("active_waypoints", std::vector<WayPoint>{});
@@ -155,8 +177,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   blackboard_->set("tag_standoff_distance", params_.tag_standoff_distance);
   blackboard_->set("goal_shift_threshold", params_.goal_shift_threshold);
-  blackboard_->set("tag_arrival_wait_msec",
-                   static_cast<unsigned>(params_.tag_arrival_wait_sec * 1000.0));
+  blackboard_->set("tag_arrival_duration_msec",
+                   static_cast<unsigned>(params_.tag_arrival_duration_sec * 1000.0));
 
   // --- ROS Interfaces ---
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -177,6 +199,15 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   aruco_sub_ = create_subscription<ArucoDetection>(
       params_.aruco_topic, rclcpp::SystemDefaultsQoS(),
       [this](const ArucoDetection::ConstSharedPtr& msg) { arucoCallback(msg); });
+
+  teleop_sub_ = create_subscription<TwistStamped>(params_.teleop_topic, rclcpp::SystemDefaultsQoS(),
+                                                  [this](const TwistStamped::ConstSharedPtr&) {
+                                                    last_teleop_time_ =
+                                                        this->get_clock()->now().seconds();
+                                                  });
+
+  led_color_pub_ =
+      create_publisher<ColorRGBA>(params_.led_color_topic, rclcpp::SystemDefaultsQoS());
 
   start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
   stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
@@ -241,8 +272,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     RCLCPP_INFO(get_logger(), "Groot2 publisher started on port %ld.", params_.groot2_port);
   }
 
-  tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
-                                  [this] { tree_.tickOnce(); });
+  tick_timer_ =
+      create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz), [this] {
+        tree_.tickOnce();
+        publishStatusLed();
+      });
 
   // --- Diagnostics ---
   if (params_.publish_diagnostics) {
@@ -368,6 +402,24 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
       });
 }
 
+void BtHelmNode::publishStatusLed() {
+  const double now = this->get_clock()->now().seconds();
+  const auto flash_start = blackboard_->get<double>("flash_start_time");
+  const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
+
+  ColorRGBA color = kLedOff;
+  if (flash_start >= 0.0 && now - flash_start < params_.led_flash_duration_sec) {
+    const bool flash_on =
+        static_cast<int>((now - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
+    color = flash_on ? kLedGreen : kLedOff;
+  } else if (last_teleop_time_ >= 0.0 && now - last_teleop_time_ < params_.teleop_timeout_sec) {
+    color = kLedBlue;
+  } else if (utils::isNavigating(active)) {
+    color = kLedRed;
+  }
+  led_color_pub_->publish(color);
+}
+
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
@@ -377,8 +429,7 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
                          : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
-  const bool navigating =
-      (active == Behavior::kMission || active == Behavior::kSurface || active == Behavior::kHome);
+  const bool navigating = utils::isNavigating(active);
   auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
   if (!navigating || waypoints.empty()) {
     return;
