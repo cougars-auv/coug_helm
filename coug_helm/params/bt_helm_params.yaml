@@ -21,6 +21,11 @@ bt_helm_node:
     default_value: 1.0
     validation:
       gt<>: [0.0]
+  startup_timeout_sec:
+    type: double
+    default_value: 30.0
+    validation:
+      gt<>: [0.0]
   surface_capture_radius:
     type: double
     default_value: 1000.0

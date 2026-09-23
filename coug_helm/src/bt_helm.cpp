@@ -104,7 +104,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
                    std::chrono::milliseconds(static_cast<int>(1000.0 / params_.tick_rate_hz)));
   blackboard_->set("server_timeout", server_timeout);
   blackboard_->set("cancel_timeout", server_timeout);
-  blackboard_->set("wait_for_service_timeout", server_timeout);
+  blackboard_->set(
+      "wait_for_service_timeout",
+      std::chrono::milliseconds(static_cast<int64_t>(params_.startup_timeout_sec * 1000.0)));
 
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
@@ -200,7 +202,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     try {
       factory_.registerFromPlugin(BT::SharedLibrary::getOSName(plugin));
     } catch (const std::exception& e) {
-      RCLCPP_ERROR(get_logger(), "Plugin '%s' not registered: %s", plugin.c_str(), e.what());
+      RCLCPP_ERROR(get_logger(), "Failed to register plugin '%s': %s", plugin.c_str(), e.what());
     }
   }
 
@@ -214,12 +216,12 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   const std::string tree_file = params_.tree_file.empty()
                                     ? pkg_share + "/trees/follow_waypoints_w_recovery.xml"
                                     : params_.tree_file;
-  RCLCPP_INFO(get_logger(), "Behavior tree: %s", tree_file.c_str());
+  RCLCPP_INFO(get_logger(), "Loading behavior tree: %s", tree_file.c_str());
   tree_ = factory_.createTreeFromFile(tree_file, blackboard_);
 
   if (params_.publish_groot2) {
     groot2_pub_ = std::make_unique<BT::Groot2Publisher>(tree_, params_.groot2_port);
-    RCLCPP_INFO(get_logger(), "Groot2 Publisher: Port %ld", params_.groot2_port);
+    RCLCPP_INFO(get_logger(), "Groot2 publisher started on port %ld.", params_.groot2_port);
   }
 
   tick_timer_ = create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz),
@@ -248,18 +250,19 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
   }
 
   blackboard_->set("map_frame", msg->header.frame_id);
+  RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s) in '%s'.", msg->waypoints.size(),
+              msg->header.frame_id.c_str());
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& waypoint = msg->waypoints[i];
     RCLCPP_INFO(get_logger(),
-                "Waypoint %zu: X %.2f, Y %.2f, Z %.2f, Speed %.1f RPM, "
-                "Capture %.1f/%.1f m, Slip %.1f/%.1f m",
+                "Waypoint %zu: position (%.2f, %.2f, %.2f) m, speed %.0f RPM, "
+                "capture %.1f/%.1f m, slip %.1f/%.1f m (horizontal/vertical).",
                 i + 1, waypoint.position.x, waypoint.position.y, waypoint.position.z,
                 waypoint.speed_rpm, waypoint.capture_radius, waypoint.capture_radius_z,
                 waypoint.slip_radius, waypoint.slip_radius_z);
   }
 
   blackboard_->set("mission_waypoints", msg->waypoints);
-  RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s).", msg->waypoints.size());
 }
 
 void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg) {
@@ -293,7 +296,8 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
         }
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;
-        res->message = label + " requested.";
+        res->message = label + " behavior requested.";
+        RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
       });
 }
 
