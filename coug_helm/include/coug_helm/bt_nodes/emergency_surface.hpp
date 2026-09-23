@@ -31,7 +31,8 @@ class EmergencySurface : public RosBtNode<BT::SyncActionNode> {
   static auto providedPorts() -> BT::PortsList { return {}; }
 
   auto tick() -> BT::NodeStatus override {
-    RCLCPP_WARN(node_->get_logger(), "EmergencySurface: surfacing (not implemented).");
+    RCLCPP_WARN(node_->get_logger(),
+                "EmergencySurface: not implemented; returning success without surfacing.");
     return BT::NodeStatus::SUCCESS;
   }
 };

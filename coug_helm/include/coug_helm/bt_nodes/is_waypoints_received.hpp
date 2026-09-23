@@ -38,7 +38,7 @@ class IsWaypointsReceived : public RosBtNode<BT::ConditionNode> {
     const auto waypoints =
         getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints");
     if (waypoints.empty()) {
-      RCLCPP_WARN(node_->get_logger(), "IsWaypointsReceived: no waypoints received.");
+      RCLCPP_WARN(node_->get_logger(), "IsWaypointsReceived: no mission waypoints received.");
       return BT::NodeStatus::FAILURE;
     }
     return BT::NodeStatus::SUCCESS;

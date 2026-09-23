@@ -59,8 +59,7 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     waypoint.slip_radius = getPortOrBlackboard<double>("surface_slip_radius");
     waypoint.slip_radius_z = getPortOrBlackboard<double>("surface_slip_radius_z");
 
-    RCLCPP_INFO(node_->get_logger(),
-                "ComputeSurfaceWaypoint: surface set to (%.1f, %.1f), depth 0.",
+    RCLCPP_INFO(node_->get_logger(), "ComputeSurfaceWaypoint: surfacing at (%.1f, %.1f) m.",
                 waypoint.position.x, waypoint.position.y);
     setOutput("surface_waypoint", std::vector<coug_interfaces::msg::WayPoint>{waypoint});
     return BT::NodeStatus::SUCCESS;

@@ -72,8 +72,9 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
     orientation.setRPY(0.0, 0.0, heading);
     goal.pose.orientation = tf2::toMsg(orientation);
 
-    RCLCPP_INFO(node_->get_logger(), "LoadGoal: navigating to waypoint %zu of %zu at (%.1f, %.1f).",
-                index + 1, waypoints.size(), goal.pose.position.x, goal.pose.position.y);
+    RCLCPP_INFO(node_->get_logger(),
+                "LoadGoal: navigating to waypoint %zu of %zu at (%.1f, %.1f) m.", index + 1,
+                waypoints.size(), goal.pose.position.x, goal.pose.position.y);
     setOutput("goal_pose", goal);
     setOutput("goal_waypoint", waypoint);
     setOutput("goal_type", static_cast<int>(waypoint.type));

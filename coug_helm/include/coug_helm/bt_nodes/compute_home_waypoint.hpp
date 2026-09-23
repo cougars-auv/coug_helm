@@ -46,7 +46,7 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     auto waypoints =
         getPortOrBlackboard<std::vector<coug_interfaces::msg::WayPoint>>("mission_waypoints");
     if (waypoints.empty()) {
-      RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no waypoints available to home from.");
+      RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no mission waypoints to home to.");
       return BT::NodeStatus::FAILURE;
     }
     coug_interfaces::msg::WayPoint home = waypoints[0];
@@ -62,8 +62,9 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     home.slip_radius = getPortOrBlackboard<double>("home_slip_radius");
     home.slip_radius_z = getPortOrBlackboard<double>("home_slip_radius_z");
 
-    RCLCPP_INFO(node_->get_logger(), "ComputeHomeWaypoint: home set to (%.1f, %.1f), depth 0.",
-                home.position.x, home.position.y);
+    RCLCPP_INFO(node_->get_logger(),
+                "ComputeHomeWaypoint: home set to (%.1f, %.1f) m at the surface.", home.position.x,
+                home.position.y);
     setOutput("home_waypoint", std::vector<coug_interfaces::msg::WayPoint>{home});
     return BT::NodeStatus::SUCCESS;
   }

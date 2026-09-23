@@ -49,7 +49,7 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
         if (std::chrono::steady_clock::now() - start_time_ < timeout_) {
           return BT::NodeStatus::RUNNING;
         }
-        RCLCPP_ERROR(node_->get_logger(), "%s: service '%s' unavailable after %ld ms.",
+        RCLCPP_ERROR(node_->get_logger(), "%s: service '%s' not available after %ld ms.",
                      registrationName().c_str(), service_name_.c_str(),
                      static_cast<long>(timeout_.count()));
         return BT::NodeStatus::FAILURE;
@@ -76,14 +76,16 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
     try {
       success = future_.get()->success;
     } catch (const std::exception& e) {
-      RCLCPP_ERROR(node_->get_logger(), "%s: request failed (%s).", registrationName().c_str(),
-                   e.what());
+      RCLCPP_ERROR(node_->get_logger(), "%s: request to '%s' failed: %s",
+                   registrationName().c_str(), service_name_.c_str(), e.what());
     }
     if (success) {
-      RCLCPP_INFO(node_->get_logger(), "%s: succeeded.", registrationName().c_str());
+      RCLCPP_INFO(node_->get_logger(), "%s: '%s' succeeded.", registrationName().c_str(),
+                  service_name_.c_str());
       return BT::NodeStatus::SUCCESS;
     }
-    RCLCPP_WARN(node_->get_logger(), "%s: failed.", registrationName().c_str());
+    RCLCPP_WARN(node_->get_logger(), "%s: '%s' reported failure.", registrationName().c_str(),
+                service_name_.c_str());
     return BT::NodeStatus::FAILURE;
   }
 

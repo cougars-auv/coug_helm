@@ -73,7 +73,7 @@ class NavigateToWaypoint : public RosBtNode<BT::StatefulActionNode> {
         (prev_norm_dist_ > 0.0 && norm_capture_dist > prev_norm_dist_ && norm_slip_dist < 1.0);
 
     if (capture || slip) {
-      RCLCPP_DEBUG(node_->get_logger(), "NavigateToWaypoint: reached by %s.",
+      RCLCPP_DEBUG(node_->get_logger(), "NavigateToWaypoint: waypoint reached (%s).",
                    capture ? "capture" : "slip");
       return BT::NodeStatus::SUCCESS;
     }
