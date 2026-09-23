@@ -20,7 +20,6 @@
     <Condition ID="IsOdomHealthy"/>
     <Condition ID="IsTagDetected">
       <input_port name="tag_id"/>
-      <output_port name="approach_pose"/>
     </Condition>
     <Condition ID="IsWaypointsReceived"/>
     <Action ID="AdvanceWaypoint">
@@ -42,6 +41,11 @@
       <input_port name="goal_waypoint"/>
       <output_port name="tag_id"/>
     </Action>
+    <Action ID="ComputeApproachPose">
+      <input_port name="tag_id"/>
+      <output_port name="approach_pose"/>
+    </Action>
+    <Action ID="FlashLeds"/>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
     </Action>
@@ -49,6 +53,9 @@
       <output_port name="active_behavior"/>
     </Action>
     <Action ID="NavigateToPose">
+      <input_port name="goal"/>
+    </Action>
+    <Action ID="NavigateToUpdatedPose">
       <input_port name="goal"/>
     </Action>
     <Decorator ID="LoopPose">
@@ -62,7 +69,36 @@
     </Action>
   </TreeNodesModel>
 
-  <BehaviorTree ID="FollowWaypointsNav2">
+  <BehaviorTree ID="FindAndApproachTag">
+    <Sequence>
+      <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
+      <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
+      <ReactiveFallback>
+        <IsTagDetected tag_id="{tag_id}"/>
+        <Sequence>
+          <ForceSuccess>
+            <NavigateToPose goal="{goal_pose}"/>
+          </ForceSuccess>
+          <LoopPose queue="{search_poses}" value="{search_pose}">
+            <ForceSuccess>
+              <NavigateToPose goal="{search_pose}"/>
+            </ForceSuccess>
+          </LoopPose>
+          <AlwaysFailure/>
+        </Sequence>
+      </ReactiveFallback>
+      <ReactiveSequence>
+        <ComputeApproachPose tag_id="{tag_id}" approach_pose="{approach_pose}"/>
+        <NavigateToUpdatedPose goal="{approach_pose}"/>
+      </ReactiveSequence>
+      <ForceSuccess>
+        <FlashLeds/>
+      </ForceSuccess>
+      <Sleep msec="{tag_arrival_wait_msec}"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FollowWaypoints">
     <ReactiveSequence>
       <IsOdomHealthy/>
       <KeepRunningUntilFailure>
@@ -76,23 +112,7 @@
             </Sequence>
             <Sequence>
               <ScriptCondition code="goal_type == kAruco"/>
-              <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
-              <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
-              <ReactiveFallback>
-                <IsTagDetected tag_id="{tag_id}" approach_pose="{approach_pose}"/>
-                <Sequence>
-                  <ForceSuccess>
-                    <NavigateToPose goal="{goal_pose}"/>
-                  </ForceSuccess>
-                  <LoopPose queue="{search_poses}" value="{search_pose}">
-                    <ForceSuccess>
-                      <NavigateToPose goal="{search_pose}"/>
-                    </ForceSuccess>
-                  </LoopPose>
-                  <AlwaysFailure/>
-                </Sequence>
-              </ReactiveFallback>
-              <NavigateToPose goal="{approach_pose}"/>
+              <SubTree ID="FindAndApproachTag" _autoremap="true"/>
             </Sequence>
             <AlwaysFailure/>
           </Fallback>
@@ -107,7 +127,7 @@
       <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
+      <SubTree ID="FollowWaypoints" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
@@ -117,7 +137,7 @@
       <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsNav2" _autoremap="true"/>
+      <SubTree ID="FollowWaypoints" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 

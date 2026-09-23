@@ -17,17 +17,7 @@
 #include <behaviortree_cpp/json_export.h>
 
 #include <coug_interfaces/msg/way_point.hpp>
-#include <geometry_msgs/msg/point.hpp>
-
-namespace geometry_msgs::msg {
-
-BT_JSON_CONVERTER(geometry_msgs::msg::Point, msg) {
-  add_field("x", &msg.x);
-  add_field("y", &msg.y);
-  add_field("z", &msg.z);
-}
-
-}  // namespace geometry_msgs::msg
+#include <nav2_behavior_tree/json_utils.hpp>
 
 namespace coug_interfaces::msg {
 
@@ -38,6 +28,9 @@ BT_JSON_CONVERTER(coug_interfaces::msg::WayPoint, msg) {
   add_field("capture_radius_z", &msg.capture_radius_z);
   add_field("slip_radius", &msg.slip_radius);
   add_field("slip_radius_z", &msg.slip_radius_z);
+  add_field("tag_id", &msg.tag_id);
+  add_field("subwaypoints", &msg.subwaypoints);
+  add_field("type", &msg.type);
   add_field("mode", &msg.mode);
 }
 

@@ -28,6 +28,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
+#include <tf2/LinearMath/Vector3.hpp>
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
@@ -88,7 +89,8 @@ class BtHelmNode : public rclcpp::Node {
 
   // --- State ---
   struct TagEstimate {
-    geometry_msgs::msg::Point mean;
+    tf2::Vector3 map_p_tag;
+    double weight_sum{0.0};
     int count{0};
   };
   std::map<int, TagEstimate> tag_estimates_;

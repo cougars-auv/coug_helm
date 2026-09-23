@@ -18,6 +18,7 @@
 #include <behaviortree_cpp/decorators/loop_node.h>
 #include <behaviortree_cpp/json_export.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
+#include <behaviortree_cpp/tree_node.h>
 #include <behaviortree_cpp/utils/shared_library.h>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -40,7 +41,8 @@
 #include <rclcpp/service.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
-#include <tf2/convert.hpp>
+#include <tf2/LinearMath/Transform.hpp>
+#include <tf2/LinearMath/Vector3.hpp>
 #include <tf2/exceptions.hpp>
 #include <tf2/time.hpp>
 #include <tf2/utils.hpp>
@@ -52,10 +54,12 @@
 #include "coug_helm/bt_helm_parameters.hpp"
 #include "coug_helm/bt_nodes/advance_waypoint.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
+#include "coug_helm/bt_nodes/compute_approach_pose.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
+#include "coug_helm/bt_nodes/flash_leds.hpp"
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
 #include "coug_helm/bt_nodes/is_tag_detected.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
@@ -64,6 +68,7 @@
 #include "coug_helm/bt_nodes/load_search_poses.hpp"
 #include "coug_helm/bt_nodes/load_tag_id.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
+#include "coug_helm/bt_nodes/navigate_to_updated_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_waypoint.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
 #include "coug_helm/bt_nodes/reset_localization.hpp"
@@ -97,6 +102,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("hsd_topic", params_.hsd_topic);
   blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
   blackboard_->set("reset_localization_service", params_.reset_localization_service);
+  blackboard_->set("flash_leds_service", params_.flash_leds_service);
 
   const auto server_timeout =
       std::chrono::milliseconds(static_cast<int64_t>(params_.server_timeout_sec * 1000.0));
@@ -146,7 +152,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("wait_duration_msec", static_cast<unsigned>(params_.wait_duration_sec * 1000.0));
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
+
   blackboard_->set("tag_standoff_distance", params_.tag_standoff_distance);
+  blackboard_->set("goal_shift_threshold", params_.goal_shift_threshold);
+  blackboard_->set("tag_arrival_wait_msec",
+                   static_cast<unsigned>(params_.tag_arrival_wait_sec * 1000.0));
 
   // --- ROS Interfaces ---
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -183,10 +193,12 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::AdvanceWaypoint>("AdvanceWaypoint");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
+  factory_.registerNodeType<bt_nodes::ComputeApproachPose>("ComputeApproachPose");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
   factory_.registerNodeType<bt_nodes::DisarmThruster>("DisarmThruster");
   factory_.registerNodeType<bt_nodes::EmergencySurface>("EmergencySurface");
+  factory_.registerNodeType<bt_nodes::FlashLeds>("FlashLeds");
   factory_.registerNodeType<bt_nodes::LoadBehavior>("LoadBehavior");
   factory_.registerNodeType<bt_nodes::LoadGoal>("LoadGoal");
   factory_.registerNodeType<bt_nodes::LoadSearchPoses>("LoadSearchPoses");
@@ -197,6 +209,11 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::Stop>("Stop");
   factory_.registerNodeType<bt_nodes::ProgressChecker>("ProgressChecker");
   factory_.registerNodeType<BT::LoopNode<geometry_msgs::msg::PoseStamped>>("LoopPose");
+
+  factory_.registerBuilder<bt_nodes::NavigateToUpdatedPose>(
+      "NavigateToUpdatedPose", [](const std::string& name, const BT::NodeConfig& config) {
+        return std::make_unique<bt_nodes::NavigateToUpdatedPose>(name, "navigate_to_pose", config);
+      });
 
   for (const auto& plugin : params_.plugin_lib_names) {
     try {
@@ -281,6 +298,56 @@ void BtHelmNode::beamsCallback(const DvlBeamList::ConstSharedPtr& msg) {
     return;
   }
   blackboard_->set("current_altitude", msg->altitude);
+}
+
+void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
+  if (msg->markers.empty()) {
+    return;
+  }
+
+  const auto map_frame = blackboard_->get<std::string>("map_frame");
+  const std::string camera_frame = msg->header.frame_id;
+
+  geometry_msgs::msg::TransformStamped map_T_camera_tf;
+  try {
+    map_T_camera_tf = tf_buffer_->lookupTransform(map_frame, camera_frame, tf2::TimePointZero);
+  } catch (const tf2::TransformException& ex) {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000,
+                         "Failed to look up transform from '%s' to '%s': %s", camera_frame.c_str(),
+                         map_frame.c_str(), ex.what());
+    return;
+  }
+
+  tf2::Transform map_T_camera;
+  tf2::fromMsg(map_T_camera_tf.transform, map_T_camera);
+
+  auto tags = blackboard_->get<std::map<int, geometry_msgs::msg::Point>>("detected_tags");
+  for (const auto& marker : msg->markers) {
+    // Ignore distant fixes
+    tf2::Vector3 camera_p_tag;
+    tf2::fromMsg(marker.pose.position, camera_p_tag);
+    const double range = camera_p_tag.length();
+    if (range > params_.tag_max_range) {
+      continue;
+    }
+    const tf2::Vector3 map_p_tag = map_T_camera * camera_p_tag;
+
+    // Fold into the mean, weighted according fix range
+    auto& estimate = tag_estimates_[marker.marker_id];
+    const double weight = 1.0 / (range * range * range * range);
+    estimate.weight_sum += weight;
+    estimate.map_p_tag += (weight / estimate.weight_sum) * (map_p_tag - estimate.map_p_tag);
+
+    // Publish once there are enough fixes
+    if (++estimate.count >= params_.tag_min_detections) {
+      if (estimate.count == params_.tag_min_detections) {
+        RCLCPP_INFO(get_logger(), "Tag %d detected at (%.1f, %.1f) m.", marker.marker_id,
+                    estimate.map_p_tag.x(), estimate.map_p_tag.y());
+      }
+      tf2::toMsg(estimate.map_p_tag, tags[marker.marker_id]);
+    }
+  }
+  blackboard_->set("detected_tags", tags);
 }
 
 auto BtHelmNode::createBehaviorService(const std::string& service, Behavior behavior,

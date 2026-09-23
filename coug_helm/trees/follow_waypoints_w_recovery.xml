@@ -59,7 +59,7 @@
     <Decorator ID="ProgressChecker"/>
   </TreeNodesModel>
 
-  <BehaviorTree ID="FollowWaypointsWithRecovery">
+  <BehaviorTree ID="FollowWaypoints">
     <ReactiveSequence>
       <Fallback>
         <IsOdomHealthy/>
@@ -108,7 +108,7 @@
       <IsWaypointsReceived/>
       <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
+      <SubTree ID="FollowWaypoints" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
@@ -118,7 +118,7 @@
       <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
       <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
+      <SubTree ID="FollowWaypoints" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
@@ -127,7 +127,7 @@
       <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
       <LoadWaypoints pending_waypoints="{surface_waypoint}" active_waypoints="{active_waypoints}"
           waypoint_index="{waypoint_index}"/>
-      <SubTree ID="FollowWaypointsWithRecovery" _autoremap="true"/>
+      <SubTree ID="FollowWaypoints" _autoremap="true"/>
     </Sequence>
   </BehaviorTree>
 
