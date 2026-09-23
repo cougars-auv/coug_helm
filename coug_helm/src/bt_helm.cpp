@@ -96,19 +96,25 @@ using utils::toString;
 
 namespace {
 
-auto makeColor(float r, float g, float b) -> ColorRGBA {
+struct Rgb {
+  float r;
+  float g;
+  float b;
+};
+
+constexpr Rgb kLedOff{160.0F / 255.0F, 160.0F / 255.0F, 164.0F / 255.0F};
+constexpr Rgb kLedRed{1.0F, 0.0F, 0.0F};
+constexpr Rgb kLedBlue{85.0F / 255.0F, 170.0F / 255.0F, 1.0F};
+constexpr Rgb kLedGreen{0.0F, 1.0F, 0.0F};
+
+auto makeColor(const Rgb& rgb) -> ColorRGBA {
   ColorRGBA color;
-  color.r = r;
-  color.g = g;
-  color.b = b;
+  color.r = rgb.r;
+  color.g = rgb.g;
+  color.b = rgb.b;
   color.a = 1.0F;
   return color;
 }
-
-const ColorRGBA kLedOff = makeColor(160.0F / 255.0F, 160.0F / 255.0F, 164.0F / 255.0F);
-const ColorRGBA kLedRed = makeColor(1.0F, 0.0F, 0.0F);
-const ColorRGBA kLedBlue = makeColor(85.0F / 255.0F, 170.0F / 255.0F, 1.0F);
-const ColorRGBA kLedGreen = makeColor(0.0F, 1.0F, 0.0F);
 
 }  // namespace
 
@@ -406,7 +412,7 @@ void BtHelmNode::publishStatusLed() {
   const auto flash_start = blackboard_->get<double>("flash_start_time");
   const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
-  ColorRGBA color = kLedOff;
+  Rgb color = kLedOff;
   if (flash_start >= 0.0 && now - flash_start < params_.led_flash_duration_sec) {
     const bool flash_on =
         static_cast<int>((now - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
@@ -416,7 +422,7 @@ void BtHelmNode::publishStatusLed() {
   } else if (utils::isNavigating(active)) {
     color = kLedRed;
   }
-  led_color_pub_->publish(color);
+  led_color_pub_->publish(makeColor(color));
 }
 
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
