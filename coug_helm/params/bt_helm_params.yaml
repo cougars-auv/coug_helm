@@ -219,6 +219,11 @@ bt_helm_node:
     default_value: "emergency_surface"
     validation:
       not_empty<>: []
+  assist_service:
+    type: string
+    default_value: "assist"
+    validation:
+      not_empty<>: []
   arm_thruster_service:
     type: string
     default_value: "thruster/arm"

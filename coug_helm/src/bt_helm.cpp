@@ -222,6 +222,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
                                               Behavior::kEmergencyStop, "Emergency stop");
   emergency_surface_srv_ = createBehaviorService(params_.emergency_surface_service,
                                                  Behavior::kEmergencySurface, "Emergency surface");
+  assist_srv_ = createBehaviorService(params_.assist_service, Behavior::kAssist, "Assist");
 
   // --- Behavior Tree ---
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");

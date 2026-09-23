@@ -26,6 +26,7 @@ enum class Behavior : std::uint8_t {
   kHome,
   kEmergencyStop,
   kEmergencySurface,
+  kAssist,
 };
 
 inline auto isNavigating(Behavior behavior) -> bool {
@@ -47,6 +48,8 @@ inline auto toString(Behavior behavior) -> std::string {
       return "EMERGENCY_STOP";
     case Behavior::kEmergencySurface:
       return "EMERGENCY_SURFACE";
+    case Behavior::kAssist:
+      return "ASSIST";
   }
   return "UNKNOWN";
 }
