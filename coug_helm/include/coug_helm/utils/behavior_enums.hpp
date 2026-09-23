@@ -26,21 +26,11 @@ enum class Behavior : std::uint8_t {
   kHome,
   kEmergencyStop,
   kEmergencySurface,
-  kFollow,
-  kStay,
-  kFetch,
-  kCome,
-  kGive,
 };
 
 inline auto isNavigating(Behavior behavior) -> bool {
   return behavior == Behavior::kMission || behavior == Behavior::kSurface ||
          behavior == Behavior::kHome;
-}
-
-inline auto isAutonomous(Behavior behavior) -> bool {
-  return behavior != Behavior::kStop && behavior != Behavior::kEmergencyStop &&
-         behavior != Behavior::kEmergencySurface;
 }
 
 inline auto toString(Behavior behavior) -> std::string {
@@ -57,16 +47,6 @@ inline auto toString(Behavior behavior) -> std::string {
       return "EMERGENCY_STOP";
     case Behavior::kEmergencySurface:
       return "EMERGENCY_SURFACE";
-    case Behavior::kFollow:
-      return "FOLLOW";
-    case Behavior::kStay:
-      return "STAY";
-    case Behavior::kFetch:
-      return "FETCH";
-    case Behavior::kCome:
-      return "COME";
-    case Behavior::kGive:
-      return "GIVE";
   }
   return "UNKNOWN";
 }

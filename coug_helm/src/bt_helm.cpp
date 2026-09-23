@@ -217,12 +217,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   emergency_surface_srv_ = createBehaviorService(params_.emergency_surface_service,
                                                  Behavior::kEmergencySurface, "Emergency surface");
 
-  follow_srv_ = createBehaviorService(params_.follow_service, Behavior::kFollow, "Follow");
-  stay_srv_ = createBehaviorService(params_.stay_service, Behavior::kStay, "Stay");
-  fetch_srv_ = createBehaviorService(params_.fetch_service, Behavior::kFetch, "Fetch");
-  come_srv_ = createBehaviorService(params_.come_service, Behavior::kCome, "Come");
-  give_srv_ = createBehaviorService(params_.give_service, Behavior::kGive, "Give");
-
   // --- Behavior Tree ---
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsTagDetected>("IsTagDetected");
@@ -419,7 +413,7 @@ void BtHelmNode::publishStatusLed() {
     color = flash_on ? kLedGreen : kLedOff;
   } else if (last_teleop_time_ >= 0.0 && now - last_teleop_time_ < params_.teleop_timeout_sec) {
     color = kLedBlue;
-  } else if (utils::isAutonomous(active)) {
+  } else if (utils::isNavigating(active)) {
     color = kLedRed;
   }
   led_color_pub_->publish(color);
