@@ -54,8 +54,7 @@ class BtHelmNode : public rclcpp::Node {
   void arucoCallback(const aruco_opencv_msgs::msg::ArucoDetection::ConstSharedPtr& msg);
 
   // --- Helpers ---
-  auto createBehaviorService(const std::string& service, utils::Behavior behavior,
-                             const std::string& label)
+  auto createBehaviorService(const std::string& service, utils::Behavior behavior)
       -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
 
   void publishStatusLed();

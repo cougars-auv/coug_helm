@@ -214,15 +214,15 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   led_color_pub_ =
       create_publisher<ColorRGBA>(params_.led_color_topic, rclcpp::SystemDefaultsQoS());
 
-  start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission, "Mission");
-  stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop, "Stop");
-  surface_srv_ = createBehaviorService(params_.surface_service, Behavior::kSurface, "Surface");
-  home_srv_ = createBehaviorService(params_.home_service, Behavior::kHome, "Home");
-  emergency_stop_srv_ = createBehaviorService(params_.emergency_stop_service,
-                                              Behavior::kEmergencyStop, "Emergency stop");
-  emergency_surface_srv_ = createBehaviorService(params_.emergency_surface_service,
-                                                 Behavior::kEmergencySurface, "Emergency surface");
-  assist_srv_ = createBehaviorService(params_.assist_service, Behavior::kAssist, "Assist");
+  start_srv_ = createBehaviorService(params_.start_service, Behavior::kMission);
+  stop_srv_ = createBehaviorService(params_.stop_service, Behavior::kStop);
+  surface_srv_ = createBehaviorService(params_.surface_service, Behavior::kSurface);
+  home_srv_ = createBehaviorService(params_.home_service, Behavior::kHome);
+  emergency_stop_srv_ =
+      createBehaviorService(params_.emergency_stop_service, Behavior::kEmergencyStop);
+  emergency_surface_srv_ =
+      createBehaviorService(params_.emergency_surface_service, Behavior::kEmergencySurface);
+  assist_srv_ = createBehaviorService(params_.assist_service, Behavior::kAssist);
 
   // --- Behavior Tree ---
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
@@ -270,7 +270,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   const std::string tree_file = params_.tree_file.empty()
                                     ? pkg_share + "/trees/follow_waypoints_w_recovery.xml"
                                     : params_.tree_file;
-  RCLCPP_INFO(get_logger(), "Loading behavior tree: %s", tree_file.c_str());
+  RCLCPP_INFO(get_logger(), "Loading behavior tree: '%s'.", tree_file.c_str());
   tree_ = factory_.createTreeFromFile(tree_file, blackboard_);
 
   if (params_.publish_groot2) {
@@ -390,12 +390,12 @@ void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
   blackboard_->set("detected_tags", tags);
 }
 
-auto BtHelmNode::createBehaviorService(const std::string& service, Behavior behavior,
-                                       const std::string& label)
+auto BtHelmNode::createBehaviorService(const std::string& service, Behavior behavior)
     -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr {
   return create_service<std_srvs::srv::Trigger>(
-      service, [this, behavior, label](const std_srvs::srv::Trigger::Request::SharedPtr&,
-                                       const std_srvs::srv::Trigger::Response::SharedPtr& res) {
+      service, [this, behavior](const std_srvs::srv::Trigger::Request::SharedPtr&,
+                                const std_srvs::srv::Trigger::Response::SharedPtr& res) {
+        const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
         tree_.haltTree();
         if (behavior == Behavior::kMission) {
           blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
@@ -403,7 +403,9 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
         }
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;
-        res->message = label + " behavior requested.";
+        res->message = active == behavior ? "Restarting " + toString(behavior) + "."
+                                          : "Switching from " + toString(active) + " to " +
+                                                toString(behavior) + ".";
         RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
       });
 }
