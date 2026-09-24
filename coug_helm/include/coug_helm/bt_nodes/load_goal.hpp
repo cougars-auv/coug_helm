@@ -36,8 +36,8 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
-        BT::InputPort<double>("current_x"),
-        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("curr_x"),
+        BT::InputPort<double>("curr_y"),
         BT::InputPort<std::string>("map_frame"),
         BT::OutputPort<geometry_msgs::msg::PoseStamped>("goal_pose"),
         BT::OutputPort<int>("goal_type"),
@@ -52,9 +52,8 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
     goal.pose.position = waypoint.position;
     goal.pose.position.z = 0.0;
 
-    const double heading =
-        std::atan2(goal.pose.position.y - getPortOrBlackboard<double>("current_y"),
-                   goal.pose.position.x - getPortOrBlackboard<double>("current_x"));
+    const double heading = std::atan2(goal.pose.position.y - getPortOrBlackboard<double>("curr_y"),
+                                      goal.pose.position.x - getPortOrBlackboard<double>("curr_x"));
     tf2::Quaternion orientation;
     orientation.setRPY(0.0, 0.0, heading);
     goal.pose.orientation = tf2::toMsg(orientation);

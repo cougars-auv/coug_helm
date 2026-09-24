@@ -147,19 +147,19 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("flash_start_time", -1.0);
 
-  blackboard_->set("waypoint_index", size_t{0});
+  blackboard_->set("waypoint_idx", size_t{0});
   blackboard_->set("active_waypoints", std::vector<WayPoint>{});
   blackboard_->set("mission_waypoints", std::vector<WayPoint>{});
   blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
 
-  blackboard_->set("current_x", 0.0);
-  blackboard_->set("current_y", 0.0);
-  blackboard_->set("current_z", 0.0);
-  blackboard_->set("current_heading_degrees", 0.0);
-  blackboard_->set("current_altitude", 0.0);
+  blackboard_->set("curr_x", 0.0);
+  blackboard_->set("curr_y", 0.0);
+  blackboard_->set("curr_z", 0.0);
+  blackboard_->set("curr_heading_degrees", 0.0);
+  blackboard_->set("curr_altitude", 0.0);
   blackboard_->set("has_odom", false);
   blackboard_->set("last_odom_time", 0.0);
-  blackboard_->set("map_frame", std::string{"map"});
+  blackboard_->set("map_frame", params_.map_frame);
 
   blackboard_->set("surface_capture_radius", params_.surface_capture_radius);
   blackboard_->set("surface_capture_radius_z", params_.surface_capture_radius_z);
@@ -313,7 +313,12 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
     return;
   }
 
-  blackboard_->set("map_frame", msg->header.frame_id);
+  if (!msg->header.frame_id.empty() && msg->header.frame_id != params_.map_frame) {
+    RCLCPP_ERROR(get_logger(), "Mission rejected: waypoints are in '%s', expected '%s'.",
+                 msg->header.frame_id.c_str(), params_.map_frame.c_str());
+    return;
+  }
+
   RCLCPP_INFO(get_logger(), "Mission received: %zu waypoint(s) in '%s'.", msg->waypoints.size(),
               msg->header.frame_id.c_str());
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
@@ -332,19 +337,19 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
 void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg) {
   blackboard_->set("has_odom", true);
   blackboard_->set("last_odom_time", this->get_clock()->now().seconds());
-  blackboard_->set("current_x", msg->pose.pose.position.x);
-  blackboard_->set("current_y", msg->pose.pose.position.y);
-  blackboard_->set("current_z", msg->pose.pose.position.z);
+  blackboard_->set("curr_x", msg->pose.pose.position.x);
+  blackboard_->set("curr_y", msg->pose.pose.position.y);
+  blackboard_->set("curr_z", msg->pose.pose.position.z);
 
   static constexpr double kRadToDeg = 180.0 / M_PI;
-  blackboard_->set("current_heading_degrees", tf2::getYaw(msg->pose.pose.orientation) * kRadToDeg);
+  blackboard_->set("curr_heading_degrees", tf2::getYaw(msg->pose.pose.orientation) * kRadToDeg);
 }
 
 void BtHelmNode::beamsCallback(const DvlBeamList::ConstSharedPtr& msg) {
   if (!msg->altitude_valid) {
     return;
   }
-  blackboard_->set("current_altitude", msg->altitude);
+  blackboard_->set("curr_altitude", msg->altitude);
 }
 
 void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
@@ -352,16 +357,16 @@ void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
     return;
   }
 
-  const auto map_frame = blackboard_->get<std::string>("map_frame");
   const std::string camera_frame = msg->header.frame_id;
 
   geometry_msgs::msg::TransformStamped map_T_camera_tf;
   try {
-    map_T_camera_tf = tf_buffer_->lookupTransform(map_frame, camera_frame, tf2::TimePointZero);
+    map_T_camera_tf =
+        tf_buffer_->lookupTransform(params_.map_frame, camera_frame, tf2::TimePointZero);
   } catch (const tf2::TransformException& ex) {
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000,
                          "Failed to look up transform from '%s' to '%s': %s", camera_frame.c_str(),
-                         map_frame.c_str(), ex.what());
+                         params_.map_frame.c_str(), ex.what());
     return;
   }
 
@@ -459,23 +464,22 @@ void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper
     return;
   }
 
-  auto waypoint_idx = blackboard_->get<size_t>("waypoint_index");
+  auto waypoint_idx = blackboard_->get<size_t>("waypoint_idx");
   if (waypoint_idx >= waypoints.size()) {
     return;
   }
 
-  const auto current_x = blackboard_->get<double>("current_x");
-  const auto current_y = blackboard_->get<double>("current_y");
+  const auto curr_x = blackboard_->get<double>("curr_x");
+  const auto curr_y = blackboard_->get<double>("curr_y");
   const auto& target = waypoints[waypoint_idx];
   const bool altitude_mode = (target.mode == WayPoint::ALTITUDE);
-  const auto current_vertical =
-      blackboard_->get<double>(altitude_mode ? "current_altitude" : "current_z");
+  const auto curr_vertical = blackboard_->get<double>(altitude_mode ? "curr_altitude" : "curr_z");
   // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
   stat.addf("Waypoint", "%zu/%zu", waypoint_idx + 1, waypoints.size());
   stat.addf("Horizontal Distance (m)", "%.1f",
-            std::hypot(target.position.x - current_x, target.position.y - current_y));
+            std::hypot(target.position.x - curr_x, target.position.y - curr_y));
   stat.addf(altitude_mode ? "Altitude Error (m)" : "Depth Error (m)", "%.1f",
-            std::abs(target.position.z - current_vertical));
+            std::abs(target.position.z - curr_vertical));
   // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 }
 

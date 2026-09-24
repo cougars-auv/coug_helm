@@ -38,8 +38,8 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
     return {
         BT::InputPort<int>("tag_id"),
         BT::InputPort<std::map<int, geometry_msgs::msg::Point>>("detected_tags"),
-        BT::InputPort<double>("current_x"),
-        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("curr_x"),
+        BT::InputPort<double>("curr_y"),
         BT::InputPort<std::string>("map_frame"),
         BT::OutputPort<geometry_msgs::msg::PoseStamped>("approach_pose"),
     };
@@ -57,10 +57,10 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
     }
 
     const auto& tag = tag_it->second;
-    const auto current_x = getPortOrBlackboard<double>("current_x");
-    const auto current_y = getPortOrBlackboard<double>("current_y");
-    const double dx = tag.x - current_x;
-    const double dy = tag.y - current_y;
+    const auto curr_x = getPortOrBlackboard<double>("curr_x");
+    const auto curr_y = getPortOrBlackboard<double>("curr_y");
+    const double dx = tag.x - curr_x;
+    const double dy = tag.y - curr_y;
 
     geometry_msgs::msg::PoseStamped approach;
     approach.header.frame_id = getPortOrBlackboard<std::string>("map_frame");

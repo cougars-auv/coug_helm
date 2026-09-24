@@ -233,3 +233,8 @@ bt_helm_node:
     default_value: "factor_graph_node/reset"
     validation:
       not_empty<>: []
+  map_frame:
+    type: string
+    default_value: "map"
+    validation:
+      not_empty<>: []

@@ -31,18 +31,18 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<double>("current_x"),
-        BT::InputPort<double>("current_y"),
-        BT::InputPort<double>("current_z"),
+        BT::InputPort<double>("curr_x"),
+        BT::InputPort<double>("curr_y"),
+        BT::InputPort<double>("curr_z"),
         BT::InputPort<double>("progress_threshold"),
         BT::InputPort<double>("progress_timeout_sec"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    const auto current_x = getPortOrBlackboard<double>("current_x");
-    const auto current_y = getPortOrBlackboard<double>("current_y");
-    const auto current_z = getPortOrBlackboard<double>("current_z");
+    const auto curr_x = getPortOrBlackboard<double>("curr_x");
+    const auto curr_y = getPortOrBlackboard<double>("curr_y");
+    const auto curr_z = getPortOrBlackboard<double>("curr_z");
     const auto threshold = getPortOrBlackboard<double>("progress_threshold");
     const auto timeout = getPortOrBlackboard<double>("progress_timeout_sec");
     const double now = node_->now().seconds();
@@ -51,11 +51,11 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
       seeded_ = false;
     }
 
-    if (!seeded_ || std::hypot(current_x - baseline_x_, current_y - baseline_y_,
-                               current_z - baseline_z_) >= threshold) {
-      baseline_x_ = current_x;
-      baseline_y_ = current_y;
-      baseline_z_ = current_z;
+    if (!seeded_ ||
+        std::hypot(curr_x - baseline_x_, curr_y - baseline_y_, curr_z - baseline_z_) >= threshold) {
+      baseline_x_ = curr_x;
+      baseline_y_ = curr_y;
+      baseline_z_ = curr_z;
       last_progress_time_ = now;
       seeded_ = true;
     } else if (timeout > 0.0 && now - last_progress_time_ > timeout) {

@@ -37,10 +37,10 @@ class NavigateToWaypoint : public RosBtNode<BT::StatefulActionNode> {
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
-        BT::InputPort<double>("current_x"),
-        BT::InputPort<double>("current_y"),
-        BT::InputPort<double>("current_z"),
-        BT::InputPort<double>("current_altitude"),
+        BT::InputPort<double>("curr_x"),
+        BT::InputPort<double>("curr_y"),
+        BT::InputPort<double>("curr_z"),
+        BT::InputPort<double>("curr_altitude"),
     };
   }
 
@@ -51,17 +51,17 @@ class NavigateToWaypoint : public RosBtNode<BT::StatefulActionNode> {
 
   auto onRunning() -> BT::NodeStatus override {
     const auto target = getInput<coug_interfaces::msg::WayPoint>("goal_waypoint").value();
-    const auto current_x = getPortOrBlackboard<double>("current_x");
-    const auto current_y = getPortOrBlackboard<double>("current_y");
-    const auto current_z = getPortOrBlackboard<double>("current_z");
-    const auto current_altitude = getPortOrBlackboard<double>("current_altitude");
+    const auto curr_x = getPortOrBlackboard<double>("curr_x");
+    const auto curr_y = getPortOrBlackboard<double>("curr_y");
+    const auto curr_z = getPortOrBlackboard<double>("curr_z");
+    const auto curr_altitude = getPortOrBlackboard<double>("curr_altitude");
 
-    publishHsd(target, current_x, current_y);
+    publishHsd(target, curr_x, curr_y);
     const double horizontal_dist =
-        std::hypot(target.position.x - current_x, target.position.y - current_y);
+        std::hypot(target.position.x - curr_x, target.position.y - curr_y);
     const double vertical_dist = (target.mode == coug_interfaces::msg::WayPoint::ALTITUDE)
-                                     ? std::abs(target.position.z - current_altitude)
-                                     : std::abs(target.position.z - current_z);
+                                     ? std::abs(target.position.z - curr_altitude)
+                                     : std::abs(target.position.z - curr_z);
 
     const double norm_capture_dist = std::hypot(horizontal_dist / target.capture_radius,
                                                 vertical_dist / target.capture_radius_z);
@@ -84,12 +84,11 @@ class NavigateToWaypoint : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { hsd_pub_->publish(coug_interfaces::msg::ControlSetpoint{}); }
 
  private:
-  void publishHsd(const coug_interfaces::msg::WayPoint& target, double current_x,
-                  double current_y) {
+  void publishHsd(const coug_interfaces::msg::WayPoint& target, double curr_x, double curr_y) {
     static constexpr double kRadToDeg = 180.0 / M_PI;
 
-    const double delta_x = target.position.x - current_x;
-    const double delta_y = target.position.y - current_y;
+    const double delta_x = target.position.x - curr_x;
+    const double delta_y = target.position.y - curr_y;
 
     coug_interfaces::msg::ControlSetpoint hsd_msg;
     hsd_msg.heading = std::atan2(delta_y, delta_x) * kRadToDeg;

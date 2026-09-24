@@ -34,7 +34,7 @@ class LoopWaypoints : public RosBtNode<BT::DecoratorNode> {
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
-        BT::BidirectionalPort<size_t>("waypoint_index"),
+        BT::BidirectionalPort<size_t>("waypoint_idx"),
         BT::OutputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
     };
   }
@@ -42,7 +42,7 @@ class LoopWaypoints : public RosBtNode<BT::DecoratorNode> {
   auto tick() -> BT::NodeStatus override {
     const auto waypoints =
         getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
-    const size_t index = getInput<size_t>("waypoint_index").value();
+    const size_t index = getInput<size_t>("waypoint_idx").value();
     if (index >= waypoints.size()) {
       return BT::NodeStatus::SUCCESS;
     }
@@ -67,7 +67,7 @@ class LoopWaypoints : public RosBtNode<BT::DecoratorNode> {
 
     RCLCPP_INFO(node_->get_logger(), "LoopWaypoints: reached waypoint %zu of %zu.", index + 1,
                 waypoints.size());
-    setOutput("waypoint_index", index + 1);
+    setOutput("waypoint_idx", index + 1);
     return index + 1 >= waypoints.size() ? BT::NodeStatus::SUCCESS : BT::NodeStatus::RUNNING;
   }
 };

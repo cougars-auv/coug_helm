@@ -34,7 +34,7 @@
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
       <output_port name="active_waypoints"/>
-      <output_port name="waypoint_index"/>
+      <output_port name="waypoint_idx"/>
     </Action>
     <Action ID="NavigateToWaypoint">
       <input_port name="goal_waypoint"/>
@@ -47,7 +47,7 @@
     <Control ID="RoundRobin"/>
     <Decorator ID="LoopWaypoints">
       <input_port name="active_waypoints"/>
-      <inout_port name="waypoint_index"/>
+      <inout_port name="waypoint_idx"/>
       <output_port name="goal_waypoint"/>
     </Decorator>
     <Decorator ID="ProgressChecker"/>
@@ -77,7 +77,7 @@
           </ReactiveSequence>
         </Sequence>
       </ReactiveFallback>
-      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"
           goal_waypoint="{goal_waypoint}">
         <RecoveryNode number_of_retries="{number_of_retries}">
           <ProgressChecker>
@@ -121,7 +121,7 @@
             <Sequence>
               <IsWaypointsReceived/>
               <LoadWaypoints pending_waypoints="{mission_waypoints}"
-                  active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+                  active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>
@@ -133,7 +133,7 @@
               <IsWaypointsReceived/>
               <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
               <LoadWaypoints pending_waypoints="{home_waypoint}"
-                  active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+                  active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>
@@ -144,7 +144,7 @@
             <Sequence>
               <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
               <LoadWaypoints pending_waypoints="{surface_waypoint}"
-                  active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
+                  active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>

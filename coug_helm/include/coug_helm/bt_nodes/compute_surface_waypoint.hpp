@@ -32,8 +32,8 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<double>("current_x"),
-        BT::InputPort<double>("current_y"),
+        BT::InputPort<double>("curr_x"),
+        BT::InputPort<double>("curr_y"),
         BT::InputPort<double>("default_speed_rpm"),
         BT::InputPort<double>("surface_capture_radius"),
         BT::InputPort<double>("surface_capture_radius_z"),
@@ -45,8 +45,8 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
 
   auto tick() -> BT::NodeStatus override {
     coug_interfaces::msg::WayPoint waypoint;
-    waypoint.position.x = getPortOrBlackboard<double>("current_x");
-    waypoint.position.y = getPortOrBlackboard<double>("current_y");
+    waypoint.position.x = getPortOrBlackboard<double>("curr_x");
+    waypoint.position.y = getPortOrBlackboard<double>("curr_y");
     waypoint.position.z = 0.0;
     waypoint.mode = coug_interfaces::msg::WayPoint::DEPTH;
     waypoint.type = coug_interfaces::msg::WayPoint::GPS;

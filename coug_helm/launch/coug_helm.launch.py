@@ -83,6 +83,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
                 {
                     "use_sim_time": use_sim_time,
                     "tree_file": tree_file,
+                    "map_frame": "map",
                 },
             ],
         ),
