@@ -29,6 +29,11 @@ enum class Behavior : std::uint8_t {
   kAssist,
 };
 
+inline auto isAutonomous(Behavior behavior) -> bool {
+  return behavior == Behavior::kMission || behavior == Behavior::kHome ||
+         behavior == Behavior::kAssist;
+}
+
 inline auto isNavigating(Behavior behavior) -> bool {
   return behavior == Behavior::kMission || behavior == Behavior::kSurface ||
          behavior == Behavior::kHome;

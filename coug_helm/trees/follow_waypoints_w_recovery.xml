@@ -71,6 +71,7 @@
           </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
+        <Script _while="active_behavior != kStop" code="pending_behavior := kStop"/>
         <Stop/>
       </ReactiveFallback>
     </ReactiveSequence>

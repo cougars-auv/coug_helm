@@ -443,7 +443,7 @@ void BtHelmNode::publishStatusLed() {
     color = flash_on ? kLedGreen : kLedOff;
   } else if (teleop_active) {
     color = kLedBlue;
-  } else if (utils::isNavigating(active)) {
+  } else if (utils::isAutonomous(active)) {
     color = kLedRed;
   }
   led_color_pub_->publish(makeColor(color));
