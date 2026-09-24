@@ -184,8 +184,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
   blackboard_->set("goal_shift_threshold", params_.goal_shift_threshold);
-  blackboard_->set("tag_arrival_duration_msec",
-                   static_cast<unsigned>(params_.tag_arrival_duration_sec * 1000.0));
+  blackboard_->set("led_flash_duration_msec",
+                   static_cast<unsigned>(params_.led_flash_duration_sec * 1000.0));
 
   // --- ROS Interfaces ---
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());

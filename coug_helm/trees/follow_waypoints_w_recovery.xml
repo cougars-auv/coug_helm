@@ -16,85 +16,6 @@
 -->
 
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
-  <TreeNodesModel>
-    <Condition ID="IsOdomHealthy"/>
-    <Condition ID="IsWaypointsReceived"/>
-    <Action ID="BackUp"/>
-    <Action ID="ComputeHomeWaypoint">
-      <output_port name="home_waypoint"/>
-    </Action>
-    <Action ID="ComputeSurfaceWaypoint">
-      <output_port name="surface_waypoint"/>
-    </Action>
-    <Action ID="DisarmThruster"/>
-    <Action ID="EmergencySurface"/>
-    <Action ID="LoadBehavior">
-      <output_port name="active_behavior"/>
-    </Action>
-    <Action ID="LoadWaypoints">
-      <input_port name="pending_waypoints"/>
-      <output_port name="active_waypoints"/>
-      <output_port name="waypoint_idx"/>
-    </Action>
-    <Action ID="NavigateToWaypoint">
-      <input_port name="goal_waypoint"/>
-    </Action>
-    <Action ID="ResetLocalization"/>
-    <Action ID="Stop"/>
-    <Control ID="RecoveryNode">
-      <input_port name="number_of_retries"/>
-    </Control>
-    <Control ID="RoundRobin"/>
-    <Decorator ID="LoopWaypoints">
-      <input_port name="active_waypoints"/>
-      <inout_port name="waypoint_idx"/>
-      <output_port name="goal_waypoint"/>
-    </Decorator>
-    <Decorator ID="ProgressChecker"/>
-    <Decorator ID="ReportOutcome">
-      <input_port name="active_behavior"/>
-    </Decorator>
-  </TreeNodesModel>
-
-  <BehaviorTree ID="FollowWaypoints">
-    <ReactiveSequence>
-      <ReactiveFallback>
-        <IsOdomHealthy/>
-        <Sequence>
-          <EmergencySurface/>
-          <ReactiveSequence>
-            <Stop/>
-            <ForceSuccess>
-              <ResetLocalization/>
-            </ForceSuccess>
-          </ReactiveSequence>
-          <ReactiveSequence>
-            <Stop/>
-            <Sequence>
-              <Sleep msec="{odom_recovery_timeout_msec}"/>
-              <AlwaysFailure/>
-            </Sequence>
-          </ReactiveSequence>
-        </Sequence>
-      </ReactiveFallback>
-      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"
-          goal_waypoint="{goal_waypoint}">
-        <RecoveryNode number_of_retries="{number_of_retries}">
-          <ProgressChecker>
-            <NavigateToWaypoint goal_waypoint="{goal_waypoint}"/>
-          </ProgressChecker>
-          <RoundRobin>
-            <ReactiveSequence>
-              <Stop/>
-              <Sleep msec="{wait_duration_msec}"/>
-            </ReactiveSequence>
-            <BackUp/>
-          </RoundRobin>
-        </RecoveryNode>
-      </LoopWaypoints>
-    </ReactiveSequence>
-  </BehaviorTree>
-
   <BehaviorTree ID="MainTree">
     <ReactiveSequence>
       <LoadBehavior active_behavior="{active_behavior}"/>
@@ -155,4 +76,82 @@
     </ReactiveSequence>
   </BehaviorTree>
 
+  <BehaviorTree ID="FollowWaypoints">
+    <ReactiveSequence>
+      <ReactiveFallback>
+        <IsOdomHealthy/>
+        <Sequence>
+          <EmergencySurface/>
+          <ReactiveSequence>
+            <Stop/>
+            <ForceSuccess>
+              <ResetLocalization/>
+            </ForceSuccess>
+          </ReactiveSequence>
+          <ReactiveSequence>
+            <Stop/>
+            <Sequence>
+              <Sleep msec="{odom_recovery_timeout_msec}"/>
+              <AlwaysFailure/>
+            </Sequence>
+          </ReactiveSequence>
+        </Sequence>
+      </ReactiveFallback>
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"
+          goal_waypoint="{goal_waypoint}">
+        <RecoveryNode number_of_retries="{number_of_retries}">
+          <ProgressChecker>
+            <NavigateToWaypoint goal_waypoint="{goal_waypoint}"/>
+          </ProgressChecker>
+          <RoundRobin>
+            <ReactiveSequence>
+              <Stop/>
+              <Sleep msec="{wait_duration_msec}"/>
+            </ReactiveSequence>
+            <BackUp/>
+          </RoundRobin>
+        </RecoveryNode>
+      </LoopWaypoints>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsWaypointsReceived"/>
+    <Action ID="BackUp"/>
+    <Action ID="ComputeHomeWaypoint">
+      <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="ComputeSurfaceWaypoint">
+      <output_port name="surface_waypoint"/>
+    </Action>
+    <Action ID="DisarmThruster"/>
+    <Action ID="EmergencySurface"/>
+    <Action ID="LoadBehavior">
+      <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="LoadWaypoints">
+      <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="waypoint_idx"/>
+    </Action>
+    <Action ID="NavigateToWaypoint">
+      <input_port name="goal_waypoint"/>
+    </Action>
+    <Action ID="ResetLocalization"/>
+    <Action ID="Stop"/>
+    <Control ID="RecoveryNode">
+      <input_port name="number_of_retries"/>
+    </Control>
+    <Control ID="RoundRobin"/>
+    <Decorator ID="LoopWaypoints">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_idx"/>
+      <output_port name="goal_waypoint"/>
+    </Decorator>
+    <Decorator ID="ProgressChecker"/>
+    <Decorator ID="ReportOutcome">
+      <input_port name="active_behavior"/>
+    </Decorator>
+  </TreeNodesModel>
 </root>

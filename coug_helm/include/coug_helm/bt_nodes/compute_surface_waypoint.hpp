@@ -48,16 +48,18 @@ class ComputeSurfaceWaypoint : public RosBtNode<BT::SyncActionNode> {
     waypoint.position.x = getPortOrBlackboard<double>("curr_x");
     waypoint.position.y = getPortOrBlackboard<double>("curr_y");
     waypoint.position.z = 0.0;
-    waypoint.mode = coug_interfaces::msg::WayPoint::DEPTH;
-    waypoint.type = coug_interfaces::msg::WayPoint::GPS;
-    waypoint.subwaypoints.clear();
 
     waypoint.speed_rpm = getPortOrBlackboard<double>("default_speed_rpm");
-
     waypoint.capture_radius = getPortOrBlackboard<double>("surface_capture_radius");
     waypoint.capture_radius_z = getPortOrBlackboard<double>("surface_capture_radius_z");
     waypoint.slip_radius = getPortOrBlackboard<double>("surface_slip_radius");
     waypoint.slip_radius_z = getPortOrBlackboard<double>("surface_slip_radius_z");
+
+    waypoint.mode = coug_interfaces::msg::WayPoint::DEPTH;
+
+    waypoint.subwaypoints.clear();
+
+    waypoint.type = coug_interfaces::msg::WayPoint::GPS;
 
     RCLCPP_INFO(node_->get_logger(), "ComputeSurfaceWaypoint: surfacing at (%.1f, %.1f) m.",
                 waypoint.position.x, waypoint.position.y);

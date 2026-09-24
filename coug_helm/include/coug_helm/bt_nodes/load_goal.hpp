@@ -41,6 +41,7 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<std::string>("map_frame"),
         BT::OutputPort<geometry_msgs::msg::PoseStamped>("goal_pose"),
         BT::OutputPort<int>("goal_type"),
+        BT::OutputPort<bool>("goal_flash"),
     };
   }
 
@@ -60,6 +61,7 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
 
     setOutput("goal_pose", goal);
     setOutput("goal_type", static_cast<int>(waypoint.type));
+    setOutput("goal_flash", waypoint.arrival_flash);
     return BT::NodeStatus::SUCCESS;
   }
 };

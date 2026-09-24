@@ -28,10 +28,11 @@ BT_JSON_CONVERTER(coug_interfaces::msg::WayPoint, msg) {
   add_field("capture_radius_z", &msg.capture_radius_z);
   add_field("slip_radius", &msg.slip_radius);
   add_field("slip_radius_z", &msg.slip_radius_z);
-  add_field("tag_id", &msg.tag_id);
-  add_field("subwaypoints", &msg.subwaypoints);
-  add_field("type", &msg.type);
   add_field("mode", &msg.mode);
+  add_field("subwaypoints", &msg.subwaypoints);
+  add_field("tag_id", &msg.tag_id);
+  add_field("arrival_flash", &msg.arrival_flash);
+  add_field("type", &msg.type);
 }
 
 }  // namespace coug_interfaces::msg

@@ -51,16 +51,20 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     }
     coug_interfaces::msg::WayPoint home = waypoints[0];
     home.position.z = 0.0;
-    home.mode = coug_interfaces::msg::WayPoint::DEPTH;
-    home.type = coug_interfaces::msg::WayPoint::GPS;
-    home.subwaypoints.clear();
 
     home.speed_rpm = getPortOrBlackboard<double>("default_speed_rpm");
-
     home.capture_radius = getPortOrBlackboard<double>("home_capture_radius");
     home.capture_radius_z = getPortOrBlackboard<double>("home_capture_radius_z");
     home.slip_radius = getPortOrBlackboard<double>("home_slip_radius");
     home.slip_radius_z = getPortOrBlackboard<double>("home_slip_radius_z");
+
+    home.mode = coug_interfaces::msg::WayPoint::DEPTH;
+
+    home.subwaypoints.clear();
+    home.tag_id = 0;
+    home.arrival_flash = false;
+
+    home.type = coug_interfaces::msg::WayPoint::GPS;
 
     RCLCPP_INFO(node_->get_logger(),
                 "ComputeHomeWaypoint: home set to (%.1f, %.1f) m at the surface.", home.position.x,

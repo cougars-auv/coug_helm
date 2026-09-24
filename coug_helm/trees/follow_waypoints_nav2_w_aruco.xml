@@ -16,106 +16,6 @@
 -->
 
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
-  <TreeNodesModel>
-    <Condition ID="IsOdomHealthy"/>
-    <Condition ID="IsTagDetected">
-      <input_port name="tag_id"/>
-    </Condition>
-    <Condition ID="IsWaypointsReceived"/>
-    <Action ID="ComputeApproachPose">
-      <input_port name="tag_id"/>
-      <output_port name="approach_pose"/>
-    </Action>
-    <Action ID="ComputeHomeWaypoint">
-      <output_port name="home_waypoint"/>
-    </Action>
-    <Action ID="FlashLeds">
-      <output_port name="flash_start_time"/>
-    </Action>
-    <Action ID="LoadBehavior">
-      <output_port name="active_behavior"/>
-    </Action>
-    <Action ID="LoadGoal">
-      <input_port name="goal_waypoint"/>
-      <output_port name="goal_pose"/>
-      <output_port name="goal_type"/>
-    </Action>
-    <Action ID="LoadSearchPoses">
-      <input_port name="goal_waypoint"/>
-      <output_port name="search_poses"/>
-    </Action>
-    <Action ID="LoadTagId">
-      <input_port name="goal_waypoint"/>
-      <output_port name="tag_id"/>
-    </Action>
-    <Action ID="LoadWaypoints">
-      <input_port name="pending_waypoints"/>
-      <output_port name="active_waypoints"/>
-      <output_port name="waypoint_idx"/>
-    </Action>
-    <Action ID="NavigateToPose">
-      <input_port name="goal"/>
-    </Action>
-    <Action ID="NavigateToUpdatedPose">
-      <input_port name="goal"/>
-    </Action>
-    <Decorator ID="LoopPose">
-      <input_port name="queue"/>
-      <output_port name="value"/>
-    </Decorator>
-    <Decorator ID="LoopWaypoints">
-      <input_port name="active_waypoints"/>
-      <inout_port name="waypoint_idx"/>
-      <output_port name="goal_waypoint"/>
-    </Decorator>
-    <Decorator ID="ReportOutcome">
-      <input_port name="active_behavior"/>
-    </Decorator>
-  </TreeNodesModel>
-
-  <BehaviorTree ID="FindAndApproachTag">
-    <Sequence>
-      <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
-      <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
-      <ReactiveFallback>
-        <IsTagDetected tag_id="{tag_id}"/>
-        <Sequence>
-          <ForceSuccess>
-            <NavigateToPose goal="{goal_pose}"/>
-          </ForceSuccess>
-          <LoopPose queue="{search_poses}" value="{search_pose}">
-            <ForceSuccess>
-              <NavigateToPose goal="{search_pose}"/>
-            </ForceSuccess>
-          </LoopPose>
-        </Sequence>
-      </ReactiveFallback>
-      <ReactiveSequence>
-        <ComputeApproachPose tag_id="{tag_id}" approach_pose="{approach_pose}"/>
-        <NavigateToUpdatedPose goal="{approach_pose}"/>
-      </ReactiveSequence>
-      <FlashLeds flash_start_time="{flash_start_time}"/>
-      <Sleep msec="{tag_arrival_duration_msec}"/>
-    </Sequence>
-  </BehaviorTree>
-
-  <BehaviorTree ID="FollowWaypoints">
-    <ReactiveSequence>
-      <IsOdomHealthy/>
-      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"
-          goal_waypoint="{goal_waypoint}">
-        <Sequence>
-          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}"/>
-          <Fallback>
-            <NavigateToPose _while="goal_type == kGps" goal="{goal_pose}"/>
-            <SubTree ID="FindAndApproachTag" _while="goal_type == kAruco" _autoremap="true"/>
-            <AlwaysFailure/>
-          </Fallback>
-        </Sequence>
-      </LoopWaypoints>
-    </ReactiveSequence>
-  </BehaviorTree>
-
   <BehaviorTree ID="MainTree">
     <ReactiveSequence>
       <LoadBehavior active_behavior="{active_behavior}"/>
@@ -154,4 +54,107 @@
     </ReactiveSequence>
   </BehaviorTree>
 
+  <BehaviorTree ID="FollowWaypoints">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"
+          goal_waypoint="{goal_waypoint}">
+        <Sequence>
+          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}"
+              goal_flash="{goal_flash}"/>
+          <Fallback>
+            <NavigateToPose _while="goal_type == kGps" goal="{goal_pose}"/>
+            <SubTree ID="FindAndApproachTag" _while="goal_type == kAruco" _autoremap="true"/>
+            <AlwaysFailure/>
+          </Fallback>
+          <Sequence _skipIf="!goal_flash">
+            <FlashLeds flash_start_time="{flash_start_time}"/>
+            <Sleep msec="{led_flash_duration_msec}"/>
+          </Sequence>
+        </Sequence>
+      </LoopWaypoints>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FindAndApproachTag">
+    <Sequence>
+      <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
+      <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
+      <ReactiveFallback>
+        <IsTagDetected tag_id="{tag_id}"/>
+        <Sequence>
+          <ForceSuccess>
+            <NavigateToPose goal="{goal_pose}"/>
+          </ForceSuccess>
+          <LoopPose queue="{search_poses}" value="{search_pose}">
+            <ForceSuccess>
+              <NavigateToPose goal="{search_pose}"/>
+            </ForceSuccess>
+          </LoopPose>
+        </Sequence>
+      </ReactiveFallback>
+      <ReactiveSequence>
+        <ComputeApproachPose tag_id="{tag_id}" approach_pose="{approach_pose}"/>
+        <NavigateToUpdatedPose goal="{approach_pose}"/>
+      </ReactiveSequence>
+    </Sequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsTagDetected">
+      <input_port name="tag_id"/>
+    </Condition>
+    <Condition ID="IsWaypointsReceived"/>
+    <Action ID="ComputeApproachPose">
+      <input_port name="tag_id"/>
+      <output_port name="approach_pose"/>
+    </Action>
+    <Action ID="ComputeHomeWaypoint">
+      <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="FlashLeds">
+      <output_port name="flash_start_time"/>
+    </Action>
+    <Action ID="LoadBehavior">
+      <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="LoadGoal">
+      <input_port name="goal_waypoint"/>
+      <output_port name="goal_pose"/>
+      <output_port name="goal_type"/>
+      <output_port name="goal_flash"/>
+    </Action>
+    <Action ID="LoadSearchPoses">
+      <input_port name="goal_waypoint"/>
+      <output_port name="search_poses"/>
+    </Action>
+    <Action ID="LoadTagId">
+      <input_port name="goal_waypoint"/>
+      <output_port name="tag_id"/>
+    </Action>
+    <Action ID="LoadWaypoints">
+      <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="waypoint_idx"/>
+    </Action>
+    <Action ID="NavigateToPose">
+      <input_port name="goal"/>
+    </Action>
+    <Action ID="NavigateToUpdatedPose">
+      <input_port name="goal"/>
+    </Action>
+    <Decorator ID="LoopPose">
+      <input_port name="queue"/>
+      <output_port name="value"/>
+    </Decorator>
+    <Decorator ID="LoopWaypoints">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_idx"/>
+      <output_port name="goal_waypoint"/>
+    </Decorator>
+    <Decorator ID="ReportOutcome">
+      <input_port name="active_behavior"/>
+    </Decorator>
+  </TreeNodesModel>
 </root>
