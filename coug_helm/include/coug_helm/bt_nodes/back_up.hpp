@@ -58,6 +58,7 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
   auto onRunning() -> BT::NodeStatus override {
     if (node_->now().seconds() - start_time_ >= duration_) {
       hsd_pub_->publish(coug_interfaces::msg::ControlSetpoint{});
+      RCLCPP_INFO(node_->get_logger(), "BackUp: finished reversing.");
       return BT::NodeStatus::SUCCESS;
     }
 

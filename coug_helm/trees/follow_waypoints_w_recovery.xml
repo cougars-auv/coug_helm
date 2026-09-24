@@ -19,10 +19,6 @@
   <TreeNodesModel>
     <Condition ID="IsOdomHealthy"/>
     <Condition ID="IsWaypointsReceived"/>
-    <Action ID="AdvanceWaypoint">
-      <input_port name="active_waypoints"/>
-      <inout_port name="waypoint_index"/>
-    </Action>
     <Action ID="BackUp"/>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
@@ -34,13 +30,6 @@
     <Action ID="EmergencySurface"/>
     <Action ID="LoadBehavior">
       <output_port name="active_behavior"/>
-    </Action>
-    <Action ID="LoadGoal">
-      <input_port name="active_waypoints"/>
-      <input_port name="waypoint_index"/>
-      <output_port name="goal_pose"/>
-      <output_port name="goal_waypoint"/>
-      <output_port name="goal_type"/>
     </Action>
     <Action ID="LoadWaypoints">
       <input_port name="pending_waypoints"/>
@@ -56,50 +45,53 @@
       <input_port name="number_of_retries"/>
     </Control>
     <Control ID="RoundRobin"/>
+    <Decorator ID="LoopWaypoints">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_index"/>
+      <output_port name="goal_waypoint"/>
+    </Decorator>
     <Decorator ID="ProgressChecker"/>
+    <Decorator ID="ReportOutcome">
+      <input_port name="active_behavior"/>
+    </Decorator>
   </TreeNodesModel>
 
   <BehaviorTree ID="FollowWaypoints">
     <ReactiveSequence>
-      <Fallback>
+      <ReactiveFallback>
         <IsOdomHealthy/>
         <Sequence>
           <EmergencySurface/>
           <ReactiveSequence>
             <Stop/>
-            <ResetLocalization/>
+            <ForceSuccess>
+              <ResetLocalization/>
+            </ForceSuccess>
           </ReactiveSequence>
-          <ReactiveFallback>
-            <IsOdomHealthy/>
+          <ReactiveSequence>
+            <Stop/>
+            <Sequence>
+              <Sleep msec="{odom_recovery_timeout_msec}"/>
+              <AlwaysFailure/>
+            </Sequence>
+          </ReactiveSequence>
+        </Sequence>
+      </ReactiveFallback>
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
+          goal_waypoint="{goal_waypoint}">
+        <RecoveryNode number_of_retries="{number_of_retries}">
+          <ProgressChecker>
+            <NavigateToWaypoint goal_waypoint="{goal_waypoint}"/>
+          </ProgressChecker>
+          <RoundRobin>
             <ReactiveSequence>
               <Stop/>
-              <Sequence>
-                <Sleep msec="{odom_recovery_timeout_msec}"/>
-                <AlwaysFailure/>
-              </Sequence>
+              <Sleep msec="{wait_duration_msec}"/>
             </ReactiveSequence>
-          </ReactiveFallback>
-        </Sequence>
-      </Fallback>
-      <KeepRunningUntilFailure>
-        <Sequence>
-          <LoadGoal active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
-              goal_pose="{goal_pose}" goal_waypoint="{goal_waypoint}" goal_type="{goal_type}"/>
-          <RecoveryNode number_of_retries="{number_of_retries}">
-            <ProgressChecker>
-              <NavigateToWaypoint goal_waypoint="{goal_waypoint}"/>
-            </ProgressChecker>
-            <RoundRobin>
-              <ReactiveSequence>
-                <Stop/>
-                <Sleep msec="{wait_duration_msec}"/>
-              </ReactiveSequence>
-              <BackUp/>
-            </RoundRobin>
-          </RecoveryNode>
-          <AdvanceWaypoint active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
-        </Sequence>
-      </KeepRunningUntilFailure>
+            <BackUp/>
+          </RoundRobin>
+        </RecoveryNode>
+      </LoopWaypoints>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -109,34 +101,34 @@
       <ReactiveFallback>
         <Sequence _while="active_behavior == kEmergencyStop">
           <Stop/>
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <ReactiveSequence>
               <Stop/>
               <DisarmThruster/>
             </ReactiveSequence>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kEmergencySurface">
           <Stop/>
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <EmergencySurface/>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kMission">
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <Sequence>
               <IsWaypointsReceived/>
               <LoadWaypoints pending_waypoints="{mission_waypoints}"
                   active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kHome">
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <Sequence>
               <IsWaypointsReceived/>
               <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
@@ -144,18 +136,18 @@
                   active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kSurface">
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <Sequence>
               <ComputeSurfaceWaypoint surface_waypoint="{surface_waypoint}"/>
               <LoadWaypoints pending_waypoints="{surface_waypoint}"
                   active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Stop/>

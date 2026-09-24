@@ -22,15 +22,22 @@
       <input_port name="tag_id"/>
     </Condition>
     <Condition ID="IsWaypointsReceived"/>
-    <Action ID="AdvanceWaypoint">
-      <input_port name="active_waypoints"/>
-      <inout_port name="waypoint_index"/>
+    <Action ID="ComputeApproachPose">
+      <input_port name="tag_id"/>
+      <output_port name="approach_pose"/>
+    </Action>
+    <Action ID="ComputeHomeWaypoint">
+      <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="FlashLeds">
+      <output_port name="flash_start_time"/>
+    </Action>
+    <Action ID="LoadBehavior">
+      <output_port name="active_behavior"/>
     </Action>
     <Action ID="LoadGoal">
-      <input_port name="active_waypoints"/>
-      <input_port name="waypoint_index"/>
+      <input_port name="goal_waypoint"/>
       <output_port name="goal_pose"/>
-      <output_port name="goal_waypoint"/>
       <output_port name="goal_type"/>
     </Action>
     <Action ID="LoadSearchPoses">
@@ -41,18 +48,10 @@
       <input_port name="goal_waypoint"/>
       <output_port name="tag_id"/>
     </Action>
-    <Action ID="ComputeApproachPose">
-      <input_port name="tag_id"/>
-      <output_port name="approach_pose"/>
-    </Action>
-    <Action ID="FlashLeds">
-      <output_port name="flash_start_time"/>
-    </Action>
-    <Action ID="ComputeHomeWaypoint">
-      <output_port name="home_waypoint"/>
-    </Action>
-    <Action ID="LoadBehavior">
-      <output_port name="active_behavior"/>
+    <Action ID="LoadWaypoints">
+      <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="waypoint_index"/>
     </Action>
     <Action ID="NavigateToPose">
       <input_port name="goal"/>
@@ -64,11 +63,14 @@
       <input_port name="queue"/>
       <output_port name="value"/>
     </Decorator>
-    <Action ID="LoadWaypoints">
-      <input_port name="pending_waypoints"/>
-      <output_port name="active_waypoints"/>
-      <output_port name="waypoint_index"/>
-    </Action>
+    <Decorator ID="LoopWaypoints">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_index"/>
+      <output_port name="goal_waypoint"/>
+    </Decorator>
+    <Decorator ID="ReportOutcome">
+      <input_port name="active_behavior"/>
+    </Decorator>
   </TreeNodesModel>
 
   <BehaviorTree ID="FindAndApproachTag">
@@ -100,18 +102,17 @@
   <BehaviorTree ID="FollowWaypoints">
     <ReactiveSequence>
       <IsOdomHealthy/>
-      <KeepRunningUntilFailure>
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
+          goal_waypoint="{goal_waypoint}">
         <Sequence>
-          <LoadGoal active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"
-              goal_pose="{goal_pose}" goal_waypoint="{goal_waypoint}" goal_type="{goal_type}"/>
+          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}"/>
           <Fallback>
             <NavigateToPose _while="goal_type == kGps" goal="{goal_pose}"/>
             <SubTree ID="FindAndApproachTag" _while="goal_type == kAruco" _autoremap="true"/>
             <AlwaysFailure/>
           </Fallback>
-          <AdvanceWaypoint active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
         </Sequence>
-      </KeepRunningUntilFailure>
+      </LoopWaypoints>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -120,18 +121,18 @@
       <LoadBehavior active_behavior="{active_behavior}"/>
       <ReactiveFallback>
         <Sequence _while="active_behavior == kMission">
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <Sequence>
               <IsWaypointsReceived/>
               <LoadWaypoints pending_waypoints="{mission_waypoints}"
                   active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kHome">
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <Sequence>
               <IsWaypointsReceived/>
               <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
@@ -139,13 +140,13 @@
                   active_waypoints="{active_waypoints}" waypoint_index="{waypoint_index}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kAssist">
-          <ForceSuccess>
+          <ReportOutcome active_behavior="{active_behavior}">
             <AlwaysSuccess/>
-          </ForceSuccess>
+          </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <AlwaysSuccess/>

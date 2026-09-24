@@ -19,20 +19,21 @@
 #include <cmath>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
-#include <nav2_behavior_tree/plugins/action/navigate_to_pose_action.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
 #include <string>
 
+#include "coug_helm/bt_nodes/navigate_to_pose.hpp"
+
 namespace coug_helm::bt_nodes {
 
-class NavigateToUpdatedPose : public nav2_behavior_tree::NavigateToPoseAction {
+class NavigateToUpdatedPose : public NavigateToPose {
  public:
   NavigateToUpdatedPose(const std::string& name, const std::string& action_name,
                         const BT::NodeConfig& config)
-      : NavigateToPoseAction(name, action_name, config) {}
+      : NavigateToPose(name, action_name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
-    auto ports = NavigateToPoseAction::providedPorts();
+    auto ports = NavigateToPose::providedPorts();
     ports.insert(BT::InputPort<double>("goal_shift_threshold"));
     return ports;
   }
@@ -48,15 +49,12 @@ class NavigateToUpdatedPose : public nav2_behavior_tree::NavigateToPoseAction {
     const double shift = std::hypot(goal.pose.position.x - goal_.pose.pose.position.x,
                                     goal.pose.position.y - goal_.pose.pose.position.y);
     if (shift > shift_threshold) {
-      RCLCPP_INFO(node_->get_logger(),
-                  "NavigateToUpdatedPose: goal moved %.1f m; resending to (%.1f, %.1f) m.", shift,
-                  goal.pose.position.x, goal.pose.position.y);
+      RCLCPP_INFO(node_->get_logger(), "%s: goal moved %.1f m; resending to (%.1f, %.1f) m.",
+                  registrationName().c_str(), shift, goal.pose.position.x, goal.pose.position.y);
       goal_.pose = goal;
       goal_updated_ = true;
     }
   }
-
-  auto on_cancelled() -> BT::NodeStatus override { return BT::NodeStatus::FAILURE; }
 };
 
 }  // namespace coug_helm::bt_nodes

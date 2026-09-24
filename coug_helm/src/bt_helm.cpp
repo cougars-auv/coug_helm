@@ -54,7 +54,6 @@
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
-#include "coug_helm/bt_nodes/advance_waypoint.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
 #include "coug_helm/bt_nodes/compute_approach_pose.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
@@ -70,9 +69,12 @@
 #include "coug_helm/bt_nodes/load_search_poses.hpp"
 #include "coug_helm/bt_nodes/load_tag_id.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
+#include "coug_helm/bt_nodes/loop_waypoints.hpp"
+#include "coug_helm/bt_nodes/navigate_to_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_updated_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_waypoint.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
+#include "coug_helm/bt_nodes/report_outcome.hpp"
 #include "coug_helm/bt_nodes/reset_localization.hpp"
 #include "coug_helm/bt_nodes/stop.hpp"
 #include "coug_helm/utils/behavior_enums.hpp"
@@ -228,7 +230,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsTagDetected>("IsTagDetected");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
-  factory_.registerNodeType<bt_nodes::AdvanceWaypoint>("AdvanceWaypoint");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
   factory_.registerNodeType<bt_nodes::ComputeApproachPose>("ComputeApproachPose");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
@@ -244,9 +245,15 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::NavigateToWaypoint>("NavigateToWaypoint");
   factory_.registerNodeType<bt_nodes::ResetLocalization>("ResetLocalization");
   factory_.registerNodeType<bt_nodes::Stop>("Stop");
+  factory_.registerNodeType<bt_nodes::LoopWaypoints>("LoopWaypoints");
   factory_.registerNodeType<bt_nodes::ProgressChecker>("ProgressChecker");
+  factory_.registerNodeType<bt_nodes::ReportOutcome>("ReportOutcome");
   factory_.registerNodeType<BT::LoopNode<geometry_msgs::msg::PoseStamped>>("LoopPose");
 
+  factory_.registerBuilder<bt_nodes::NavigateToPose>(
+      "NavigateToPose", [](const std::string& name, const BT::NodeConfig& config) {
+        return std::make_unique<bt_nodes::NavigateToPose>(name, "navigate_to_pose", config);
+      });
   factory_.registerBuilder<bt_nodes::NavigateToUpdatedPose>(
       "NavigateToUpdatedPose", [](const std::string& name, const BT::NodeConfig& config) {
         return std::make_unique<bt_nodes::NavigateToUpdatedPose>(name, "navigate_to_pose", config);
@@ -406,7 +413,9 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
         res->message = active == behavior ? "Restarting " + toString(behavior) + "."
                                           : "Switching from " + toString(active) + " to " +
                                                 toString(behavior) + ".";
-        RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
+        if (active == behavior) {
+          RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
+        }
       });
 }
 
@@ -415,12 +424,19 @@ void BtHelmNode::publishStatusLed() {
   const auto flash_start = blackboard_->get<double>("flash_start_time");
   const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
+  const bool teleop_active =
+      last_teleop_time_ >= 0.0 && now - last_teleop_time_ < params_.teleop_timeout_sec;
+  if (teleop_active != teleop_active_) {
+    teleop_active_ = teleop_active;
+    RCLCPP_INFO(get_logger(), teleop_active ? "Teleop input detected." : "Teleop input stopped.");
+  }
+
   Rgb color = kLedOff;
   if (flash_start >= 0.0 && now - flash_start < params_.led_flash_duration_sec) {
     const bool flash_on =
         static_cast<int>((now - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
     color = flash_on ? kLedGreen : kLedOff;
-  } else if (last_teleop_time_ >= 0.0 && now - last_teleop_time_ < params_.teleop_timeout_sec) {
+  } else if (teleop_active) {
     color = kLedBlue;
   } else if (utils::isNavigating(active)) {
     color = kLedRed;

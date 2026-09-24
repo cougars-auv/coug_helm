@@ -18,13 +18,11 @@
 
 #include <cmath>
 #include <coug_interfaces/msg/way_point.hpp>
-#include <cstddef>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <vector>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
 
@@ -37,28 +35,17 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
+        BT::InputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
         BT::InputPort<double>("current_x"),
         BT::InputPort<double>("current_y"),
         BT::InputPort<std::string>("map_frame"),
-        BT::InputPort<size_t>("waypoint_index"),
         BT::OutputPort<geometry_msgs::msg::PoseStamped>("goal_pose"),
-        BT::OutputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
         BT::OutputPort<int>("goal_type"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    const auto waypoints =
-        getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
-    const size_t index = getInput<size_t>("waypoint_index").value();
-
-    if (index >= waypoints.size()) {
-      RCLCPP_INFO(node_->get_logger(), "LoadGoal: all %zu waypoint(s) reached.", waypoints.size());
-      return BT::NodeStatus::FAILURE;
-    }
-
-    const auto& waypoint = waypoints[index];
+    const auto waypoint = getInput<coug_interfaces::msg::WayPoint>("goal_waypoint").value();
     geometry_msgs::msg::PoseStamped goal;
     goal.header.frame_id = getPortOrBlackboard<std::string>("map_frame");
     goal.header.stamp = node_->now();
@@ -72,11 +59,7 @@ class LoadGoal : public RosBtNode<BT::SyncActionNode> {
     orientation.setRPY(0.0, 0.0, heading);
     goal.pose.orientation = tf2::toMsg(orientation);
 
-    RCLCPP_INFO(node_->get_logger(),
-                "LoadGoal: navigating to waypoint %zu of %zu at (%.1f, %.1f) m.", index + 1,
-                waypoints.size(), goal.pose.position.x, goal.pose.position.y);
     setOutput("goal_pose", goal);
-    setOutput("goal_waypoint", waypoint);
     setOutput("goal_type", static_cast<int>(waypoint.type));
     return BT::NodeStatus::SUCCESS;
   }

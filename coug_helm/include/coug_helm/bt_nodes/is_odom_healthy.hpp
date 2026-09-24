@@ -41,12 +41,24 @@ class IsOdomHealthy : public RosBtNode<BT::ConditionNode> {
     const auto has_odom = getPortOrBlackboard<bool>("has_odom");
     const auto timeout = getPortOrBlackboard<double>("odom_timeout_sec");
 
-    if (!has_odom) {
-      return BT::NodeStatus::FAILURE;
+    const double age = node_->now().seconds() - last_odom;
+    const bool healthy = has_odom && age < timeout;
+
+    if (healthy != healthy_) {
+      healthy_ = healthy;
+      if (healthy) {
+        RCLCPP_INFO(node_->get_logger(), "IsOdomHealthy: odometry recovered.");
+      } else if (!has_odom) {
+        RCLCPP_WARN(node_->get_logger(), "IsOdomHealthy: no odometry received.");
+      } else {
+        RCLCPP_WARN(node_->get_logger(), "IsOdomHealthy: odometry stale for %.1f s.", age);
+      }
     }
-    return ((node_->now().seconds() - last_odom) < timeout) ? BT::NodeStatus::SUCCESS
-                                                            : BT::NodeStatus::FAILURE;
+    return healthy ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
   }
+
+ private:
+  bool healthy_{true};
 };
 
 }  // namespace coug_helm::bt_nodes

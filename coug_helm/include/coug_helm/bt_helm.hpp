@@ -101,6 +101,7 @@ class BtHelmNode : public rclcpp::Node {
   };
   std::map<int, TagEstimate> tag_estimates_;
   double last_teleop_time_{-1.0};
+  bool teleop_active_{false};
 };
 
 }  // namespace coug_helm

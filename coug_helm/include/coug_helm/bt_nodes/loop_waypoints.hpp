@@ -26,15 +26,16 @@
 
 namespace coug_helm::bt_nodes {
 
-class AdvanceWaypoint : public RosBtNode<BT::SyncActionNode> {
+class LoopWaypoints : public RosBtNode<BT::DecoratorNode> {
  public:
-  AdvanceWaypoint(const std::string& name, const BT::NodeConfig& config)
-      : RosBtNode<BT::SyncActionNode>(name, config) {}
+  LoopWaypoints(const std::string& name, const BT::NodeConfig& config)
+      : RosBtNode<BT::DecoratorNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
     return {
         BT::InputPort<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints"),
         BT::BidirectionalPort<size_t>("waypoint_index"),
+        BT::OutputPort<coug_interfaces::msg::WayPoint>("goal_waypoint"),
     };
   }
 
@@ -42,10 +43,32 @@ class AdvanceWaypoint : public RosBtNode<BT::SyncActionNode> {
     const auto waypoints =
         getInput<std::vector<coug_interfaces::msg::WayPoint>>("active_waypoints").value();
     const size_t index = getInput<size_t>("waypoint_index").value();
-    RCLCPP_INFO(node_->get_logger(), "AdvanceWaypoint: reached waypoint %zu of %zu.", index + 1,
+    if (index >= waypoints.size()) {
+      return BT::NodeStatus::SUCCESS;
+    }
+
+    const auto& waypoint = waypoints[index];
+    if (child_node_->status() == BT::NodeStatus::IDLE) {
+      RCLCPP_INFO(node_->get_logger(),
+                  "LoopWaypoints: navigating to waypoint %zu of %zu at (%.1f, %.1f) m.", index + 1,
+                  waypoints.size(), waypoint.position.x, waypoint.position.y);
+    }
+    setOutput("goal_waypoint", waypoint);
+
+    setStatus(BT::NodeStatus::RUNNING);
+    const BT::NodeStatus child_status = child_node_->executeTick();
+    if (child_status == BT::NodeStatus::RUNNING) {
+      return child_status;
+    }
+    resetChild();
+    if (child_status == BT::NodeStatus::FAILURE) {
+      return BT::NodeStatus::FAILURE;
+    }
+
+    RCLCPP_INFO(node_->get_logger(), "LoopWaypoints: reached waypoint %zu of %zu.", index + 1,
                 waypoints.size());
     setOutput("waypoint_index", index + 1);
-    return BT::NodeStatus::SUCCESS;
+    return index + 1 >= waypoints.size() ? BT::NodeStatus::SUCCESS : BT::NodeStatus::RUNNING;
   }
 };
 
