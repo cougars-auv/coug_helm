@@ -25,8 +25,13 @@ from launch.substitutions import (
     EnvironmentVariable,
     LaunchConfiguration,
     PathJoinSubstitution,
+    PythonExpression,
 )
 from launch_ros.actions import Node
+
+
+def is_agent(agent_ns: LaunchConfiguration, *names: str) -> PythonExpression:
+    return PythonExpression(["'", agent_ns, "' in ", str(names)])
 
 
 def load_launch_params(path: str, top_key: str) -> dict[str, Any]:
@@ -69,10 +74,6 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
     tree_filename = launch_params["tree_file"]
     tree_file = os.path.join(coug_helm_dir, "trees", tree_filename)
 
-    with open(tree_file) as tree:
-        tree_xml = tree.read()
-    use_aruco = str("<IsTagDetected" in tree_xml)
-
     return [
         Node(
             package="coug_helm",
@@ -93,7 +94,17 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
             package="aruco_opencv",
             executable="aruco_tracker_autostart",
             name="aruco_tracker",
-            condition=IfCondition(use_aruco),
+            condition=IfCondition(
+                is_agent(
+                    agent_ns,
+                    "blue1holo",
+                    "wamv1holo",
+                    "rover1gz",
+                    "rover2gz",
+                    "rover3gz",
+                    "wamv1gz",
+                )
+            ),
             parameters=[
                 fleet_param_file,
                 agent_param_file,
