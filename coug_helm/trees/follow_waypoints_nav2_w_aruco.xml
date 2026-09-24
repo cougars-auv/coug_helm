@@ -49,7 +49,12 @@
           </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
-        <Script _while="active_behavior != kStop" code="pending_behavior := kStop"/>
+        <Sequence _while="active_behavior != kStop">
+          <ReportOutcome active_behavior="{active_behavior}">
+            <AlwaysFailure/>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
         <AlwaysSuccess/>
       </ReactiveFallback>
     </ReactiveSequence>
