@@ -26,7 +26,6 @@
             <Sequence>
               <IsWaypointsReceived/>
               <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
-              <ClearEntireCostmap service_name="global_costmap/clear_entirely_global_costmap"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>
@@ -38,7 +37,6 @@
               <IsWaypointsReceived/>
               <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
               <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
-              <ClearEntireCostmap service_name="global_costmap/clear_entirely_global_costmap"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>
