@@ -44,7 +44,7 @@
         </Sequence>
         <Sequence _while="active_behavior == kAssist">
           <ReportOutcome>
-            <AlwaysSuccess/>
+            <SubTree ID="AssistAstronaut" _autoremap="true"/>
           </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
@@ -83,27 +83,101 @@
     <Sequence>
       <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
       <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
-      <ReactiveFallback>
-        <IsTagDetected tag_id="{tag_id}"/>
-        <Sequence>
-          <ForceSuccess>
-            <NavigateToPose goal="{goal_pose}"/>
-          </ForceSuccess>
-          <LoopPose queue="{search_poses}" value="{search_pose}">
-            <ForceSuccess>
-              <NavigateToPose goal="{search_pose}"/>
-            </ForceSuccess>
-          </LoopPose>
-        </Sequence>
-      </ReactiveFallback>
       <ReactiveSequence>
+        <ReactiveFallback>
+          <IsTagDetected tag_id="{tag_id}"/>
+          <Sequence>
+            <ForceSuccess>
+              <NavigateToPose goal="{goal_pose}"/>
+            </ForceSuccess>
+            <LoopPose queue="{search_poses}" value="{search_pose}">
+              <ForceSuccess>
+                <NavigateToPose goal="{search_pose}"/>
+              </ForceSuccess>
+            </LoopPose>
+            <AlwaysFailure/>
+          </Sequence>
+        </ReactiveFallback>
         <ComputeTagPose tag_id="{tag_id}" tag_pose="{tag_pose}"/>
         <NavigateToTrackedPose goal="{tag_pose}"/>
       </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
 
+  <BehaviorTree ID="AssistAstronaut">
+    <Sequence>
+      <Script code="pending_command := kStay"/>
+      <KeepRunningUntilFailure>
+        <ReactiveSequence>
+          <LoadCommand active_command="{active_command}"/>
+          <ReactiveFallback>
+            <Sequence _while="active_command == kFollow">
+              <ReportCommandOutcome>
+                <SubTree ID="FollowAstronaut" _autoremap="true"/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <Sequence _while="active_command == kFetch">
+              <ReportCommandOutcome>
+                <PickUpTool/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <Sequence _while="active_command == kCome">
+              <ReportCommandOutcome>
+                <SubTree ID="ComeToAstronaut" _autoremap="true"/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <Sequence _while="active_command == kGive">
+              <ReportCommandOutcome>
+                <PlaceTool/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <KeepRunningUntilFailure>
+              <AlwaysSuccess/>
+            </KeepRunningUntilFailure>
+          </ReactiveFallback>
+        </ReactiveSequence>
+      </KeepRunningUntilFailure>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FollowAstronaut">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <KeepRunningUntilFailure>
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <IsAstronautVisible/>
+            <KeepRunningUntilFailure>
+              <AlwaysSuccess/>
+            </KeepRunningUntilFailure>
+          </ReactiveFallback>
+          <ComputeAstronautPose astronaut_pose="{astronaut_pose}"/>
+          <NavigateToTrackedPose goal="{astronaut_pose}"/>
+        </ReactiveSequence>
+      </KeepRunningUntilFailure>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="ComeToAstronaut">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <ReactiveFallback>
+        <IsAstronautVisible/>
+        <KeepRunningUntilFailure>
+          <AlwaysSuccess/>
+        </KeepRunningUntilFailure>
+      </ReactiveFallback>
+      <ComputeAstronautPose astronaut_pose="{astronaut_pose}"/>
+      <NavigateToTrackedPose goal="{astronaut_pose}"/>
+    </ReactiveSequence>
+  </BehaviorTree>
+
   <TreeNodesModel>
+    <Condition ID="IsAstronautVisible"/>
     <Condition ID="IsOdomHealthy"/>
     <Condition ID="IsTagDetected">
       <input_port name="tag_id"/>
@@ -111,6 +185,9 @@
     <Condition ID="IsWaypointsReceived"/>
     <Action ID="AbortOnTeleop">
       <inout_port name="pending_behavior"/>
+    </Action>
+    <Action ID="ComputeAstronautPose">
+      <output_port name="astronaut_pose"/>
     </Action>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
@@ -124,6 +201,9 @@
     </Action>
     <Action ID="LoadBehavior">
       <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="LoadCommand">
+      <output_port name="active_command"/>
     </Action>
     <Action ID="LoadGoal">
       <input_port name="goal_waypoint"/>
@@ -150,6 +230,8 @@
     <Action ID="NavigateToTrackedPose">
       <input_port name="goal"/>
     </Action>
+    <Action ID="PickUpTool"/>
+    <Action ID="PlaceTool"/>
     <Decorator ID="LoopPose">
       <input_port name="queue"/>
       <output_port name="value"/>
@@ -159,6 +241,7 @@
       <inout_port name="waypoint_idx"/>
       <output_port name="goal_waypoint"/>
     </Decorator>
+    <Decorator ID="ReportCommandOutcome"/>
     <Decorator ID="ReportOutcome"/>
   </TreeNodesModel>
 </root>

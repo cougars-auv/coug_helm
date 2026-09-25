@@ -63,4 +63,28 @@ inline auto toString(Behavior behavior) -> std::string {
   return "UNKNOWN";
 }
 
+enum class AssistCommand : std::uint8_t {
+  kFollow = 0,
+  kStay,
+  kFetch,
+  kCome,
+  kGive,
+};
+
+inline auto toString(AssistCommand command) -> std::string {
+  switch (command) {
+    case AssistCommand::kFollow:
+      return "FOLLOW";
+    case AssistCommand::kStay:
+      return "STAY";
+    case AssistCommand::kFetch:
+      return "FETCH";
+    case AssistCommand::kCome:
+      return "COME";
+    case AssistCommand::kGive:
+      return "GIVE";
+  }
+  return "UNKNOWN";
+}
+
 }  // namespace coug_helm::utils

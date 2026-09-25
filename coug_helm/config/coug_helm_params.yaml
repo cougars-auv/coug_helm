@@ -69,6 +69,12 @@
       emergency_surface_service: "emergency_surface"
       assist_service: "assist"
 
+      follow_service: "assist/follow"
+      stay_service: "assist/stay"
+      fetch_service: "assist/fetch"
+      come_service: "assist/come"
+      give_service: "assist/give"
+
       arm_thruster_service: "thruster/arm"
       reset_localization_service: "factor_graph_node/reset"
 

@@ -20,36 +20,20 @@
 #include <string>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"
-#include "coug_helm/utils/behavior_enums.hpp"
 
 namespace coug_helm::bt_nodes {
 
-class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
+class PlaceTool : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadBehavior(const std::string& name, const BT::NodeConfig& config)
+  PlaceTool(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
-  static auto providedPorts() -> BT::PortsList {
-    return {
-        BT::InputPort<int>("pending_behavior"),
-        BT::OutputPort<int>("active_behavior"),
-    };
-  }
+  static auto providedPorts() -> BT::PortsList { return {}; }
 
   auto tick() -> BT::NodeStatus override {
-    const auto pending = getPortOrBlackboard<int>("pending_behavior");
-    if (pending != last_) {
-      RCLCPP_INFO(node_->get_logger(), "LoadBehavior: switching from %s to %s.",
-                  utils::toString(static_cast<utils::Behavior>(last_)).c_str(),
-                  utils::toString(static_cast<utils::Behavior>(pending)).c_str());
-      last_ = pending;
-    }
-    setOutput("active_behavior", pending);
-    return BT::NodeStatus::SUCCESS;
+    RCLCPP_WARN_ONCE(node_->get_logger(), "PlaceTool: not implemented.");
+    return BT::NodeStatus::FAILURE;
   }
-
- private:
-  int last_{static_cast<int>(utils::Behavior::kStop)};
 };
 
 }  // namespace coug_helm::bt_nodes

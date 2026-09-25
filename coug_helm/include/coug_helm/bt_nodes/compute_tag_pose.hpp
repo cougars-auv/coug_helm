@@ -47,15 +47,8 @@ class ComputeTagPose : public RosBtNode<BT::SyncActionNode> {
 
   auto tick() -> BT::NodeStatus override {
     const auto tag_id = getInput<int>("tag_id").value();
-    const auto tags =
-        getPortOrBlackboard<std::map<int, geometry_msgs::msg::Point>>("detected_tags");
-    const auto tag_it = tags.find(tag_id);
-    if (tag_it == tags.end()) {
-      RCLCPP_WARN(node_->get_logger(), "ComputeTagPose: tag %d not found.", tag_id);
-      return BT::NodeStatus::FAILURE;
-    }
-
-    const auto& tag = tag_it->second;
+    const auto tag =
+        getPortOrBlackboard<std::map<int, geometry_msgs::msg::Point>>("detected_tags").at(tag_id);
     const double heading = std::atan2(tag.y - getPortOrBlackboard<double>("curr_y"),
                                       tag.x - getPortOrBlackboard<double>("curr_x"));
 

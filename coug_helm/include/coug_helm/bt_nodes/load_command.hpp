@@ -24,32 +24,32 @@
 
 namespace coug_helm::bt_nodes {
 
-class LoadBehavior : public RosBtNode<BT::SyncActionNode> {
+class LoadCommand : public RosBtNode<BT::SyncActionNode> {
  public:
-  LoadBehavior(const std::string& name, const BT::NodeConfig& config)
+  LoadCommand(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
     return {
-        BT::InputPort<int>("pending_behavior"),
-        BT::OutputPort<int>("active_behavior"),
+        BT::InputPort<int>("pending_command"),
+        BT::OutputPort<int>("active_command"),
     };
   }
 
   auto tick() -> BT::NodeStatus override {
-    const auto pending = getPortOrBlackboard<int>("pending_behavior");
+    const auto pending = getPortOrBlackboard<int>("pending_command");
     if (pending != last_) {
-      RCLCPP_INFO(node_->get_logger(), "LoadBehavior: switching from %s to %s.",
-                  utils::toString(static_cast<utils::Behavior>(last_)).c_str(),
-                  utils::toString(static_cast<utils::Behavior>(pending)).c_str());
+      RCLCPP_INFO(node_->get_logger(), "LoadCommand: switching from %s to %s.",
+                  utils::toString(static_cast<utils::AssistCommand>(last_)).c_str(),
+                  utils::toString(static_cast<utils::AssistCommand>(pending)).c_str());
       last_ = pending;
     }
-    setOutput("active_behavior", pending);
+    setOutput("active_command", pending);
     return BT::NodeStatus::SUCCESS;
   }
 
  private:
-  int last_{static_cast<int>(utils::Behavior::kStop)};
+  int last_{static_cast<int>(utils::AssistCommand::kStay)};
 };
 
 }  // namespace coug_helm::bt_nodes

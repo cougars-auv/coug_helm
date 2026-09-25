@@ -213,6 +213,31 @@ bt_helm_node:
     default_value: "assist"
     validation:
       not_empty<>: []
+  follow_service:
+    type: string
+    default_value: "assist/follow"
+    validation:
+      not_empty<>: []
+  stay_service:
+    type: string
+    default_value: "assist/stay"
+    validation:
+      not_empty<>: []
+  fetch_service:
+    type: string
+    default_value: "assist/fetch"
+    validation:
+      not_empty<>: []
+  come_service:
+    type: string
+    default_value: "assist/come"
+    validation:
+      not_empty<>: []
+  give_service:
+    type: string
+    default_value: "assist/give"
+    validation:
+      not_empty<>: []
   arm_thruster_service:
     type: string
     default_value: "thruster/arm"

@@ -57,16 +57,19 @@
 #include "coug_helm/bt_helm_parameters.hpp"
 #include "coug_helm/bt_nodes/abort_on_teleop.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
+#include "coug_helm/bt_nodes/compute_astronaut_pose.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_tag_pose.hpp"
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
 #include "coug_helm/bt_nodes/flash_leds.hpp"
+#include "coug_helm/bt_nodes/is_astronaut_visible.hpp"
 #include "coug_helm/bt_nodes/is_odom_healthy.hpp"
 #include "coug_helm/bt_nodes/is_tag_detected.hpp"
 #include "coug_helm/bt_nodes/is_waypoints_received.hpp"
 #include "coug_helm/bt_nodes/load_behavior.hpp"
+#include "coug_helm/bt_nodes/load_command.hpp"
 #include "coug_helm/bt_nodes/load_goal.hpp"
 #include "coug_helm/bt_nodes/load_search_poses.hpp"
 #include "coug_helm/bt_nodes/load_tag_id.hpp"
@@ -75,7 +78,10 @@
 #include "coug_helm/bt_nodes/navigate_to_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_tracked_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_waypoint.hpp"
+#include "coug_helm/bt_nodes/pick_up_tool.hpp"
+#include "coug_helm/bt_nodes/place_tool.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
+#include "coug_helm/bt_nodes/report_command_outcome.hpp"
 #include "coug_helm/bt_nodes/report_outcome.hpp"
 #include "coug_helm/bt_nodes/reset_localization.hpp"
 #include "coug_helm/bt_nodes/stop.hpp"
@@ -95,6 +101,7 @@ using coug_interfaces::msg::WayPoint;
 using coug_interfaces::msg::WayPointList;
 using geometry_msgs::msg::TwistStamped;
 using std_msgs::msg::ColorRGBA;
+using utils::AssistCommand;
 using utils::Behavior;
 using utils::toString;
 
@@ -147,6 +154,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
+  blackboard_->set("pending_command", static_cast<int>(AssistCommand::kStay));
+  blackboard_->set("active_command", static_cast<int>(AssistCommand::kStay));
   blackboard_->set("flash_start_time", -1.0);
   blackboard_->set("last_teleop_time", -1.0);
 
@@ -225,13 +234,20 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   emergency_surface_srv_ =
       createBehaviorService(params_.emergency_surface_service, Behavior::kEmergencySurface);
   assist_srv_ = createBehaviorService(params_.assist_service, Behavior::kAssist);
+  follow_srv_ = createAssistCommandService(params_.follow_service, AssistCommand::kFollow);
+  stay_srv_ = createAssistCommandService(params_.stay_service, AssistCommand::kStay);
+  fetch_srv_ = createAssistCommandService(params_.fetch_service, AssistCommand::kFetch);
+  come_srv_ = createAssistCommandService(params_.come_service, AssistCommand::kCome);
+  give_srv_ = createAssistCommandService(params_.give_service, AssistCommand::kGive);
 
   // --- Behavior Tree ---
+  factory_.registerNodeType<bt_nodes::IsAstronautVisible>("IsAstronautVisible");
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsTagDetected>("IsTagDetected");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::AbortOnTeleop>("AbortOnTeleop");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
+  factory_.registerNodeType<bt_nodes::ComputeAstronautPose>("ComputeAstronautPose");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeTagPose>("ComputeTagPose");
@@ -239,16 +255,20 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::EmergencySurface>("EmergencySurface");
   factory_.registerNodeType<bt_nodes::FlashLeds>("FlashLeds");
   factory_.registerNodeType<bt_nodes::LoadBehavior>("LoadBehavior");
+  factory_.registerNodeType<bt_nodes::LoadCommand>("LoadCommand");
   factory_.registerNodeType<bt_nodes::LoadGoal>("LoadGoal");
   factory_.registerNodeType<bt_nodes::LoadSearchPoses>("LoadSearchPoses");
   factory_.registerNodeType<bt_nodes::LoadTagId>("LoadTagId");
   factory_.registerNodeType<bt_nodes::LoadWaypoints>("LoadWaypoints");
   factory_.registerNodeType<bt_nodes::NavigateToWaypoint>("NavigateToWaypoint");
+  factory_.registerNodeType<bt_nodes::PickUpTool>("PickUpTool");
+  factory_.registerNodeType<bt_nodes::PlaceTool>("PlaceTool");
   factory_.registerNodeType<bt_nodes::ResetLocalization>("ResetLocalization");
   factory_.registerNodeType<bt_nodes::Stop>("Stop");
   factory_.registerNodeType<bt_nodes::LoopWaypoints>("LoopWaypoints");
   factory_.registerNodeType<bt_nodes::ProgressChecker>("ProgressChecker");
   factory_.registerNodeType<bt_nodes::ReportOutcome>("ReportOutcome");
+  factory_.registerNodeType<bt_nodes::ReportCommandOutcome>("ReportCommandOutcome");
   factory_.registerNodeType<BT::LoopNode<geometry_msgs::msg::PoseStamped>>("LoopPose");
 
   factory_.registerBuilder<bt_nodes::NavigateToPose>(
@@ -269,6 +289,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   }
 
   factory_.registerScriptingEnums<Behavior>();
+  factory_.registerScriptingEnums<AssistCommand>();
   factory_.registerScriptingEnum("kGps", WayPoint::GPS);
   factory_.registerScriptingEnum("kAruco", WayPoint::ARUCO);
   BT::RegisterJsonDefinition<WayPoint>();
@@ -286,11 +307,10 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     RCLCPP_INFO(get_logger(), "Groot2 publisher started on port %ld.", params_.groot2_port);
   }
 
-  tick_timer_ =
-      create_wall_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz), [this] {
-        tree_.tickOnce();
-        publishStatusLed();
-      });
+  tick_timer_ = create_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz), [this] {
+    tree_.tickOnce();
+    publishStatusLed();
+  });
 
   // --- Diagnostics ---
   if (params_.publish_diagnostics) {
@@ -337,7 +357,7 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
 
 void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg) {
   blackboard_->set("has_odom", true);
-  blackboard_->set("last_odom_time", this->get_clock()->now().seconds());
+  blackboard_->set("last_odom_time", now().seconds());
   blackboard_->set("curr_x", msg->pose.pose.position.x);
   blackboard_->set("curr_y", msg->pose.pose.position.y);
   blackboard_->set("curr_z", msg->pose.pose.position.z);
@@ -407,7 +427,7 @@ void BtHelmNode::teleopCallback(const TwistStamped::ConstSharedPtr& msg) {
   if (msg->twist == geometry_msgs::msg::Twist{}) {
     return;
   }
-  blackboard_->set("last_teleop_time", this->get_clock()->now().seconds());
+  blackboard_->set("last_teleop_time", now().seconds());
   if (!teleop_active_) {
     teleop_active_ = true;
     RCLCPP_INFO(get_logger(), "Teleop active.");
@@ -419,7 +439,7 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
   return create_service<std_srvs::srv::Trigger>(
       service, [this, behavior](const std_srvs::srv::Trigger::Request::SharedPtr&,
                                 const std_srvs::srv::Trigger::Response::SharedPtr& res) {
-        const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
+        const auto active = activeBehavior();
         tree_.haltTree();
         if (behavior == Behavior::kMission) {
           blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
@@ -436,21 +456,43 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
       });
 }
 
+auto BtHelmNode::createAssistCommandService(const std::string& service, AssistCommand command)
+    -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr {
+  return create_service<std_srvs::srv::Trigger>(
+      service, [this, command](const std_srvs::srv::Trigger::Request::SharedPtr&,
+                               const std_srvs::srv::Trigger::Response::SharedPtr& res) {
+        const auto active = activeBehavior();
+        if (active != Behavior::kAssist) {
+          res->success = false;
+          res->message = "Ignoring " + toString(command) + ": ASSIST not active.";
+          RCLCPP_WARN(get_logger(), "%s", res->message.c_str());
+          return;
+        }
+        blackboard_->set("pending_command", static_cast<int>(command));
+        res->success = true;
+        res->message = "Assist command: " + toString(command) + ".";
+      });
+}
+
+auto BtHelmNode::activeBehavior() const -> Behavior {
+  return static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
+}
+
 void BtHelmNode::publishStatusLed() {
-  const double now = this->get_clock()->now().seconds();
+  const double now_sec = now().seconds();
   const auto flash_start = blackboard_->get<double>("flash_start_time");
-  const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
+  const auto active = activeBehavior();
 
   if (teleop_active_ &&
-      now - blackboard_->get<double>("last_teleop_time") >= params_.teleop_timeout_sec) {
+      now_sec - blackboard_->get<double>("last_teleop_time") >= params_.teleop_timeout_sec) {
     teleop_active_ = false;
     RCLCPP_INFO(get_logger(), "Teleop inactive (no input for %.1f s).", params_.teleop_timeout_sec);
   }
 
   Rgb color = kLedOff;
-  if (flash_start >= 0.0 && now - flash_start < params_.led_flash_duration_sec) {
+  if (flash_start >= 0.0 && now_sec - flash_start < params_.led_flash_duration_sec) {
     const bool flash_on =
-        static_cast<int>((now - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
+        static_cast<int>((now_sec - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
     color = flash_on ? kLedGreen : kLedOff;
   } else if (teleop_active_) {
     color = kLedBlue;
@@ -461,19 +503,17 @@ void BtHelmNode::publishStatusLed() {
 }
 
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
-  auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
-
+  const auto active = activeBehavior();
   stat.summary(utils::isEmergency(active) ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
                                           : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
-  const bool navigating = utils::isNavigating(active);
-  auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
-  if (!navigating || waypoints.empty()) {
+  const auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
+  if (!utils::isNavigating(active) || waypoints.empty()) {
     return;
   }
 
-  auto waypoint_idx = blackboard_->get<size_t>("waypoint_idx");
+  const auto waypoint_idx = blackboard_->get<size_t>("waypoint_idx");
   if (waypoint_idx >= waypoints.size()) {
     return;
   }

@@ -59,6 +59,11 @@ class BtHelmNode : public rclcpp::Node {
   auto createBehaviorService(const std::string& service, utils::Behavior behavior)
       -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
 
+  auto createAssistCommandService(const std::string& service, utils::AssistCommand command)
+      -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
+
+  [[nodiscard]] auto activeBehavior() const -> utils::Behavior;
+
   void publishStatusLed();
 
   // --- Diagnostics ---
@@ -80,6 +85,11 @@ class BtHelmNode : public rclcpp::Node {
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_stop_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_surface_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr assist_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr follow_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stay_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr fetch_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr come_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr give_srv_;
 
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
