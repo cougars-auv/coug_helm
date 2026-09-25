@@ -97,7 +97,7 @@
       </ReactiveFallback>
       <ReactiveSequence>
         <ComputeTagPose tag_id="{tag_id}" tag_pose="{tag_pose}"/>
-        <NavigateToUpdatedPose goal="{tag_pose}"/>
+        <NavigateToTrackedPose goal="{tag_pose}"/>
       </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
@@ -143,7 +143,7 @@
     <Action ID="NavigateToPose">
       <input_port name="goal"/>
     </Action>
-    <Action ID="NavigateToUpdatedPose">
+    <Action ID="NavigateToTrackedPose">
       <input_port name="goal"/>
     </Action>
     <Decorator ID="LoopPose">

@@ -71,7 +71,7 @@
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
 #include "coug_helm/bt_nodes/loop_waypoints.hpp"
 #include "coug_helm/bt_nodes/navigate_to_pose.hpp"
-#include "coug_helm/bt_nodes/navigate_to_updated_pose.hpp"
+#include "coug_helm/bt_nodes/navigate_to_tracked_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_waypoint.hpp"
 #include "coug_helm/bt_nodes/progress_checker.hpp"
 #include "coug_helm/bt_nodes/report_outcome.hpp"
@@ -253,9 +253,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       "NavigateToPose", [](const std::string& name, const BT::NodeConfig& config) {
         return std::make_unique<bt_nodes::NavigateToPose>(name, "navigate_to_pose", config);
       });
-  factory_.registerBuilder<bt_nodes::NavigateToUpdatedPose>(
-      "NavigateToUpdatedPose", [](const std::string& name, const BT::NodeConfig& config) {
-        return std::make_unique<bt_nodes::NavigateToUpdatedPose>(name, "navigate_to_pose", config);
+  factory_.registerBuilder<bt_nodes::NavigateToTrackedPose>(
+      "NavigateToTrackedPose", [](const std::string& name, const BT::NodeConfig& config) {
+        return std::make_unique<bt_nodes::NavigateToTrackedPose>(name, "navigate_to_pose", config);
       });
 
   for (const auto& plugin : params_.plugin_lib_names) {

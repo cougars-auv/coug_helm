@@ -25,9 +25,9 @@
 
 namespace coug_helm::bt_nodes {
 
-class NavigateToUpdatedPose : public NavigateToPose {
+class NavigateToTrackedPose : public NavigateToPose {
  public:
-  NavigateToUpdatedPose(const std::string& name, const std::string& action_name,
+  NavigateToTrackedPose(const std::string& name, const std::string& action_name,
                         const BT::NodeConfig& config)
       : NavigateToPose(name, action_name, config) {}
 
