@@ -94,17 +94,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
             package="aruco_opencv",
             executable="aruco_tracker_autostart",
             name="aruco_tracker",
-            condition=IfCondition(
-                is_agent(
-                    agent_ns,
-                    "blue1holo",
-                    "wamv1holo",
-                    "rover1gz",
-                    "rover2gz",
-                    "rover3gz",
-                    "wamv1gz",
-                )
-            ),
+            condition=IfCondition(is_agent(agent_ns, "rover1gz", "rover2gz", "rover3gz")),
             parameters=[
                 fleet_param_file,
                 agent_param_file,
