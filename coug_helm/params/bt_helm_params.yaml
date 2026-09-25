@@ -15,6 +15,7 @@ bt_helm_node:
     default_value:
       - "nav2_recovery_node_bt_node"
       - "nav2_round_robin_node_bt_node"
+      - "nav2_clear_costmap_service_bt_node"
   server_timeout_sec:
     type: double
     default_value: 1.0
