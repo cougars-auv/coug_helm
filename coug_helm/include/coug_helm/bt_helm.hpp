@@ -53,6 +53,8 @@ class BtHelmNode : public rclcpp::Node {
 
   void arucoCallback(const aruco_opencv_msgs::msg::ArucoDetection::ConstSharedPtr& msg);
 
+  void teleopCallback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr& msg);
+
   // --- Helpers ---
   auto createBehaviorService(const std::string& service, utils::Behavior behavior)
       -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr;
@@ -100,7 +102,6 @@ class BtHelmNode : public rclcpp::Node {
     int count{0};
   };
   std::map<int, TagEstimate> tag_estimates_;
-  double last_teleop_time_{-1.0};
   bool teleop_active_{false};
 };
 

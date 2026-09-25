@@ -40,7 +40,7 @@ class ReportOutcome : public RosBtNode<BT::DecoratorNode> {
     resetChild();
 
     const auto behavior =
-        utils::toString(static_cast<utils::Behavior>(getInput<int>("active_behavior").value()));
+        utils::toString(static_cast<utils::Behavior>(getPortOrBlackboard<int>("active_behavior")));
     if (child_status == BT::NodeStatus::SUCCESS) {
       RCLCPP_INFO(node_->get_logger(), "ReportOutcome: %s complete.", behavior.c_str());
     } else {

@@ -18,10 +18,11 @@
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <ReactiveSequence>
+      <AbortOnTeleop pending_behavior="{pending_behavior}"/>
       <LoadBehavior active_behavior="{active_behavior}"/>
       <ReactiveFallback>
         <Sequence _while="active_behavior == kMission">
-          <ReportOutcome active_behavior="{active_behavior}">
+          <ReportOutcome>
             <Sequence>
               <IsWaypointsReceived/>
               <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
@@ -31,7 +32,7 @@
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kHome">
-          <ReportOutcome active_behavior="{active_behavior}">
+          <ReportOutcome>
             <Sequence>
               <IsWaypointsReceived/>
               <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
@@ -42,13 +43,13 @@
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior == kAssist">
-          <ReportOutcome active_behavior="{active_behavior}">
+          <ReportOutcome>
             <AlwaysSuccess/>
           </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
         </Sequence>
         <Sequence _while="active_behavior != kStop">
-          <ReportOutcome active_behavior="{active_behavior}">
+          <ReportOutcome>
             <AlwaysFailure/>
           </ReportOutcome>
           <Script code="pending_behavior := kStop"/>
@@ -108,6 +109,9 @@
       <input_port name="tag_id"/>
     </Condition>
     <Condition ID="IsWaypointsReceived"/>
+    <Action ID="AbortOnTeleop">
+      <inout_port name="pending_behavior"/>
+    </Action>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
     </Action>
@@ -155,8 +159,6 @@
       <inout_port name="waypoint_idx"/>
       <output_port name="goal_waypoint"/>
     </Decorator>
-    <Decorator ID="ReportOutcome">
-      <input_port name="active_behavior"/>
-    </Decorator>
+    <Decorator ID="ReportOutcome"/>
   </TreeNodesModel>
 </root>

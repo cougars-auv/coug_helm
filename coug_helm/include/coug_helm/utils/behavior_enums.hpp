@@ -34,6 +34,10 @@ inline auto isAutonomous(Behavior behavior) -> bool {
          behavior == Behavior::kAssist;
 }
 
+inline auto isEmergency(Behavior behavior) -> bool {
+  return behavior == Behavior::kEmergencyStop || behavior == Behavior::kEmergencySurface;
+}
+
 inline auto isNavigating(Behavior behavior) -> bool {
   return behavior == Behavior::kMission || behavior == Behavior::kSurface ||
          behavior == Behavior::kHome;

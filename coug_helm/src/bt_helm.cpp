@@ -33,6 +33,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <map>
 #include <memory>
@@ -54,6 +55,7 @@
 #include <vector>
 
 #include "coug_helm/bt_helm_parameters.hpp"
+#include "coug_helm/bt_nodes/abort_on_teleop.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
@@ -146,6 +148,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("flash_start_time", -1.0);
+  blackboard_->set("last_teleop_time", -1.0);
 
   blackboard_->set("waypoint_idx", size_t{0});
   blackboard_->set("active_waypoints", std::vector<WayPoint>{});
@@ -206,11 +209,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       params_.aruco_topic, rclcpp::SystemDefaultsQoS(),
       [this](const ArucoDetection::ConstSharedPtr& msg) { arucoCallback(msg); });
 
-  teleop_sub_ = create_subscription<TwistStamped>(params_.teleop_topic, rclcpp::SystemDefaultsQoS(),
-                                                  [this](const TwistStamped::ConstSharedPtr&) {
-                                                    last_teleop_time_ =
-                                                        this->get_clock()->now().seconds();
-                                                  });
+  teleop_sub_ = create_subscription<TwistStamped>(
+      params_.teleop_topic, rclcpp::SystemDefaultsQoS(),
+      [this](const TwistStamped::ConstSharedPtr& msg) { teleopCallback(msg); });
 
   led_color_pub_ =
       create_publisher<ColorRGBA>(params_.led_color_topic, rclcpp::SystemDefaultsQoS());
@@ -229,6 +230,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::IsOdomHealthy>("IsOdomHealthy");
   factory_.registerNodeType<bt_nodes::IsTagDetected>("IsTagDetected");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
+  factory_.registerNodeType<bt_nodes::AbortOnTeleop>("AbortOnTeleop");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
@@ -401,6 +403,17 @@ void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
   blackboard_->set("detected_tags", tags);
 }
 
+void BtHelmNode::teleopCallback(const TwistStamped::ConstSharedPtr& msg) {
+  if (msg->twist == geometry_msgs::msg::Twist{}) {
+    return;
+  }
+  blackboard_->set("last_teleop_time", this->get_clock()->now().seconds());
+  if (!teleop_active_) {
+    teleop_active_ = true;
+    RCLCPP_INFO(get_logger(), "Teleop active.");
+  }
+}
+
 auto BtHelmNode::createBehaviorService(const std::string& service, Behavior behavior)
     -> rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr {
   return create_service<std_srvs::srv::Trigger>(
@@ -428,11 +441,10 @@ void BtHelmNode::publishStatusLed() {
   const auto flash_start = blackboard_->get<double>("flash_start_time");
   const auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
-  const bool teleop_active =
-      last_teleop_time_ >= 0.0 && now - last_teleop_time_ < params_.teleop_timeout_sec;
-  if (teleop_active != teleop_active_) {
-    teleop_active_ = teleop_active;
-    RCLCPP_INFO(get_logger(), teleop_active ? "Teleop input detected." : "Teleop input stopped.");
+  if (teleop_active_ &&
+      now - blackboard_->get<double>("last_teleop_time") >= params_.teleop_timeout_sec) {
+    teleop_active_ = false;
+    RCLCPP_INFO(get_logger(), "Teleop inactive (no input for %.1f s).", params_.teleop_timeout_sec);
   }
 
   Rgb color = kLedOff;
@@ -440,7 +452,7 @@ void BtHelmNode::publishStatusLed() {
     const bool flash_on =
         static_cast<int>((now - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
     color = flash_on ? kLedGreen : kLedOff;
-  } else if (teleop_active) {
+  } else if (teleop_active_) {
     color = kLedBlue;
   } else if (utils::isAutonomous(active)) {
     color = kLedRed;
@@ -451,10 +463,8 @@ void BtHelmNode::publishStatusLed() {
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   auto active = static_cast<Behavior>(blackboard_->get<int>("active_behavior"));
 
-  const bool emergency =
-      (active == Behavior::kEmergencyStop || active == Behavior::kEmergencySurface);
-  stat.summary(emergency ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
-                         : diagnostic_msgs::msg::DiagnosticStatus::OK,
+  stat.summary(utils::isEmergency(active) ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
+                                          : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
   const bool navigating = utils::isNavigating(active);
