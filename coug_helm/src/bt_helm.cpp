@@ -55,9 +55,9 @@
 
 #include "coug_helm/bt_helm_parameters.hpp"
 #include "coug_helm/bt_nodes/back_up.hpp"
-#include "coug_helm/bt_nodes/compute_approach_pose.hpp"
 #include "coug_helm/bt_nodes/compute_home_waypoint.hpp"
 #include "coug_helm/bt_nodes/compute_surface_waypoint.hpp"
+#include "coug_helm/bt_nodes/compute_tag_pose.hpp"
 #include "coug_helm/bt_nodes/disarm_thruster.hpp"
 #include "coug_helm/bt_nodes/emergency_surface.hpp"
 #include "coug_helm/bt_nodes/flash_leds.hpp"
@@ -183,7 +183,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
-  blackboard_->set("goal_shift_threshold", params_.goal_shift_threshold);
   blackboard_->set("led_flash_duration_msec",
                    static_cast<unsigned>(params_.led_flash_duration_sec * 1000.0));
 
@@ -231,9 +230,9 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::IsTagDetected>("IsTagDetected");
   factory_.registerNodeType<bt_nodes::IsWaypointsReceived>("IsWaypointsReceived");
   factory_.registerNodeType<bt_nodes::BackUp>("BackUp");
-  factory_.registerNodeType<bt_nodes::ComputeApproachPose>("ComputeApproachPose");
   factory_.registerNodeType<bt_nodes::ComputeHomeWaypoint>("ComputeHomeWaypoint");
   factory_.registerNodeType<bt_nodes::ComputeSurfaceWaypoint>("ComputeSurfaceWaypoint");
+  factory_.registerNodeType<bt_nodes::ComputeTagPose>("ComputeTagPose");
   factory_.registerNodeType<bt_nodes::DisarmThruster>("DisarmThruster");
   factory_.registerNodeType<bt_nodes::EmergencySurface>("EmergencySurface");
   factory_.registerNodeType<bt_nodes::FlashLeds>("FlashLeds");

@@ -24,8 +24,7 @@
           <ReportOutcome active_behavior="{active_behavior}">
             <Sequence>
               <IsWaypointsReceived/>
-              <LoadWaypoints pending_waypoints="{mission_waypoints}"
-                  active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
+              <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>
@@ -36,8 +35,7 @@
             <Sequence>
               <IsWaypointsReceived/>
               <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
-              <LoadWaypoints pending_waypoints="{home_waypoint}"
-                  active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
+              <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
               <SubTree ID="FollowWaypoints" _autoremap="true"/>
             </Sequence>
           </ReportOutcome>
@@ -63,11 +61,9 @@
   <BehaviorTree ID="FollowWaypoints">
     <ReactiveSequence>
       <IsOdomHealthy/>
-      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"
-          goal_waypoint="{goal_waypoint}">
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}" goal_waypoint="{goal_waypoint}">
         <Sequence>
-          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}"
-              goal_flash="{goal_flash}"/>
+          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}" goal_flash="{goal_flash}"/>
           <Fallback>
             <NavigateToPose _while="goal_type == kGps" goal="{goal_pose}"/>
             <SubTree ID="FindAndApproachTag" _while="goal_type == kAruco" _autoremap="true"/>
@@ -100,8 +96,8 @@
         </Sequence>
       </ReactiveFallback>
       <ReactiveSequence>
-        <ComputeApproachPose tag_id="{tag_id}" approach_pose="{approach_pose}"/>
-        <NavigateToUpdatedPose goal="{approach_pose}"/>
+        <ComputeTagPose tag_id="{tag_id}" tag_pose="{tag_pose}"/>
+        <NavigateToUpdatedPose goal="{tag_pose}"/>
       </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
@@ -112,12 +108,12 @@
       <input_port name="tag_id"/>
     </Condition>
     <Condition ID="IsWaypointsReceived"/>
-    <Action ID="ComputeApproachPose">
-      <input_port name="tag_id"/>
-      <output_port name="approach_pose"/>
-    </Action>
     <Action ID="ComputeHomeWaypoint">
       <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="ComputeTagPose">
+      <input_port name="tag_id"/>
+      <output_port name="tag_pose"/>
     </Action>
     <Action ID="FlashLeds">
       <output_port name="flash_start_time"/>

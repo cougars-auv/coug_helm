@@ -85,13 +85,8 @@ class ServiceBtNode : public RosBtNode<BT::StatefulActionNode> {
                   service_name_.c_str());
       return BT::NodeStatus::SUCCESS;
     }
-    if (response->message.empty()) {
-      RCLCPP_WARN(node_->get_logger(), "%s: '%s' reported failure.", registrationName().c_str(),
-                  service_name_.c_str());
-    } else {
-      RCLCPP_WARN(node_->get_logger(), "%s: '%s' reported failure: %s", registrationName().c_str(),
-                  service_name_.c_str(), response->message.c_str());
-    }
+    RCLCPP_WARN(node_->get_logger(), "%s: '%s' reported failure: '%s'", registrationName().c_str(),
+                service_name_.c_str(), response->message.c_str());
     return BT::NodeStatus::FAILURE;
   }
 

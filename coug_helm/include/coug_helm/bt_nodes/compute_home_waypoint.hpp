@@ -49,7 +49,8 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
       RCLCPP_WARN(node_->get_logger(), "ComputeHomeWaypoint: no mission waypoints to home to.");
       return BT::NodeStatus::FAILURE;
     }
-    coug_interfaces::msg::WayPoint home = waypoints[0];
+    coug_interfaces::msg::WayPoint home;
+    home.position = waypoints[0].position;
     home.position.z = 0.0;
 
     home.speed_rpm = getPortOrBlackboard<double>("default_speed_rpm");
@@ -59,11 +60,6 @@ class ComputeHomeWaypoint : public RosBtNode<BT::SyncActionNode> {
     home.slip_radius_z = getPortOrBlackboard<double>("home_slip_radius_z");
 
     home.mode = coug_interfaces::msg::WayPoint::DEPTH;
-
-    home.subwaypoints.clear();
-    home.tag_id = 0;
-    home.arrival_flash = false;
-
     home.type = coug_interfaces::msg::WayPoint::GPS;
 
     RCLCPP_INFO(node_->get_logger(),

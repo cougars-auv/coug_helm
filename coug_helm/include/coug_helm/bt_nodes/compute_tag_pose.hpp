@@ -29,9 +29,9 @@
 
 namespace coug_helm::bt_nodes {
 
-class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
+class ComputeTagPose : public RosBtNode<BT::SyncActionNode> {
  public:
-  ComputeApproachPose(const std::string& name, const BT::NodeConfig& config)
+  ComputeTagPose(const std::string& name, const BT::NodeConfig& config)
       : RosBtNode<BT::SyncActionNode>(name, config) {}
 
   static auto providedPorts() -> BT::PortsList {
@@ -41,7 +41,7 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
         BT::InputPort<double>("curr_x"),
         BT::InputPort<double>("curr_y"),
         BT::InputPort<std::string>("map_frame"),
-        BT::OutputPort<geometry_msgs::msg::PoseStamped>("approach_pose"),
+        BT::OutputPort<geometry_msgs::msg::PoseStamped>("tag_pose"),
     };
   }
 
@@ -51,29 +51,24 @@ class ComputeApproachPose : public RosBtNode<BT::SyncActionNode> {
         getPortOrBlackboard<std::map<int, geometry_msgs::msg::Point>>("detected_tags");
     const auto tag_it = tags.find(tag_id);
     if (tag_it == tags.end()) {
-      RCLCPP_WARN(node_->get_logger(),
-                  "ComputeApproachPose: tag %d not found; nothing to approach.", tag_id);
+      RCLCPP_WARN(node_->get_logger(), "ComputeTagPose: tag %d not found.", tag_id);
       return BT::NodeStatus::FAILURE;
     }
 
     const auto& tag = tag_it->second;
-    const auto curr_x = getPortOrBlackboard<double>("curr_x");
-    const auto curr_y = getPortOrBlackboard<double>("curr_y");
-    const double dx = tag.x - curr_x;
-    const double dy = tag.y - curr_y;
+    const double heading = std::atan2(tag.y - getPortOrBlackboard<double>("curr_y"),
+                                      tag.x - getPortOrBlackboard<double>("curr_x"));
 
-    geometry_msgs::msg::PoseStamped approach;
-    approach.header.frame_id = getPortOrBlackboard<std::string>("map_frame");
-    approach.header.stamp = node_->now();
-    approach.pose.position.x = tag.x;
-    approach.pose.position.y = tag.y;
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header.frame_id = getPortOrBlackboard<std::string>("map_frame");
+    pose.header.stamp = node_->now();
+    pose.pose.position.x = tag.x;
+    pose.pose.position.y = tag.y;
     tf2::Quaternion orientation;
-    orientation.setRPY(0.0, 0.0, std::atan2(dy, dx));
-    approach.pose.orientation = tf2::toMsg(orientation);
+    orientation.setRPY(0.0, 0.0, heading);
+    pose.pose.orientation = tf2::toMsg(orientation);
 
-    RCLCPP_DEBUG(node_->get_logger(), "ComputeApproachPose: approaching tag %d at (%.1f, %.1f) m.",
-                 tag_id, approach.pose.position.x, approach.pose.position.y);
-    setOutput("approach_pose", approach);
+    setOutput("tag_pose", pose);
     return BT::NodeStatus::SUCCESS;
   }
 };

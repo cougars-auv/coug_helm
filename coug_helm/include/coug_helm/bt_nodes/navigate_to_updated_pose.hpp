@@ -16,7 +16,6 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-#include <cmath>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
@@ -32,25 +31,10 @@ class NavigateToUpdatedPose : public NavigateToPose {
                         const BT::NodeConfig& config)
       : NavigateToPose(name, action_name, config) {}
 
-  static auto providedPorts() -> BT::PortsList {
-    auto ports = NavigateToPose::providedPorts();
-    ports.insert(BT::InputPort<double>("goal_shift_threshold"));
-    return ports;
-  }
-
   void on_wait_for_result(
       std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> /*feedback*/) override {
     geometry_msgs::msg::PoseStamped goal;
-    if (!getInput("goal", goal)) {
-      return;
-    }
-    double shift_threshold = 0.0;
-    getInputOrBlackboard("goal_shift_threshold", shift_threshold);
-    const double shift = std::hypot(goal.pose.position.x - goal_.pose.pose.position.x,
-                                    goal.pose.position.y - goal_.pose.pose.position.y);
-    if (shift > shift_threshold) {
-      RCLCPP_INFO(node_->get_logger(), "%s: goal moved %.1f m; resending to (%.1f, %.1f) m.",
-                  registrationName().c_str(), shift, goal.pose.position.x, goal.pose.position.y);
+    if (getInput("goal", goal) && goal.pose.position != goal_.pose.pose.position) {
       goal_.pose = goal;
       goal_updated_ = true;
     }
