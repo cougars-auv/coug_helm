@@ -47,17 +47,12 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
     const auto timeout = getPortOrBlackboard<double>("progress_timeout_sec");
     const double now = node_->now().seconds();
 
-    if (status() == BT::NodeStatus::IDLE) {
-      seeded_ = false;
-    }
-
-    if (!seeded_ ||
+    if (status() == BT::NodeStatus::IDLE ||
         std::hypot(curr_x - baseline_x_, curr_y - baseline_y_, curr_z - baseline_z_) >= threshold) {
       baseline_x_ = curr_x;
       baseline_y_ = curr_y;
       baseline_z_ = curr_z;
       last_progress_time_ = now;
-      seeded_ = true;
     } else if (timeout > 0.0 && now - last_progress_time_ > timeout) {
       RCLCPP_WARN(node_->get_logger(),
                   "ProgressChecker: no progress for %.1f s; triggering recovery.",
@@ -71,7 +66,6 @@ class ProgressChecker : public RosBtNode<BT::DecoratorNode> {
   }
 
  private:
-  bool seeded_{false};
   double baseline_x_{};
   double baseline_y_{};
   double baseline_z_{};
