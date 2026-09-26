@@ -396,29 +396,15 @@ void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
 
   auto tags = blackboard_->get<std::map<int, geometry_msgs::msg::Point>>("detected_tags");
   for (const auto& marker : msg->markers) {
-    // Ignore distant fixes
     tf2::Vector3 camera_p_tag;
     tf2::fromMsg(marker.pose.position, camera_p_tag);
-    const double range = camera_p_tag.length();
-    if (range > params_.tag_max_range) {
-      continue;
-    }
     const tf2::Vector3 map_p_tag = map_T_camera * camera_p_tag;
 
-    // Fold into the mean, weighted according fix range
-    auto& estimate = tag_estimates_[marker.marker_id];
-    const double weight = 1.0 / (range * range * range * range);
-    estimate.weight_sum += weight;
-    estimate.map_p_tag += (weight / estimate.weight_sum) * (map_p_tag - estimate.map_p_tag);
-
-    // Publish once there are enough fixes
-    if (++estimate.count >= params_.tag_min_detections) {
-      if (estimate.count == params_.tag_min_detections) {
-        RCLCPP_INFO(get_logger(), "Tag %d detected at (%.1f, %.1f) m.", marker.marker_id,
-                    estimate.map_p_tag.x(), estimate.map_p_tag.y());
-      }
-      tf2::toMsg(estimate.map_p_tag, tags[marker.marker_id]);
+    if (tags.find(marker.marker_id) == tags.end()) {
+      RCLCPP_INFO(get_logger(), "Tag %d detected at (%.1f, %.1f) m.", marker.marker_id,
+                  map_p_tag.x(), map_p_tag.y());
     }
+    tf2::toMsg(map_p_tag, tags[marker.marker_id]);
   }
   blackboard_->set("detected_tags", tags);
 }
@@ -443,7 +429,6 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
         tree_.haltTree();
         if (behavior == Behavior::kMission) {
           blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
-          tag_estimates_.clear();
         }
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
         res->success = true;

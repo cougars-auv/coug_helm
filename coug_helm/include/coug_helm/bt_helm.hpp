@@ -23,14 +23,12 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <map>
 #include <memory>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
-#include <tf2/LinearMath/Vector3.hpp>
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
@@ -106,12 +104,6 @@ class BtHelmNode : public rclcpp::Node {
   std::unique_ptr<BT::Groot2Publisher> groot2_pub_;
 
   // --- State ---
-  struct TagEstimate {
-    tf2::Vector3 map_p_tag;
-    double weight_sum{0.0};
-    int count{0};
-  };
-  std::map<int, TagEstimate> tag_estimates_;
   bool teleop_active_{false};
 };
 
