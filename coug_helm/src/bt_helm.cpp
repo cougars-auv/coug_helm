@@ -118,6 +118,8 @@ constexpr Rgb kLedRed{1.0F, 0.0F, 0.0F};
 constexpr Rgb kLedBlue{85.0F / 255.0F, 170.0F / 255.0F, 1.0F};
 constexpr Rgb kLedGreen{0.0F, 1.0F, 0.0F};
 
+constexpr double kSecondsToMilliseconds = 1000.0;
+
 auto makeColor(const Rgb& rgb) -> ColorRGBA {
   ColorRGBA color;
   color.r = rgb.r;
@@ -142,15 +144,16 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("arm_thruster_service", params_.arm_thruster_service);
   blackboard_->set("reset_localization_service", params_.reset_localization_service);
 
-  const auto server_timeout =
-      std::chrono::milliseconds(static_cast<int64_t>(params_.server_timeout_sec * 1000.0));
-  blackboard_->set("bt_loop_duration",
-                   std::chrono::milliseconds(static_cast<int>(1000.0 / params_.tick_rate_hz)));
+  const auto server_timeout = std::chrono::milliseconds(
+      static_cast<int64_t>(params_.server_timeout_sec * kSecondsToMilliseconds));
+  blackboard_->set(
+      "bt_loop_duration",
+      std::chrono::milliseconds(static_cast<int>(kSecondsToMilliseconds / params_.tick_rate_hz)));
   blackboard_->set("server_timeout", server_timeout);
   blackboard_->set("cancel_timeout", server_timeout);
-  blackboard_->set(
-      "wait_for_service_timeout",
-      std::chrono::milliseconds(static_cast<int64_t>(params_.startup_timeout_sec * 1000.0)));
+  blackboard_->set("wait_for_service_timeout",
+                   std::chrono::milliseconds(
+                       static_cast<int64_t>(params_.startup_timeout_sec * kSecondsToMilliseconds)));
 
   blackboard_->set("pending_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
@@ -185,18 +188,20 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("default_speed_rpm", params_.default_speed_rpm);
 
   blackboard_->set("odom_timeout_sec", params_.odom_timeout_sec);
-  blackboard_->set("odom_recovery_timeout_msec",
-                   static_cast<unsigned>(params_.odom_recovery_timeout_sec * 1000.0));
+  blackboard_->set(
+      "odom_recovery_timeout_msec",
+      static_cast<unsigned>(params_.odom_recovery_timeout_sec * kSecondsToMilliseconds));
 
   blackboard_->set("progress_timeout_sec", params_.progress_timeout_sec);
   blackboard_->set("progress_threshold", params_.progress_threshold);
   blackboard_->set("number_of_retries", static_cast<int>(params_.number_of_retries));
-  blackboard_->set("wait_duration_msec", static_cast<unsigned>(params_.wait_duration_sec * 1000.0));
+  blackboard_->set("wait_duration_msec",
+                   static_cast<unsigned>(params_.wait_duration_sec * kSecondsToMilliseconds));
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
   blackboard_->set("led_flash_duration_msec",
-                   static_cast<unsigned>(params_.led_flash_duration_sec * 1000.0));
+                   static_cast<unsigned>(params_.led_flash_duration_sec * kSecondsToMilliseconds));
 
   // --- ROS Interfaces ---
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
