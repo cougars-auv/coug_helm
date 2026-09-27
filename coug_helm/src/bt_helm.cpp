@@ -208,7 +208,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   waypoint_sub_ = create_subscription<WayPointList>(
-      params_.waypoint_topic, rclcpp::SystemDefaultsQoS(),
+      params_.waypoints_topic, rclcpp::SystemDefaultsQoS(),
       [this](const WayPointList::ConstSharedPtr& msg) { waypointCallback(msg); });
 
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
