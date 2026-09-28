@@ -44,7 +44,8 @@ class AbortOnTeleop : public RosBtNode<BT::SyncActionNode> {
     last_seen_teleop_time_ = last_teleop_time;
 
     const auto pending = static_cast<utils::Behavior>(getInput<int>("pending_behavior").value());
-    if (pending != utils::Behavior::kStop && !utils::isEmergency(pending)) {
+    if (pending != utils::Behavior::kStop && pending != utils::Behavior::kEmergencyStop &&
+        pending != utils::Behavior::kEmergencySurface) {
       RCLCPP_WARN(node_->get_logger(), "AbortOnTeleop: aborting %s.",
                   utils::toString(pending).c_str());
       setOutput("pending_behavior", static_cast<int>(utils::Behavior::kStop));

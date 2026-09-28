@@ -16,6 +16,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
+#include <cmath>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
@@ -29,16 +30,22 @@ class NavigateToTrackedPose : public NavigateToPose {
  public:
   NavigateToTrackedPose(const std::string& name, const std::string& action_name,
                         const BT::NodeConfig& config)
-      : NavigateToPose(name, action_name, config) {}
+      : NavigateToPose(name, action_name, config),
+        update_threshold_(config.blackboard->get<double>("tracked_goal_update_threshold")) {}
 
   void on_wait_for_result(
       std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> /*feedback*/) override {
     geometry_msgs::msg::PoseStamped goal;
-    if (getInput("goal", goal) && goal.pose.position != goal_.pose.pose.position) {
+    if (getInput("goal", goal) &&
+        std::hypot(goal.pose.position.x - goal_.pose.pose.position.x,
+                   goal.pose.position.y - goal_.pose.pose.position.y) > update_threshold_) {
       goal_.pose = goal;
       goal_updated_ = true;
     }
   }
+
+ private:
+  double update_threshold_;
 };
 
 }  // namespace coug_helm::bt_nodes

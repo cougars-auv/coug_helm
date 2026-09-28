@@ -200,6 +200,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("backup_speed_rpm", params_.backup_speed_rpm);
   blackboard_->set("backup_duration_sec", params_.backup_duration_sec);
 
+  blackboard_->set("tracked_goal_update_threshold", params_.tracked_goal_update_threshold);
   blackboard_->set("led_flash_duration_msec",
                    static_cast<unsigned>(params_.led_flash_duration_sec * kSecondsToMilliseconds));
 
@@ -436,6 +437,8 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
           blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
         }
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
+        blackboard_->set("last_teleop_time", -1.0);
+        blackboard_->set("flash_start_time", -1.0);
         res->success = true;
         res->message = active == behavior ? "Restarting " + toString(behavior) + "."
                                           : "Switching from " + toString(active) + " to " +
@@ -480,13 +483,13 @@ void BtHelmNode::publishStatusLed() {
   }
 
   Rgb color = kLedOff;
-  if (flash_start >= 0.0 && now_sec - flash_start < params_.led_flash_duration_sec) {
+  if (teleop_active_) {
+    color = kLedBlue;
+  } else if (flash_start >= 0.0 && now_sec - flash_start < params_.led_flash_duration_sec) {
     const bool flash_on =
         static_cast<int>((now_sec - flash_start) * params_.led_flash_rate_hz * 2.0) % 2 == 0;
     color = flash_on ? kLedGreen : kLedOff;
-  } else if (teleop_active_) {
-    color = kLedBlue;
-  } else if (utils::isAutonomous(active)) {
+  } else if (active != Behavior::kStop && active != Behavior::kEmergencyStop) {
     color = kLedRed;
   }
   led_color_pub_->publish(makeColor(color));
@@ -494,12 +497,16 @@ void BtHelmNode::publishStatusLed() {
 
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   const auto active = activeBehavior();
-  stat.summary(utils::isEmergency(active) ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
-                                          : diagnostic_msgs::msg::DiagnosticStatus::OK,
+  const bool emergency =
+      active == Behavior::kEmergencyStop || active == Behavior::kEmergencySurface;
+  stat.summary(emergency ? diagnostic_msgs::msg::DiagnosticStatus::ERROR
+                         : diagnostic_msgs::msg::DiagnosticStatus::OK,
                toString(active));
 
   const auto waypoints = blackboard_->get<std::vector<WayPoint>>("active_waypoints");
-  if (!utils::isNavigating(active) || waypoints.empty()) {
+  const bool navigating =
+      active == Behavior::kMission || active == Behavior::kSurface || active == Behavior::kHome;
+  if (!navigating || waypoints.empty()) {
     return;
   }
 

@@ -110,6 +110,11 @@ bt_helm_node:
     default_value: 5.0
     validation:
       gt_eq<>: [0.0]
+  tracked_goal_update_threshold:
+    type: double
+    default_value: 0.1
+    validation:
+      gt_eq<>: [0.0]
   teleop_timeout_sec:
     type: double
     default_value: 2.0

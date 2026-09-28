@@ -29,20 +29,6 @@ enum class Behavior : std::uint8_t {
   kAssist,
 };
 
-inline auto isAutonomous(Behavior behavior) -> bool {
-  return behavior == Behavior::kMission || behavior == Behavior::kHome ||
-         behavior == Behavior::kAssist;
-}
-
-inline auto isEmergency(Behavior behavior) -> bool {
-  return behavior == Behavior::kEmergencyStop || behavior == Behavior::kEmergencySurface;
-}
-
-inline auto isNavigating(Behavior behavior) -> bool {
-  return behavior == Behavior::kMission || behavior == Behavior::kSurface ||
-         behavior == Behavior::kHome;
-}
-
 inline auto toString(Behavior behavior) -> std::string {
   switch (behavior) {
     case Behavior::kStop:
