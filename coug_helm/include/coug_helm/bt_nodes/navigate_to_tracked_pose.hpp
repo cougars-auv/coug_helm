@@ -19,18 +19,17 @@
 #include <cmath>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
+#include <nav2_behavior_tree/plugins/action/navigate_to_pose_action.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
 #include <string>
 
-#include "coug_helm/bt_nodes/navigate_to_pose.hpp"
-
 namespace coug_helm::bt_nodes {
 
-class NavigateToTrackedPose : public NavigateToPose {
+class NavigateToTrackedPose : public nav2_behavior_tree::NavigateToPoseAction {
  public:
   NavigateToTrackedPose(const std::string& name, const std::string& action_name,
                         const BT::NodeConfig& config)
-      : NavigateToPose(name, action_name, config),
+      : NavigateToPoseAction(name, action_name, config),
         update_threshold_(config.blackboard->get<double>("tracked_goal_update_threshold")) {}
 
   void on_wait_for_result(

@@ -75,7 +75,6 @@
 #include "coug_helm/bt_nodes/load_tag_id.hpp"
 #include "coug_helm/bt_nodes/load_waypoints.hpp"
 #include "coug_helm/bt_nodes/loop_waypoints.hpp"
-#include "coug_helm/bt_nodes/navigate_to_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_tracked_pose.hpp"
 #include "coug_helm/bt_nodes/navigate_to_waypoint.hpp"
 #include "coug_helm/bt_nodes/pick_up_tool.hpp"
@@ -277,10 +276,6 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   factory_.registerNodeType<bt_nodes::ReportCommandOutcome>("ReportCommandOutcome");
   factory_.registerNodeType<BT::LoopNode<geometry_msgs::msg::PoseStamped>>("LoopPose");
 
-  factory_.registerBuilder<bt_nodes::NavigateToPose>(
-      "NavigateToPose", [](const std::string& name, const BT::NodeConfig& config) {
-        return std::make_unique<bt_nodes::NavigateToPose>(name, "navigate_to_pose", config);
-      });
   factory_.registerBuilder<bt_nodes::NavigateToTrackedPose>(
       "NavigateToTrackedPose", [](const std::string& name, const BT::NodeConfig& config) {
         return std::make_unique<bt_nodes::NavigateToTrackedPose>(name, "navigate_to_pose", config);
