@@ -21,7 +21,6 @@
 #include <behaviortree_cpp/tree_node.h>
 #include <behaviortree_cpp/utils/shared_library.h>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <aruco_opencv_msgs/msg/aruco_detection.hpp>
 #include <chrono>
 #include <cmath>
@@ -287,12 +286,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   BT::RegisterJsonDefinition<WayPoint>();
   BT::RegisterJsonDefinition<std::vector<WayPoint>>();
 
-  const std::string pkg_share = ament_index_cpp::get_package_share_directory("coug_helm");
-  const std::string tree_file = params_.tree_file.empty()
-                                    ? pkg_share + "/trees/behaviors_hsd_w_recovery.xml"
-                                    : params_.tree_file;
-  RCLCPP_INFO(get_logger(), "Loading behavior tree: '%s'.", tree_file.c_str());
-  tree_ = factory_.createTreeFromFile(tree_file, blackboard_);
+  RCLCPP_INFO(get_logger(), "Loading behavior tree: '%s'.", params_.tree_file.c_str());
+  tree_ = factory_.createTreeFromFile(params_.tree_file, blackboard_);
 
   if (params_.publish_groot2) {
     groot2_pub_ = std::make_unique<BT::Groot2Publisher>(tree_, params_.groot2_port);
