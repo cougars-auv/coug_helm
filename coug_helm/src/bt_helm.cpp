@@ -119,15 +119,6 @@ constexpr Rgb kLedGreen{0.0F, 1.0F, 0.0F};
 
 constexpr double kSecondsToMilliseconds = 1000.0;
 
-auto makeColor(const Rgb& rgb) -> ColorRGBA {
-  ColorRGBA color;
-  color.r = rgb.r;
-  color.g = rgb.g;
-  color.b = rgb.b;
-  color.a = 1.0F;
-  return color;
-}
-
 }  // namespace
 
 BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
@@ -487,7 +478,12 @@ void BtHelmNode::publishStatusLed() {
   } else if (active != Behavior::kStop && active != Behavior::kEmergencyStop) {
     color = kLedRed;
   }
-  led_color_pub_->publish(makeColor(color));
+  ColorRGBA color_msg;
+  color_msg.r = color.r;
+  color_msg.g = color.g;
+  color_msg.b = color.b;
+  color_msg.a = 1.0F;
+  led_color_pub_->publish(color_msg);
 }
 
 void BtHelmNode::checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat) {
