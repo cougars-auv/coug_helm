@@ -36,7 +36,6 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <map>
 #include <memory>
-#include <message_filters/subscriber.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
