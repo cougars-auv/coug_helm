@@ -40,13 +40,13 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/service.hpp>
+#include <rclcpp/time.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 #include <string>
 #include <tf2/LinearMath/Transform.hpp>
 #include <tf2/LinearMath/Vector3.hpp>
 #include <tf2/exceptions.hpp>
-#include <tf2/time.hpp>
 #include <tf2/utils.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>  // NOLINT(misc-include-cleaner)
 #include <tf2_ros/buffer.hpp>
@@ -369,8 +369,8 @@ void BtHelmNode::arucoCallback(const ArucoDetection::ConstSharedPtr& msg) {
 
   geometry_msgs::msg::TransformStamped map_T_camera_tf;
   try {
-    map_T_camera_tf =
-        tf_buffer_->lookupTransform(params_.map_frame, camera_frame, tf2::TimePointZero);
+    map_T_camera_tf = tf_buffer_->lookupTransform(params_.map_frame, camera_frame,
+                                                  rclcpp::Time(msg->header.stamp));
   } catch (const tf2::TransformException& ex) {
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000,
                          "Failed to look up transform from '%s' to '%s': %s", camera_frame.c_str(),
