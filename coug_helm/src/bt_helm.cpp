@@ -215,6 +215,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   aruco_sub_.subscribe(this, params_.aruco_topic,
                        rclcpp::SystemDefaultsQoS().get_rmw_qos_profile());
+  // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall)
   aruco_filter_ = std::make_shared<tf2_ros::MessageFilter<ArucoDetection>>(
       aruco_sub_, *tf_buffer_, params_.map_frame, 10, get_node_logging_interface(),
       get_node_clock_interface());
