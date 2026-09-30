@@ -24,12 +24,14 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <memory>
+#include <message_filters/subscriber.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
 #include <tf2_ros/buffer.hpp>
+#include <tf2_ros/message_filter.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
 #include "coug_helm/bt_helm_parameters.hpp"
@@ -71,7 +73,7 @@ class BtHelmNode : public rclcpp::Node {
   rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<coug_interfaces::msg::DvlBeamList>::SharedPtr beams_sub_;
-  rclcpp::Subscription<aruco_opencv_msgs::msg::ArucoDetection>::SharedPtr aruco_sub_;
+  message_filters::Subscriber<aruco_opencv_msgs::msg::ArucoDetection> aruco_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr teleop_sub_;
   rclcpp::Publisher<std_msgs::msg::ColorRGBA>::SharedPtr led_color_pub_;
   rclcpp::TimerBase::SharedPtr tick_timer_;
@@ -91,6 +93,7 @@ class BtHelmNode : public rclcpp::Node {
 
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  std::shared_ptr<tf2_ros::MessageFilter<aruco_opencv_msgs::msg::ArucoDetection>> aruco_filter_;
   diagnostic_updater::Updater diagnostic_updater_;
 
   // --- Parameters ---

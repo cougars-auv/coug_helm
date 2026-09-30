@@ -36,6 +36,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <map>
 #include <memory>
+#include <message_filters/subscriber.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
@@ -50,6 +51,8 @@
 #include <tf2/utils.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>  // NOLINT(misc-include-cleaner)
 #include <tf2_ros/buffer.hpp>
+#include <tf2_ros/create_timer_ros.hpp>
+#include <tf2_ros/message_filter.hpp>
 #include <tf2_ros/transform_listener.hpp>
 #include <vector>
 
@@ -195,6 +198,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   // --- ROS Interfaces ---
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  tf_buffer_->setCreateTimerInterface(std::make_shared<tf2_ros::CreateTimerROS>(
+      get_node_base_interface(), get_node_timers_interface()));
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   waypoint_sub_ = create_subscription<WayPointList>(
@@ -209,9 +214,12 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       params_.beams_topic, rclcpp::SystemDefaultsQoS(),
       [this](const DvlBeamList::ConstSharedPtr& msg) { beamsCallback(msg); });
 
-  aruco_sub_ = create_subscription<ArucoDetection>(
-      params_.aruco_topic, rclcpp::SystemDefaultsQoS(),
-      [this](const ArucoDetection::ConstSharedPtr& msg) { arucoCallback(msg); });
+  aruco_sub_.subscribe(this, params_.aruco_topic,
+                       rclcpp::SystemDefaultsQoS().get_rmw_qos_profile());
+  aruco_filter_ = std::make_shared<tf2_ros::MessageFilter<ArucoDetection>>(
+      aruco_sub_, *tf_buffer_, params_.map_frame, 10, get_node_logging_interface(),
+      get_node_clock_interface());
+  aruco_filter_->registerCallback(&BtHelmNode::arucoCallback, this);
 
   teleop_sub_ = create_subscription<TwistStamped>(
       params_.teleop_topic, rclcpp::SystemDefaultsQoS(),
