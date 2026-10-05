@@ -137,9 +137,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
 
   const auto server_timeout = std::chrono::milliseconds(
       static_cast<int64_t>(params_.server_timeout_sec * kSecondsToMilliseconds));
-  blackboard_->set(
-      "bt_loop_duration",
-      std::chrono::milliseconds(static_cast<int>(kSecondsToMilliseconds / params_.tick_rate_hz)));
+  blackboard_->set("bt_loop_duration", std::chrono::milliseconds(static_cast<int64_t>(
+                                           params_.tick_period_sec * kSecondsToMilliseconds)));
   blackboard_->set("server_timeout", server_timeout);
   blackboard_->set("cancel_timeout", server_timeout);
   blackboard_->set("wait_for_service_timeout",
@@ -302,7 +301,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
     RCLCPP_INFO(get_logger(), "Groot2 publisher started on port %ld.", params_.groot2_port);
   }
 
-  tick_timer_ = create_timer(std::chrono::duration<double>(1.0 / params_.tick_rate_hz), [this] {
+  tick_timer_ = create_timer(std::chrono::duration<double>(params_.tick_period_sec), [this] {
     tree_.tickOnce();
     publishStatusLed();
   });

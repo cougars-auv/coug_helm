@@ -2,9 +2,9 @@ bt_helm_node:
   tree_file:
     type: string
     default_value: ""
-  tick_rate_hz:
+  tick_period_sec:
     type: double
-    default_value: 20.0
+    default_value: 0.05
     validation:
       gt<>: [0.0]
   publish_diagnostics:
