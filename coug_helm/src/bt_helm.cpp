@@ -339,8 +339,8 @@ void BtHelmNode::waypointCallback(const WayPointList::ConstSharedPtr& msg) {
   for (size_t i = 0; i < msg->waypoints.size(); ++i) {
     const auto& waypoint = msg->waypoints[i];
     RCLCPP_INFO(get_logger(),
-                "Waypoint %zu: position (%.2f, %.2f, %.2f) m, speed %.0f RPM, "
-                "capture %.1f/%.1f m, slip %.1f/%.1f m (horizontal/vertical).",
+                "Waypoint %zu: position (%.2f, %.2f, %.2f) m, speed %g RPM, "
+                "capture %g/%g m, slip %g/%g m (horizontal/vertical).",
                 i + 1, waypoint.position.x, waypoint.position.y, waypoint.position.z,
                 waypoint.speed_rpm, waypoint.capture_radius, waypoint.capture_radius_z,
                 waypoint.slip_radius, waypoint.slip_radius_z);
@@ -467,7 +467,7 @@ void BtHelmNode::publishStatusLed() {
   if (teleop_active_ &&
       now_sec - blackboard_->get<double>("last_teleop_time") >= params_.teleop_timeout_sec) {
     teleop_active_ = false;
-    RCLCPP_INFO(get_logger(), "Teleop inactive (no input for %.1f s).", params_.teleop_timeout_sec);
+    RCLCPP_INFO(get_logger(), "Teleop inactive (no input for %g s).", params_.teleop_timeout_sec);
   }
 
   Rgb color = kLedOff;

@@ -50,8 +50,8 @@ class BackUp : public RosBtNode<BT::StatefulActionNode> {
     hsd_msg_.depth = getPortOrBlackboard<double>("curr_z");
     hsd_msg_.mode = coug_interfaces::msg::ControlSetpoint::DEPTH;
 
-    RCLCPP_INFO(node_->get_logger(), "BackUp: reversing at %.0f RPM for %.1f s.",
-                hsd_msg_.speed_rpm, duration_);
+    RCLCPP_INFO(node_->get_logger(), "BackUp: reversing at %g RPM for %g s.", hsd_msg_.speed_rpm,
+                duration_);
     return onRunning();
   }
 
