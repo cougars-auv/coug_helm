@@ -30,8 +30,6 @@ ament_auto_find_build_dependencies()
 
 set(COUG_HELM_NODES bt_helm)
 
-set(COUG_HELM_NODE_SOURCES "")
-set(COUG_HELM_PARAM_LIBRARIES "")
 foreach(node IN LISTS COUG_HELM_NODES)
   generate_parameter_library(
     ${node}_parameters
@@ -41,11 +39,9 @@ foreach(node IN LISTS COUG_HELM_NODES)
   list(APPEND COUG_HELM_PARAM_LIBRARIES "${node}_parameters")
 endforeach()
 
-ament_auto_add_library(coug_helm_component SHARED NO_TARGET_LINK_LIBRARIES
+ament_auto_add_library(coug_helm_component SHARED
   ${COUG_HELM_NODE_SOURCES}
 )
-
-target_compile_features(coug_helm_component PUBLIC cxx_std_17)
 
 target_link_libraries(coug_helm_component ${COUG_HELM_PARAM_LIBRARIES})
 
@@ -54,8 +50,7 @@ rclcpp_components_register_nodes(coug_helm_component
 )
 
 foreach(node IN LISTS COUG_HELM_NODES)
-  ament_auto_add_executable(${node} NO_TARGET_LINK_LIBRARIES "src/${node}_node.cpp")
-  target_link_libraries(${node} coug_helm_component)
+  ament_auto_add_executable(${node} "src/${node}_node.cpp")
 endforeach()
 
 ament_auto_package(
