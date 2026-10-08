@@ -19,6 +19,8 @@
 
 namespace coug_helm::utils {
 
+inline constexpr double kUnsetTime = -1.0;
+
 enum class Behavior : std::uint8_t {
   kStop = 0,
   kMission,

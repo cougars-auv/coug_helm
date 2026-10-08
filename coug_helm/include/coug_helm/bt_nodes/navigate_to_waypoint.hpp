@@ -84,9 +84,9 @@ class NavigateToWaypoint : public RosBtNode<BT::StatefulActionNode> {
   void onHalted() override { hsd_pub_->publish(coug_interfaces::msg::ControlSetpoint{}); }
 
  private:
-  void publishHsd(const coug_interfaces::msg::WayPoint& target, double curr_x, double curr_y) {
-    static constexpr double kRadToDeg = 180.0 / M_PI;
+  static constexpr double kRadToDeg = 180.0 / M_PI;
 
+  void publishHsd(const coug_interfaces::msg::WayPoint& target, double curr_x, double curr_y) {
     const double delta_x = target.position.x - curr_x;
     const double delta_y = target.position.y - curr_y;
 

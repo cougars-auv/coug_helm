@@ -54,7 +54,7 @@ class AbortOnTeleop : public RosBtNode<BT::SyncActionNode> {
   }
 
  private:
-  double last_seen_teleop_time_{-1.0};
+  double last_seen_teleop_time_{utils::kUnsetTime};
 };
 
 }  // namespace coug_helm::bt_nodes

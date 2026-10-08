@@ -103,6 +103,7 @@ using geometry_msgs::msg::TwistStamped;
 using std_msgs::msg::ColorRGBA;
 using utils::AssistCommand;
 using utils::Behavior;
+using utils::kUnsetTime;
 using utils::toString;
 
 namespace {
@@ -119,6 +120,7 @@ constexpr Rgb kLedBlue{85.0F / 255.0F, 170.0F / 255.0F, 1.0F};
 constexpr Rgb kLedGreen{0.0F, 1.0F, 0.0F};
 
 constexpr double kSecondsToMilliseconds = 1000.0;
+constexpr double kRadToDeg = 180.0 / M_PI;
 
 }  // namespace
 
@@ -149,8 +151,8 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
   blackboard_->set("active_behavior", static_cast<int>(Behavior::kStop));
   blackboard_->set("pending_command", static_cast<int>(AssistCommand::kStay));
   blackboard_->set("active_command", static_cast<int>(AssistCommand::kStay));
-  blackboard_->set("flash_start_time", -1.0);
-  blackboard_->set("last_teleop_time", -1.0);
+  blackboard_->set("flash_start_time", kUnsetTime);
+  blackboard_->set("last_teleop_time", kUnsetTime);
 
   blackboard_->set("waypoint_idx", size_t{0});
   blackboard_->set("active_waypoints", std::vector<WayPoint>{});
@@ -356,7 +358,6 @@ void BtHelmNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg
   blackboard_->set("curr_y", msg->pose.pose.position.y);
   blackboard_->set("curr_z", msg->pose.pose.position.z);
 
-  static constexpr double kRadToDeg = 180.0 / M_PI;
   blackboard_->set("curr_heading_degrees", tf2::getYaw(msg->pose.pose.orientation) * kRadToDeg);
 }
 
@@ -425,8 +426,8 @@ auto BtHelmNode::createBehaviorService(const std::string& service, Behavior beha
           blackboard_->set("detected_tags", std::map<int, geometry_msgs::msg::Point>{});
         }
         blackboard_->set("pending_behavior", static_cast<int>(behavior));
-        blackboard_->set("last_teleop_time", -1.0);
-        blackboard_->set("flash_start_time", -1.0);
+        blackboard_->set("last_teleop_time", kUnsetTime);
+        blackboard_->set("flash_start_time", kUnsetTime);
         res->success = true;
         res->message = active == behavior ? "Restarting " + toString(behavior) + "."
                                           : "Switching from " + toString(active) + " to " +
