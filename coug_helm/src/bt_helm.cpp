@@ -202,7 +202,7 @@ BtHelmNode::BtHelmNode(const rclcpp::NodeOptions& options)
       get_node_base_interface(), get_node_timers_interface()));
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-  waypoint_sub_ = create_subscription<WayPointList>(
+  waypoints_sub_ = create_subscription<WayPointList>(
       params_.waypoints_topic, rclcpp::SystemDefaultsQoS(),
       [this](const WayPointList::ConstSharedPtr& msg) { waypointCallback(msg); });
 

@@ -70,7 +70,7 @@ class BtHelmNode : public rclcpp::Node {
   void checkBehaviorStatus(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
   // --- ROS Interfaces ---
-  rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_sub_;
+  rclcpp::Subscription<coug_interfaces::msg::WayPointList>::SharedPtr waypoints_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<coug_interfaces::msg::DvlBeamList>::SharedPtr beams_sub_;
   message_filters::Subscriber<aruco_opencv_msgs::msg::ArucoDetection> aruco_sub_;
