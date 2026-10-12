@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2026 BYU FROST Lab
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <ReactiveSequence>
+      <AbortOnTeleop pending_behavior="{pending_behavior}"/>
+      <LoadBehavior active_behavior="{active_behavior}"/>
+      <ReactiveFallback>
+        <Sequence _while="active_behavior == kMission">
+          <ReportOutcome>
+            <Sequence>
+              <IsWaypointsReceived/>
+              <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kHome">
+          <ReportOutcome>
+            <Sequence>
+              <IsWaypointsReceived/>
+              <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
+              <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kAssist">
+          <ReportOutcome>
+            <SubTree ID="AssistAstronaut" _autoremap="true"/>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior != kStop">
+          <ReportOutcome>
+            <AlwaysFailure/>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <AlwaysSuccess/>
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FollowWaypoints">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}" goal_waypoint="{goal_waypoint}">
+        <Sequence>
+          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}" goal_flash="{goal_flash}"/>
+          <Fallback>
+            <NavigateToPose _while="goal_type == kGps" goal="{goal_pose}"/>
+            <SubTree ID="FindAndApproachTag" _while="goal_type == kAruco" _autoremap="true"/>
+            <AlwaysFailure/>
+          </Fallback>
+          <Sequence _skipIf="!goal_flash">
+            <FlashLeds flash_start_time="{flash_start_time}"/>
+            <Sleep msec="{led_flash_duration_msec}"/>
+          </Sequence>
+        </Sequence>
+      </LoopWaypoints>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FindAndApproachTag">
+    <Sequence>
+      <LoadTagId goal_waypoint="{goal_waypoint}" tag_id="{tag_id}"/>
+      <LoadSearchPoses goal_waypoint="{goal_waypoint}" search_poses="{search_poses}"/>
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <IsTagDetected tag_id="{tag_id}"/>
+          <Sequence>
+            <ForceSuccess>
+              <NavigateToPose goal="{goal_pose}"/>
+            </ForceSuccess>
+            <LoopPose queue="{search_poses}" value="{search_pose}">
+              <ForceSuccess>
+                <NavigateToPose goal="{search_pose}"/>
+              </ForceSuccess>
+            </LoopPose>
+            <AlwaysFailure/>
+          </Sequence>
+        </ReactiveFallback>
+        <ComputeTagPose tag_id="{tag_id}" tag_pose="{tag_pose}"/>
+        <NavigateToTrackedPose goal="{tag_pose}"/>
+      </ReactiveSequence>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="AssistAstronaut">
+    <Sequence>
+      <Script code="pending_command := kStay"/>
+      <KeepRunningUntilFailure>
+        <ReactiveSequence>
+          <LoadCommand active_command="{active_command}"/>
+          <ReactiveFallback>
+            <Sequence _while="active_command == kFollow">
+              <ReportCommandOutcome>
+                <SubTree ID="FollowAstronaut" _autoremap="true"/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <Sequence _while="active_command == kFetch">
+              <ReportCommandOutcome>
+                <PickUpTool/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <Sequence _while="active_command == kCome">
+              <ReportCommandOutcome>
+                <SubTree ID="ComeToAstronaut" _autoremap="true"/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <Sequence _while="active_command == kGive">
+              <ReportCommandOutcome>
+                <PlaceTool/>
+              </ReportCommandOutcome>
+              <Script code="pending_command := kStay"/>
+            </Sequence>
+            <KeepRunningUntilFailure>
+              <AlwaysSuccess/>
+            </KeepRunningUntilFailure>
+          </ReactiveFallback>
+        </ReactiveSequence>
+      </KeepRunningUntilFailure>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FollowAstronaut">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <KeepRunningUntilFailure>
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <IsAstronautVisible/>
+            <KeepRunningUntilFailure>
+              <AlwaysSuccess/>
+            </KeepRunningUntilFailure>
+          </ReactiveFallback>
+          <ComputeAstronautPose astronaut_pose="{astronaut_pose}"/>
+          <NavigateToTrackedPose goal="{astronaut_pose}"/>
+        </ReactiveSequence>
+      </KeepRunningUntilFailure>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="ComeToAstronaut">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <ReactiveFallback>
+        <IsAstronautVisible/>
+        <KeepRunningUntilFailure>
+          <AlwaysSuccess/>
+        </KeepRunningUntilFailure>
+      </ReactiveFallback>
+      <ComputeAstronautPose astronaut_pose="{astronaut_pose}"/>
+      <NavigateToTrackedPose goal="{astronaut_pose}"/>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <Condition ID="IsAstronautVisible"/>
+    <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsTagDetected">
+      <input_port name="tag_id"/>
+    </Condition>
+    <Condition ID="IsWaypointsReceived"/>
+    <Action ID="AbortOnTeleop">
+      <inout_port name="pending_behavior"/>
+    </Action>
+    <Action ID="ComputeAstronautPose">
+      <output_port name="astronaut_pose"/>
+    </Action>
+    <Action ID="ComputeHomeWaypoint">
+      <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="ComputeTagPose">
+      <input_port name="tag_id"/>
+      <output_port name="tag_pose"/>
+    </Action>
+    <Action ID="FlashLeds">
+      <output_port name="flash_start_time"/>
+    </Action>
+    <Action ID="LoadBehavior">
+      <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="LoadCommand">
+      <output_port name="active_command"/>
+    </Action>
+    <Action ID="LoadGoal">
+      <input_port name="goal_waypoint"/>
+      <output_port name="goal_pose"/>
+      <output_port name="goal_type"/>
+      <output_port name="goal_flash"/>
+    </Action>
+    <Action ID="LoadSearchPoses">
+      <input_port name="goal_waypoint"/>
+      <output_port name="search_poses"/>
+    </Action>
+    <Action ID="LoadTagId">
+      <input_port name="goal_waypoint"/>
+      <output_port name="tag_id"/>
+    </Action>
+    <Action ID="LoadWaypoints">
+      <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="waypoint_idx"/>
+    </Action>
+    <Action ID="NavigateToPose">
+      <input_port name="goal"/>
+    </Action>
+    <Action ID="NavigateToTrackedPose">
+      <input_port name="goal"/>
+    </Action>
+    <Action ID="PickUpTool"/>
+    <Action ID="PlaceTool"/>
+    <Decorator ID="LoopPose">
+      <input_port name="queue"/>
+      <output_port name="value"/>
+    </Decorator>
+    <Decorator ID="LoopWaypoints">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_idx"/>
+      <output_port name="goal_waypoint"/>
+    </Decorator>
+    <Decorator ID="ReportCommandOutcome"/>
+    <Decorator ID="ReportOutcome"/>
+  </TreeNodesModel>
+</root>

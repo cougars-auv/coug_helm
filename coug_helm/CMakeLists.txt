@@ -1,0 +1,62 @@
+# Copyright 2026 BYU FROST Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+cmake_minimum_required(VERSION 3.22)
+project(coug_helm)
+
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+
+set(COUG_HELM_NODES bt_helm)
+
+foreach(node IN LISTS COUG_HELM_NODES)
+  generate_parameter_library(
+    ${node}_parameters
+    "params/${node}_params.yaml"
+  )
+  list(APPEND COUG_HELM_NODE_SOURCES "src/${node}.cpp")
+  list(APPEND COUG_HELM_PARAM_LIBRARIES "${node}_parameters")
+endforeach()
+
+ament_auto_add_library(coug_helm_component SHARED
+  ${COUG_HELM_NODE_SOURCES}
+)
+
+target_link_libraries(coug_helm_component ${COUG_HELM_PARAM_LIBRARIES})
+
+rclcpp_components_register_nodes(coug_helm_component
+  "coug_helm::BtHelmNode"
+)
+
+foreach(node IN LISTS COUG_HELM_NODES)
+  ament_auto_add_executable(${node} "src/${node}_node.cpp")
+endforeach()
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  config
+  launch
+  trees
+  USE_SCOPED_HEADER_INSTALL_DIR
+)

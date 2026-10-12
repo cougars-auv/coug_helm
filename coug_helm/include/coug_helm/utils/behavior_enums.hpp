@@ -1,0 +1,78 @@
+// Copyright 2026 BYU FROST Lab
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#pragma once
+
+#include <cstdint>
+#include <string>
+
+namespace coug_helm::utils {
+
+inline constexpr double kUnsetTime = -1.0;
+
+enum class Behavior : std::uint8_t {
+  kStop = 0,
+  kMission,
+  kSurface,
+  kHome,
+  kEmergencyStop,
+  kEmergencySurface,
+  kAssist,
+};
+
+inline auto toString(Behavior behavior) -> std::string {
+  switch (behavior) {
+    case Behavior::kStop:
+      return "STOP";
+    case Behavior::kMission:
+      return "MISSION";
+    case Behavior::kSurface:
+      return "SURFACE";
+    case Behavior::kHome:
+      return "HOME";
+    case Behavior::kEmergencyStop:
+      return "EMERGENCY_STOP";
+    case Behavior::kEmergencySurface:
+      return "EMERGENCY_SURFACE";
+    case Behavior::kAssist:
+      return "ASSIST";
+  }
+  return "UNKNOWN";
+}
+
+enum class AssistCommand : std::uint8_t {
+  kFollow = 0,
+  kStay,
+  kFetch,
+  kCome,
+  kGive,
+};
+
+inline auto toString(AssistCommand command) -> std::string {
+  switch (command) {
+    case AssistCommand::kFollow:
+      return "FOLLOW";
+    case AssistCommand::kStay:
+      return "STAY";
+    case AssistCommand::kFetch:
+      return "FETCH";
+    case AssistCommand::kCome:
+      return "COME";
+    case AssistCommand::kGive:
+      return "GIVE";
+  }
+  return "UNKNOWN";
+}
+
+}  // namespace coug_helm::utils

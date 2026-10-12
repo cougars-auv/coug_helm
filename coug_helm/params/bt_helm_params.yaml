@@ -1,0 +1,251 @@
+bt_helm_node:
+  tree_file:
+    type: string
+    default_value: ""
+  tick_period_sec:
+    type: double
+    default_value: 0.05
+    validation:
+      gt<>: [0.0]
+  publish_diagnostics:
+    type: bool
+    default_value: false
+  plugin_lib_names:
+    type: string_array
+    default_value:
+      - "nav2_recovery_node_bt_node"
+      - "nav2_round_robin_node_bt_node"
+      - "nav2_navigate_to_pose_action_bt_node"
+  server_timeout_sec:
+    type: double
+    default_value: 1.0
+    validation:
+      gt<>: [0.0]
+  startup_timeout_sec:
+    type: double
+    default_value: 30.0
+    validation:
+      gt<>: [0.0]
+  surface_capture_radius:
+    type: double
+    default_value: 1000.0
+    validation:
+      gt_eq<>: [0.1]
+  surface_capture_radius_z:
+    type: double
+    default_value: 0.5
+    validation:
+      gt_eq<>: [0.1]
+  home_capture_radius:
+    type: double
+    default_value: 25.0
+    validation:
+      gt_eq<>: [0.1]
+  home_capture_radius_z:
+    type: double
+    default_value: 0.5
+    validation:
+      gt_eq<>: [0.1]
+  surface_slip_radius:
+    type: double
+    default_value: 1000.0
+    validation:
+      gt_eq<>: [0.1]
+  surface_slip_radius_z:
+    type: double
+    default_value: 0.5
+    validation:
+      gt_eq<>: [0.1]
+  home_slip_radius:
+    type: double
+    default_value: 50.0
+    validation:
+      gt_eq<>: [0.1]
+  home_slip_radius_z:
+    type: double
+    default_value: 0.5
+    validation:
+      gt_eq<>: [0.1]
+  default_speed_rpm:
+    type: double
+    default_value: 1500.0
+    validation:
+      bounds<>: [0.0, 1525.0]
+  odom_timeout_sec:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
+  odom_recovery_timeout_sec:
+    type: double
+    default_value: 30.0
+    validation:
+      gt_eq<>: [0.0]
+  progress_timeout_sec:
+    type: double
+    default_value: 15.0
+    validation:
+      gt_eq<>: [0.0]
+  progress_threshold:
+    type: double
+    default_value: 0.5
+    validation:
+      gt_eq<>: [0.0]
+  number_of_retries:
+    type: int
+    default_value: 6
+    validation:
+      gt_eq<>: [0]
+  backup_speed_rpm:
+    type: double
+    default_value: -900.0
+    validation:
+      bounds<>: [-1525.0, 0.0]
+  backup_duration_sec:
+    type: double
+    default_value: 5.0
+    validation:
+      gt<>: [0.0]
+  wait_duration_sec:
+    type: double
+    default_value: 5.0
+    validation:
+      gt_eq<>: [0.0]
+  tracked_goal_update_threshold:
+    type: double
+    default_value: 0.1
+    validation:
+      gt_eq<>: [0.0]
+  teleop_timeout_sec:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
+  led_flash_duration_sec:
+    type: double
+    default_value: 5.0
+    validation:
+      gt<>: [0.0]
+  led_flash_rate_hz:
+    type: double
+    default_value: 2.0
+    validation:
+      gt<>: [0.0]
+  publish_groot2:
+    type: bool
+    default_value: false
+  groot2_port:
+    type: int
+    default_value: 1667
+    validation:
+      bounds<>: [1024, 65535]
+  waypoints_topic:
+    type: string
+    default_value: "waypoints"
+    validation:
+      not_empty<>: []
+  odom_topic:
+    type: string
+    default_value: "odometry/global"
+    validation:
+      not_empty<>: []
+  beams_topic:
+    type: string
+    default_value: "dvl/beams"
+    validation:
+      not_empty<>: []
+  aruco_topic:
+    type: string
+    default_value: "aruco_detections"
+    validation:
+      not_empty<>: []
+  hsd_topic:
+    type: string
+    default_value: "cmd_hsd_helm"
+    validation:
+      not_empty<>: []
+  teleop_topic:
+    type: string
+    default_value: "cmd_vel_joy"
+    validation:
+      not_empty<>: []
+  led_color_topic:
+    type: string
+    default_value: "led/color"
+    validation:
+      not_empty<>: []
+  start_service:
+    type: string
+    default_value: "start"
+    validation:
+      not_empty<>: []
+  stop_service:
+    type: string
+    default_value: "stop"
+    validation:
+      not_empty<>: []
+  surface_service:
+    type: string
+    default_value: "surface"
+    validation:
+      not_empty<>: []
+  home_service:
+    type: string
+    default_value: "home"
+    validation:
+      not_empty<>: []
+  emergency_stop_service:
+    type: string
+    default_value: "emergency_stop"
+    validation:
+      not_empty<>: []
+  emergency_surface_service:
+    type: string
+    default_value: "emergency_surface"
+    validation:
+      not_empty<>: []
+  assist_service:
+    type: string
+    default_value: "assist"
+    validation:
+      not_empty<>: []
+  follow_service:
+    type: string
+    default_value: "assist/follow"
+    validation:
+      not_empty<>: []
+  stay_service:
+    type: string
+    default_value: "assist/stay"
+    validation:
+      not_empty<>: []
+  fetch_service:
+    type: string
+    default_value: "assist/fetch"
+    validation:
+      not_empty<>: []
+  come_service:
+    type: string
+    default_value: "assist/come"
+    validation:
+      not_empty<>: []
+  give_service:
+    type: string
+    default_value: "assist/give"
+    validation:
+      not_empty<>: []
+  arm_thruster_service:
+    type: string
+    default_value: "thruster/arm"
+    validation:
+      not_empty<>: []
+  reset_localization_service:
+    type: string
+    default_value: "factor_graph_node/reset"
+    validation:
+      not_empty<>: []
+  map_frame:
+    type: string
+    default_value: "map"
+    validation:
+      not_empty<>: []

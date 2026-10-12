@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2026 BYU FROST Lab
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <ReactiveSequence>
+      <AbortOnTeleop pending_behavior="{pending_behavior}"/>
+      <LoadBehavior active_behavior="{active_behavior}"/>
+      <ReactiveFallback>
+        <Sequence _while="active_behavior == kMission">
+          <ReportOutcome>
+            <Sequence>
+              <IsWaypointsReceived/>
+              <LoadWaypoints pending_waypoints="{mission_waypoints}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior == kHome">
+          <ReportOutcome>
+            <Sequence>
+              <IsWaypointsReceived/>
+              <ComputeHomeWaypoint home_waypoint="{home_waypoint}"/>
+              <LoadWaypoints pending_waypoints="{home_waypoint}" active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}"/>
+              <SubTree ID="FollowWaypoints" _autoremap="true"/>
+            </Sequence>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <Sequence _while="active_behavior != kStop">
+          <ReportOutcome>
+            <AlwaysFailure/>
+          </ReportOutcome>
+          <Script code="pending_behavior := kStop"/>
+        </Sequence>
+        <AlwaysSuccess/>
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="FollowWaypoints">
+    <ReactiveSequence>
+      <IsOdomHealthy/>
+      <LoopWaypoints active_waypoints="{active_waypoints}" waypoint_idx="{waypoint_idx}" goal_waypoint="{goal_waypoint}">
+        <Sequence>
+          <LoadGoal goal_waypoint="{goal_waypoint}" goal_pose="{goal_pose}" goal_type="{goal_type}" goal_flash="{goal_flash}"/>
+          <NavigateToPose goal="{goal_pose}"/>
+          <Sequence _skipIf="!goal_flash">
+            <FlashLeds flash_start_time="{flash_start_time}"/>
+            <Sleep msec="{led_flash_duration_msec}"/>
+          </Sequence>
+        </Sequence>
+      </LoopWaypoints>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <Condition ID="IsOdomHealthy"/>
+    <Condition ID="IsWaypointsReceived"/>
+    <Action ID="AbortOnTeleop">
+      <inout_port name="pending_behavior"/>
+    </Action>
+    <Action ID="ComputeHomeWaypoint">
+      <output_port name="home_waypoint"/>
+    </Action>
+    <Action ID="FlashLeds">
+      <output_port name="flash_start_time"/>
+    </Action>
+    <Action ID="LoadBehavior">
+      <output_port name="active_behavior"/>
+    </Action>
+    <Action ID="LoadGoal">
+      <input_port name="goal_waypoint"/>
+      <output_port name="goal_pose"/>
+      <output_port name="goal_type"/>
+      <output_port name="goal_flash"/>
+    </Action>
+    <Action ID="LoadWaypoints">
+      <input_port name="pending_waypoints"/>
+      <output_port name="active_waypoints"/>
+      <output_port name="waypoint_idx"/>
+    </Action>
+    <Action ID="NavigateToPose">
+      <input_port name="goal"/>
+    </Action>
+    <Decorator ID="LoopWaypoints">
+      <input_port name="active_waypoints"/>
+      <inout_port name="waypoint_idx"/>
+      <output_port name="goal_waypoint"/>
+    </Decorator>
+    <Decorator ID="ReportOutcome"/>
+  </TreeNodesModel>
+</root>
