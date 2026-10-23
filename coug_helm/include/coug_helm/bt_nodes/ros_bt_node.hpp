@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/tree_node.h>
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/node.hpp>
 #include <string>
 
 namespace coug_helm::bt_nodes {

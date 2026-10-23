@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/tree_node.h>
 
 #include <cmath>
 #include <geometry_msgs/msg/pose_stamped.hpp>

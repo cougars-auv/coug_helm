@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/basic_types.h>
+#include <behaviortree_cpp/tree_node.h>
 
 #include <memory>
 #include <std_srvs/srv/set_bool.hpp>

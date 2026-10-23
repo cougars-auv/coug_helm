@@ -14,19 +14,25 @@
 
 #pragma once
 
+#include <behaviortree_cpp/blackboard.h>
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
+#include <message_filters/subscriber.h>
 
 #include <aruco_opencv_msgs/msg/aruco_detection.hpp>
 #include <coug_interfaces/msg/dvl_beam_list.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
+#include <diagnostic_updater/diagnostic_status_wrapper.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <memory>
-#include <message_filters/subscriber.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/node_options.hpp>
+#include <rclcpp/publisher.hpp>
+#include <rclcpp/service.hpp>
+#include <rclcpp/subscription.hpp>
+#include <rclcpp/timer.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>

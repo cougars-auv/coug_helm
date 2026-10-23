@@ -14,10 +14,12 @@
 
 #pragma once
 
-#include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/basic_types.h>
+#include <behaviortree_cpp/tree_node.h>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/logging.hpp>
 #include <string>
 
 #include "coug_helm/bt_nodes/ros_bt_node.hpp"

@@ -17,7 +17,7 @@
 #include <behaviortree_cpp/json_export.h>
 
 #include <coug_interfaces/msg/way_point.hpp>
-#include <nav2_behavior_tree/json_utils.hpp>
+#include <nav2_behavior_tree/json_utils.hpp>  // NOLINT(misc-include-cleaner)
 
 namespace coug_interfaces::msg {
 
